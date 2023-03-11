@@ -28,11 +28,11 @@ func init() {
 
 	setDefaults()
 
-	err := viper.ReadInConfig() // Find and read the config file
-	if err != nil {             // Handle errors reading the config file
-		log.Println("no config file detected, using default values")
-	}
-	Update()
+	// err := viper.ReadInConfig() // Find and read the config file
+	// if err != nil {             // Handle errors reading the config file
+	// 	log.Println("no config file detected, using default values")
+	// }
+	// Update()
 }
 
 func Update() {

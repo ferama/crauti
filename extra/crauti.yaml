@@ -1,0 +1,3 @@
+k8sAutodiscover: true
+gatewayListenAddress: ":8080"
+adminApiListenAddress: ":9090"

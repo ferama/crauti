@@ -11,6 +11,7 @@ import (
 	"github.com/ferama/crauti/pkg/kube"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"k8s.io/client-go/util/homedir"
 )
 
@@ -20,18 +21,34 @@ func init() {
 	} else {
 		rootCmd.Flags().StringP("kubeconfig", "k", "", "absolute path to the kubeconfig file")
 	}
+	rootCmd.Flags().StringP("config", "c", "", "set config file path")
+
+	rootCmd.Flags().BoolP("debug", "d", false, "debug")
 }
 
 var rootCmd = &cobra.Command{
 	Use: "crauti",
 	Run: func(cmd *cobra.Command, args []string) {
-		go func() {
-			for {
-				c, _ := conf.Dump()
-				log.Printf("current conf:\n\n%s\n", c)
-				time.Sleep(3 * time.Second)
-			}
-		}()
+		config, _ := cmd.Flags().GetString("config")
+		if config != "" {
+			viper.SetConfigFile(config)
+		}
+		err := viper.ReadInConfig() // Find and read the config file
+		if err != nil {             // Handle errors reading the config file
+			log.Println("no config file detected, using default values")
+		}
+		conf.Update()
+
+		debug, _ := cmd.Flags().GetBool("debug")
+		if debug {
+			go func() {
+				for {
+					c, _ := conf.Dump()
+					log.Printf("current conf:\n\n%s\n", c)
+					time.Sleep(3 * time.Second)
+				}
+			}()
+		}
 
 		// the api gateway server
 		log.Printf("gateway listening on '%s'", conf.Config.GatewayListenAddress)
