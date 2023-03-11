@@ -14,7 +14,8 @@ import (
 func main() {
 	go func() {
 		for {
-			conf.Dump()
+			c, _ := conf.Dump()
+			log.Printf("current conf:\n\n%s\n", c)
 			time.Sleep(3 * time.Second)
 		}
 	}()

@@ -21,7 +21,7 @@ type ReverseProxy struct {
 
 func NewReverseProxy(
 	next http.Handler,
-	mountPoint *conf.MountPoint,
+	mountPoint conf.MountPoint,
 ) (http.Handler, error) {
 
 	upstreamUrl, err := url.Parse(mountPoint.Upstream)

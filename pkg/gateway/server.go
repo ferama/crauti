@@ -42,7 +42,7 @@ func (s *Server) UpdateHandlers(mountPoints []conf.MountPoint) {
 
 		// Middlewares are executed in reverse order: the last one
 		// is exectuted first
-		chain, _ = reverseproxy.NewReverseProxy(chain, &i)
+		chain, _ = reverseproxy.NewReverseProxy(chain, i)
 
 		// install the cors middleware
 		chain = cors.NewCors(chain)

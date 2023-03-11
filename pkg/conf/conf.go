@@ -42,12 +42,11 @@ func Update() {
 	}
 }
 
-func Dump() error {
+func Dump() (string, error) {
 	// b, err := json.MarshalIndent(Crauti, "", "    ")
 	b, err := yaml.Marshal(Config)
 	if err != nil {
-		return err
+		return "", err
 	}
-	log.Printf("Current conf:\n\n%s\n", string(b))
-	return nil
+	return string(b), nil
 }
