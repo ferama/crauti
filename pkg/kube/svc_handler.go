@@ -1,9 +1,7 @@
 package kube
 
 import (
-	"flag"
 	"fmt"
-	"path/filepath"
 	"time"
 
 	"github.com/ferama/crauti/pkg/gateway"
@@ -16,7 +14,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/homedir"
 )
 
 const resyncTime = 10 * time.Second
@@ -29,13 +26,14 @@ type SvcHandler struct {
 
 func NewSvcHandler(
 	server *gateway.Server,
+	kubeconfig string,
 	stopper chan struct{}) *SvcHandler {
 
 	svc := &SvcHandler{
 		server:     server,
 		svcUpdater: newSvcUpdater(server),
 	}
-	config := svc.getRestConfig()
+	config := svc.getRestConfig(kubeconfig)
 
 	// create the clientset
 	clientSet, err := kubernetes.NewForConfig(config)
@@ -68,20 +66,13 @@ func NewSvcHandler(
 	return svc
 }
 
-func (s *SvcHandler) getRestConfig() *rest.Config {
+func (s *SvcHandler) getRestConfig(kubeconfig string) *rest.Config {
 	config, err := rest.InClusterConfig()
 	if err == nil {
 		return config
 	}
-	var kubeconfig *string
-	if home := homedir.HomeDir(); home != "" {
-		kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
-	} else {
-		kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
-	}
-	flag.Parse()
 	// use the current context in kubeconfig
-	config, err = clientcmd.BuildConfigFromFlags("", *kubeconfig)
+	config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
 		panic(err.Error())
 	}
