@@ -27,15 +27,11 @@ func init() {
 	viper.SetEnvPrefix("crauti")
 
 	setDefaults()
-
-	// err := viper.ReadInConfig() // Find and read the config file
-	// if err != nil {             // Handle errors reading the config file
-	// 	log.Println("no config file detected, using default values")
-	// }
-	// Update()
 }
 
 func Update() {
+	Config.reset()
+
 	err := viper.Unmarshal(&Config)
 	if err != nil {
 		log.Fatalf("unable to decode into struct, %v", err)

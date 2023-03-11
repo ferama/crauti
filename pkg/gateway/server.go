@@ -10,8 +10,6 @@ import (
 
 type Server struct {
 	srv *http.Server
-
-	mountPoints []conf.MountPoint
 }
 
 func NewServer(listenAddr string) *Server {
@@ -22,7 +20,6 @@ func NewServer(listenAddr string) *Server {
 			// WriteTimeout:      10 * time.Second,
 			Addr: listenAddr,
 		},
-		mountPoints: make([]conf.MountPoint, 0),
 	}
 	s.UpdateHandlers(nil)
 
@@ -30,8 +27,6 @@ func NewServer(listenAddr string) *Server {
 }
 
 func (s *Server) UpdateHandlers(mountPoints []conf.MountPoint) {
-	s.mountPoints = mountPoints
-
 	root := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 	mux := http.NewServeMux()

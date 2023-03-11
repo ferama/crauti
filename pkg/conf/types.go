@@ -18,3 +18,7 @@ type config struct {
 	GatewayListenAddress  string `yaml:"gatewayListenAddress"`
 	AdminApiListenAddress string `yaml:"adminApiListenAddress"`
 }
+
+func (c *config) reset() {
+	c.MountPoints = nil
+}

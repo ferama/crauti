@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"path/filepath"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/gateway"
 	"github.com/ferama/crauti/pkg/kube"
+	"github.com/fsnotify/fsnotify"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -62,6 +64,14 @@ var rootCmd = &cobra.Command{
 			// the kubernetes services informer
 			kube.NewSvcHandler(gwServer, kubeconfig, stopper)
 			log.Println("k8s service informer started")
+		} else {
+			gwServer.UpdateHandlers(conf.Config.MountPoints)
+			viper.OnConfigChange(func(e fsnotify.Event) {
+				fmt.Println("config file changed:", e.Name)
+				conf.Update()
+				gwServer.UpdateHandlers(conf.Config.MountPoints)
+			})
+			viper.WatchConfig()
 		}
 
 		// Install admin apis
