@@ -31,15 +31,15 @@ or you can use yaml instead
 
 */
 
-type mountPoint struct {
+type annotationMountPoint struct {
 	Source      string `json:"source"`
 	Destination string `json:"destination"`
 }
 
 type crautiAnnotatedConfig struct {
-	Enabled          bool         `json:"enabled"`
-	UpstreamHttpPort int32        `json:"upstreamHttpPort"`
-	MountPoints      []mountPoint `json:"mountPoints"`
+	Enabled          bool                   `json:"enabled"`
+	UpstreamHttpPort int32                  `json:"upstreamHttpPort"`
+	MountPoints      []annotationMountPoint `json:"mountPoints"`
 }
 
 type annotationParser struct{}

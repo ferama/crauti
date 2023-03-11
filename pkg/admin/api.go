@@ -3,6 +3,7 @@ package admin
 import (
 	"net/http"
 
+	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/gateway"
 	"github.com/gin-gonic/gin"
 )
@@ -28,15 +29,14 @@ func (r *adminRoutes) Health(c *gin.Context) {
 }
 
 func (r *adminRoutes) Routes(c *gin.Context) {
-	mountPoints := r.gwServer.GetMountpoints()
-
+	// mountPoints := r.gwServer.GetMountpoints()
 	type responseItem struct {
 		Upstream string `json:"Upstream"`
 		Path     string `json:"Path"`
 	}
 	var response []responseItem
 
-	for _, route := range mountPoints {
+	for _, route := range conf.Crauti.MountPoints {
 		response = append(response, responseItem{
 			route.Upstream,
 			route.Path,

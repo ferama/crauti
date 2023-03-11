@@ -1,14 +1,19 @@
 package conf
 
 import (
-	"fmt"
 	"log"
-	"os"
 
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v3"
 )
 
-var CrautiConf Config
+var Crauti config
+
+func setDefaults() {
+	viper.SetDefault("K8sAutodiscover", true)
+	viper.SetDefault("GatewayListenAddress", ":8080")
+	viper.SetDefault("AdminApiListenAddress", ":9090")
+}
 
 func init() {
 	viper.SetConfigName("crauti")
@@ -21,14 +26,28 @@ func init() {
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("crauti")
 
+	setDefaults()
+
 	err := viper.ReadInConfig() // Find and read the config file
 	if err != nil {             // Handle errors reading the config file
-		fmt.Println(fmt.Errorf("fatal error config file: %w", err))
-		os.Exit(1)
+		log.Println("no config file detected, using default values")
 	}
+	Update()
+}
 
-	err = viper.Unmarshal(&CrautiConf)
+func Update() {
+	err := viper.Unmarshal(&Crauti)
 	if err != nil {
 		log.Fatalf("unable to decode into struct, %v", err)
 	}
+}
+
+func Dump() error {
+	// b, err := json.MarshalIndent(Crauti, "", "    ")
+	b, err := yaml.Marshal(Crauti)
+	if err != nil {
+		return err
+	}
+	log.Printf("Current conf:\n\n%s\n", string(b))
+	return nil
 }

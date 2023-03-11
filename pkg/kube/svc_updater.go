@@ -7,6 +7,7 @@ import (
 
 	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/gateway"
+	"github.com/spf13/viper"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 )
@@ -63,6 +64,8 @@ func (s *svcUpdater) synch() {
 
 		}
 		s.mu.Unlock()
+		viper.Set("MountPoints", mp)
+		conf.Update()
 		s.server.UpdateHandlers(mp)
 
 		time.Sleep(10 * time.Second)

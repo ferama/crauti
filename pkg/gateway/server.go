@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/ferama/crauti/pkg/conf"
@@ -54,10 +53,5 @@ func (s *Server) UpdateHandlers(mountPoints []conf.MountPoint) {
 }
 
 func (s *Server) Start() {
-	log.Printf("Gateway listening on '%s'", s.srv.Addr)
-	log.Println(s.srv.ListenAndServe())
-}
-
-func (s *Server) GetMountpoints() []conf.MountPoint {
-	return s.mountPoints
+	s.srv.ListenAndServe()
 }

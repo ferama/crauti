@@ -5,8 +5,10 @@ type MountPoint struct {
 	Upstream string
 }
 
-// Config holds all the config values
-type Config struct {
-	MountPoints     []MountPoint
-	K8sAutodiscover bool
+// config holds all the config values
+type config struct {
+	MountPoints           []MountPoint
+	K8sAutodiscover       bool
+	GatewayListenAddress  string
+	AdminApiListenAddress string
 }
