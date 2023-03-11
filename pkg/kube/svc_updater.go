@@ -64,8 +64,12 @@ func (s *svcUpdater) synch() {
 
 		}
 		s.mu.Unlock()
+
+		// update viper conf
 		viper.Set("MountPoints", mp)
+		// unmarshal the new conf
 		conf.Update()
+		// update the gateway instance
 		s.server.UpdateHandlers(mp)
 
 		time.Sleep(10 * time.Second)

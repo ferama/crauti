@@ -7,7 +7,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var Crauti config
+var Config config
 
 func setDefaults() {
 	viper.SetDefault("K8sAutodiscover", true)
@@ -36,7 +36,7 @@ func init() {
 }
 
 func Update() {
-	err := viper.Unmarshal(&Crauti)
+	err := viper.Unmarshal(&Config)
 	if err != nil {
 		log.Fatalf("unable to decode into struct, %v", err)
 	}
@@ -44,7 +44,7 @@ func Update() {
 
 func Dump() error {
 	// b, err := json.MarshalIndent(Crauti, "", "    ")
-	b, err := yaml.Marshal(Crauti)
+	b, err := yaml.Marshal(Config)
 	if err != nil {
 		return err
 	}

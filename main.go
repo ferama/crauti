@@ -20,10 +20,10 @@ func main() {
 	}()
 
 	// the api gateway server
-	log.Printf("gateway listening on '%s'", conf.Crauti.GatewayListenAddress)
-	gwServer := gateway.NewServer(conf.Crauti.GatewayListenAddress)
+	log.Printf("gateway listening on '%s'", conf.Config.GatewayListenAddress)
+	gwServer := gateway.NewServer(conf.Config.GatewayListenAddress)
 
-	if conf.Crauti.K8sAutodiscover {
+	if conf.Config.K8sAutodiscover {
 		// stop signal for the informer
 		stopper := make(chan struct{})
 		defer close(stopper)
@@ -45,8 +45,8 @@ func main() {
 	// is to leave this api/port not exposed directly.
 	admin.Routes(gwServer, ginrouter.Group("/"))
 
-	log.Printf("admin api listening on '%s'", conf.Crauti.AdminApiListenAddress)
-	go ginrouter.Run(conf.Crauti.AdminApiListenAddress)
+	log.Printf("admin api listening on '%s'", conf.Config.AdminApiListenAddress)
+	go ginrouter.Run(conf.Config.AdminApiListenAddress)
 
 	// start the gateway server
 	gwServer.Start()
