@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/ferama/crauti/pkg/gateway"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 
-	"github.com/ferama/crauti/pkg/gateway/server"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/informers"
@@ -22,13 +22,13 @@ import (
 const resyncTime = 10 * time.Second
 
 type SvcHandler struct {
-	server *server.Server
+	server *gateway.Server
 
 	svcUpdater *svcUpdater
 }
 
 func NewSvcHandler(
-	server *server.Server,
+	server *gateway.Server,
 	stopper chan struct{}) *SvcHandler {
 
 	svc := &SvcHandler{

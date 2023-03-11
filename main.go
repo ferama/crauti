@@ -4,14 +4,27 @@ import (
 	"log"
 
 	"github.com/ferama/crauti/pkg/admin"
-	"github.com/ferama/crauti/pkg/gateway/server"
+	"github.com/ferama/crauti/pkg/gateway"
 	"github.com/ferama/crauti/pkg/kube"
 	"github.com/gin-gonic/gin"
 )
 
+// func init() {
+// 	viper.SetConfigName("crauti")
+// 	viper.SetConfigType("yaml")
+// 	viper.AddConfigPath(".")
+// 	viper.AutomaticEnv()
+// }
+
 func main() {
+	// err := viper.ReadInConfig() // Find and read the config file
+	// if err != nil {             // Handle errors reading the config file
+	// 	fmt.Println(fmt.Errorf("fatal error config file: %w", err))
+	// 	os.Exit(1)
+	// }
+
 	// the api gateway server
-	gwServer := server.NewServer(":8080")
+	gwServer := gateway.NewServer(":8080")
 
 	// stop signal for the informer
 	stopper := make(chan struct{})

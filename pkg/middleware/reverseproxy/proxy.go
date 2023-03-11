@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/ferama/crauti/pkg/gateway"
+	"github.com/ferama/crauti/pkg/conf"
 )
 
 type ReverseProxy struct {
@@ -21,7 +21,7 @@ type ReverseProxy struct {
 
 func NewReverseProxy(
 	next http.Handler,
-	mountPoint *gateway.MountPoint,
+	mountPoint *conf.MountPoint,
 ) (http.Handler, error) {
 
 	upstreamUrl, err := url.Parse(mountPoint.Upstream)

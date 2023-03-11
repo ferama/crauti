@@ -1,10 +1,10 @@
-package server
+package gateway
 
 import (
 	"log"
 	"net/http"
 
-	"github.com/ferama/crauti/pkg/gateway"
+	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/middleware/cors"
 	"github.com/ferama/crauti/pkg/middleware/reverseproxy"
 )
@@ -12,7 +12,7 @@ import (
 type Server struct {
 	srv *http.Server
 
-	mountPoints []gateway.MountPoint
+	mountPoints []conf.MountPoint
 }
 
 func NewServer(listenAddr string) *Server {
@@ -23,14 +23,14 @@ func NewServer(listenAddr string) *Server {
 			// WriteTimeout:      10 * time.Second,
 			Addr: listenAddr,
 		},
-		mountPoints: make([]gateway.MountPoint, 0),
+		mountPoints: make([]conf.MountPoint, 0),
 	}
 	s.UpdateHandlers(nil)
 
 	return s
 }
 
-func (s *Server) UpdateHandlers(mountPoints []gateway.MountPoint) {
+func (s *Server) UpdateHandlers(mountPoints []conf.MountPoint) {
 	s.mountPoints = mountPoints
 
 	root := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
@@ -58,6 +58,6 @@ func (s *Server) Start() {
 	log.Println(s.srv.ListenAndServe())
 }
 
-func (s *Server) GetMountpoints() []gateway.MountPoint {
+func (s *Server) GetMountpoints() []conf.MountPoint {
 	return s.mountPoints
 }

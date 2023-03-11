@@ -3,16 +3,16 @@ package admin
 import (
 	"net/http"
 
-	"github.com/ferama/crauti/pkg/gateway/server"
+	"github.com/ferama/crauti/pkg/gateway"
 	"github.com/gin-gonic/gin"
 )
 
 type adminRoutes struct {
-	gwServer *server.Server
+	gwServer *gateway.Server
 }
 
 // Routes setup the root api routes
-func Routes(gwServer *server.Server, router *gin.RouterGroup) {
+func Routes(gwServer *gateway.Server, router *gin.RouterGroup) {
 	r := &adminRoutes{
 		gwServer: gwServer,
 	}

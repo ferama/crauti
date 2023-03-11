@@ -5,21 +5,21 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/gateway"
-	"github.com/ferama/crauti/pkg/gateway/server"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 )
 
 type svcUpdater struct {
-	server *server.Server
+	server *gateway.Server
 
 	data map[string]corev1.Service
 
 	mu sync.Mutex
 }
 
-func newSvcUpdater(server *server.Server) *svcUpdater {
+func newSvcUpdater(server *gateway.Server) *svcUpdater {
 	s := &svcUpdater{
 		server: server,
 		data:   make(map[string]corev1.Service),
@@ -33,15 +33,15 @@ func (s *svcUpdater) synch() {
 	parser := new(annotationParser)
 	for {
 		s.mu.Lock()
-		mp := []gateway.MountPoint{}
+		mp := []conf.MountPoint{}
 
 		for _, svc := range s.data {
-			conf := parser.parse(svc)
-			if !conf.Enabled {
+			annotation := parser.parse(svc)
+			if !annotation.Enabled {
 				continue
 			}
 
-			port := conf.UpstreamHttpPort
+			port := annotation.UpstreamHttpPort
 			if port == 0 {
 				if len(svc.Spec.Ports) == 1 {
 					port = svc.Spec.Ports[0].Port
@@ -51,11 +51,11 @@ func (s *svcUpdater) synch() {
 				}
 			}
 
-			for _, item := range conf.MountPoints {
+			for _, item := range annotation.MountPoints {
 				url := fmt.Sprintf("http://%s.%s:%d%s",
 					svc.Name, svc.Namespace, port, item.Source)
 
-				mp = append(mp, gateway.MountPoint{
+				mp = append(mp, conf.MountPoint{
 					Upstream: url,
 					Path:     item.Destination,
 				})
