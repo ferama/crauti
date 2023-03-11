@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/ferama/crauti/pkg/conf"
@@ -30,6 +31,14 @@ func (s *Server) UpdateHandlers(mountPoints []conf.MountPoint) {
 	root := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 	mux := http.NewServeMux()
+
+	defer func() {
+		if err := recover(); err != nil {
+			log.Println("[ERROR] panic occurred:", err)
+			s.srv.Handler = mux
+		}
+	}()
+
 	for _, i := range mountPoints {
 
 		var chain http.Handler
