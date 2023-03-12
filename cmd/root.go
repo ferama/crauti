@@ -53,10 +53,10 @@ var rootCmd = &cobra.Command{
 		}
 
 		// the api gateway server
-		log.Printf("gateway listening on '%s'", conf.Config.GatewayListenAddress)
-		gwServer := gateway.NewServer(conf.Config.GatewayListenAddress)
+		log.Printf("gateway listening on '%s'", conf.Crauti.GatewayListenAddress)
+		gwServer := gateway.NewServer(conf.Crauti.GatewayListenAddress)
 
-		if conf.Config.Kubernetes.Autodiscover {
+		if conf.Crauti.Kubernetes.Autodiscover {
 			kubeconfig, _ := cmd.Flags().GetString("kubeconfig")
 			// stop signal for the informer
 			stopper := make(chan struct{})
@@ -65,11 +65,11 @@ var rootCmd = &cobra.Command{
 			kube.NewSvcHandler(gwServer, kubeconfig, stopper)
 			log.Println("k8s service informer started")
 		} else {
-			gwServer.UpdateHandlers(conf.Config.MountPoints)
+			gwServer.UpdateHandlers(conf.Crauti.MountPoints)
 			viper.OnConfigChange(func(e fsnotify.Event) {
 				fmt.Println("config file changed:", e.Name)
 				conf.Update()
-				gwServer.UpdateHandlers(conf.Config.MountPoints)
+				gwServer.UpdateHandlers(conf.Crauti.MountPoints)
 			})
 			viper.WatchConfig()
 		}
@@ -87,8 +87,8 @@ var rootCmd = &cobra.Command{
 		// is to leave this api/port not exposed directly.
 		admin.Routes(gwServer, ginrouter.Group("/"))
 
-		log.Printf("admin api listening on '%s'", conf.Config.AdminApiListenAddress)
-		go ginrouter.Run(conf.Config.AdminApiListenAddress)
+		log.Printf("admin api listening on '%s'", conf.Crauti.AdminApiListenAddress)
+		go ginrouter.Run(conf.Crauti.AdminApiListenAddress)
 
 		// start the gateway server
 		gwServer.Start()

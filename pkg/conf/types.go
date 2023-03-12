@@ -9,19 +9,39 @@ type MountPoint struct {
 	Upstream string `yaml:"upstream"`
 }
 
-type Kubernetes struct {
-	Autodiscover   bool   `yaml:"autodiscover"`
+type kubernetes struct {
+	// if service discover is enabled or not
+	Autodiscover bool `yaml:"autodiscover"`
+	// if not empyt, limits discovery to the specified namespace
 	WatchNamespace string `yaml:"watchNamespace"`
+}
+
+// /////////////////////////////////////////////////////////////////////////////
+//
+//	Middlewares configuration
+//
+// /////////////////////////////////////////////////////////////////////////////
+
+type cors struct {
+	Enabled bool `yaml:"enabled"`
+}
+
+// middelewares configuration struct
+type middlewares struct {
+	Cors cors `yaml:"cors"`
 }
 
 // config holds all the config values
 type config struct {
-	MountPoints []MountPoint `yaml:"mountPoints"`
-	// if the service informer is enabled or not
-	Kubernetes Kubernetes `yaml:"kubernetes"`
-
+	// Listeners conf
 	GatewayListenAddress  string `yaml:"gatewayListenAddress"`
 	AdminApiListenAddress string `yaml:"adminApiListenAddress"`
+	// kubernetes relatech conf
+	Kubernetes kubernetes `yaml:"kubernetes"`
+	// global middlewares configuration
+	Middlewares middlewares `yaml:"middlewares"`
+	// define mount points
+	MountPoints []MountPoint `yaml:"mountPoints"`
 }
 
 // resets the config fields. called on dynamic conf update

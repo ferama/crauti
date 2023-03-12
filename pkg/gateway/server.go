@@ -48,8 +48,11 @@ func (s *Server) UpdateHandlers(mountPoints []conf.MountPoint) {
 		// is exectuted first
 		chain, _ = reverseproxy.NewReverseProxy(chain, i)
 
-		// install the cors middleware
-		chain = cors.NewCors(chain)
+		if conf.Crauti.Middlewares.Cors.Enabled {
+			// install the cors middleware
+			chain = cors.NewCors(chain)
+		}
+
 		mux.Handle(i.Path, chain)
 	}
 

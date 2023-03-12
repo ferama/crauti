@@ -1,4 +1,15 @@
-kubernetes:
-  autodiscover: true
 gatewayListenAddress: ":8080"
 adminApiListenAddress: ":9090"
+
+kubernetes:
+  autodiscover: true
+  watchNamespace: ""
+
+middlewares:
+  cors:
+    enabled: true
+
+mountPoints:
+  - upstream: https://httpbin.org
+    path: /bin
+

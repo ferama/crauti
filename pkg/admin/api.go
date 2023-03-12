@@ -35,7 +35,7 @@ func (r *adminRoutes) Routes(c *gin.Context) {
 	}
 	var response []responseItem
 
-	for _, route := range conf.Config.MountPoints {
+	for _, route := range conf.Crauti.MountPoints {
 		response = append(response, responseItem{
 			route.Upstream,
 			route.Path,
