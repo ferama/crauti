@@ -1,0 +1,19 @@
+kubernetes:
+  autodiscover: false
+middlewares:
+  cors:
+    enabled: true
+    val: test1
+mountPoints:
+  - upstream: https://httpbin.org/get
+    path: /get
+    middlewares:
+      cors:
+        enabled: false
+
+  - upstream: https://httpbin.org/post
+    path: /post
+    middlewares:
+      cors:
+        enabled: true
+        val: test2

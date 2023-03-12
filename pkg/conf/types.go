@@ -7,6 +7,9 @@ type MountPoint struct {
 	// full upstream definition
 	// like http://my-service.my-namespace:port
 	Upstream string `yaml:"upstream"`
+	// middlewares configuration can be overridden setting
+	// changed values here
+	Middlewares middlewares `yaml:"middlewares"`
 }
 
 type kubernetes struct {
@@ -24,6 +27,11 @@ type kubernetes struct {
 
 type cors struct {
 	Enabled bool `yaml:"enabled"`
+
+	// TODO: remove this. for test only
+	// omitempty here is important, merge will fail otherwise
+	//
+	Val string `yaml:"val,omitempty"`
 }
 
 // middelewares configuration struct

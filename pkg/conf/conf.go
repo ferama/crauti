@@ -36,10 +36,18 @@ func Update() {
 	if err != nil {
 		log.Fatalf("unable to decode into struct, %v", err)
 	}
+
+	// merge mountpoints middleware configuration
+	for idx, i := range Crauti.MountPoints {
+		m := Crauti.Middlewares
+		b, _ := yaml.Marshal(i.Middlewares)
+		yaml.Unmarshal(b, &m)
+		Crauti.MountPoints[idx].Middlewares = m
+	}
 }
 
+// debug utility
 func Dump() (string, error) {
-	// b, err := json.MarshalIndent(Crauti, "", "    ")
 	b, err := yaml.Marshal(Crauti)
 	if err != nil {
 		return "", err

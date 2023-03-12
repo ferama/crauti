@@ -22,12 +22,12 @@ func NewServer(listenAddr string) *Server {
 			Addr: listenAddr,
 		},
 	}
-	s.UpdateHandlers(nil)
+	s.UpdateHandlers()
 
 	return s
 }
 
-func (s *Server) UpdateHandlers(mountPoints []conf.MountPoint) {
+func (s *Server) UpdateHandlers() {
 	root := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 	mux := http.NewServeMux()
@@ -39,7 +39,7 @@ func (s *Server) UpdateHandlers(mountPoints []conf.MountPoint) {
 		}
 	}()
 
-	for _, i := range mountPoints {
+	for _, i := range conf.Crauti.MountPoints {
 
 		var chain http.Handler
 		chain = root

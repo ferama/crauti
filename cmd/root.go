@@ -65,11 +65,11 @@ var rootCmd = &cobra.Command{
 			kube.NewSvcHandler(gwServer, kubeconfig, stopper)
 			log.Println("k8s service informer started")
 		} else {
-			gwServer.UpdateHandlers(conf.Crauti.MountPoints)
+			gwServer.UpdateHandlers()
 			viper.OnConfigChange(func(e fsnotify.Event) {
 				fmt.Println("config file changed:", e.Name)
 				conf.Update()
-				gwServer.UpdateHandlers(conf.Crauti.MountPoints)
+				gwServer.UpdateHandlers()
 			})
 			viper.WatchConfig()
 		}

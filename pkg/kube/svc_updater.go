@@ -70,7 +70,7 @@ func (s *svcUpdater) synch() {
 		// unmarshal the new conf
 		conf.Update()
 		// update the gateway instance
-		s.server.UpdateHandlers(mp)
+		s.server.UpdateHandlers()
 
 		time.Sleep(10 * time.Second)
 	}
