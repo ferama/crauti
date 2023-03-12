@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/gateway"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 
@@ -40,10 +41,20 @@ func NewSvcHandler(
 	if err != nil {
 		panic(err.Error())
 	}
-	factory := informers.NewSharedInformerFactoryWithOptions(
-		clientSet,
-		resyncTime,
-	)
+	var factory informers.SharedInformerFactory
+	if conf.Config.Kubernetes.WatchNamespace != "" {
+		factory = informers.NewSharedInformerFactoryWithOptions(
+			clientSet,
+			resyncTime,
+			informers.WithNamespace(conf.Config.Kubernetes.WatchNamespace),
+		)
+	} else {
+		factory = informers.NewSharedInformerFactoryWithOptions(
+			clientSet,
+			resyncTime,
+			informers.WithNamespace(corev1.NamespaceAll),
+		)
+	}
 	serviceInformer := factory.Core().V1().Services().Informer()
 
 	defer runtime.HandleCrash()

@@ -36,6 +36,8 @@ type annotationMountPoint struct {
 	Destination string `json:"destination"`
 }
 
+// this is the service annotation config. It will be mapped
+// to crauti configuguration
 type crautiAnnotatedConfig struct {
 	Enabled          bool                   `json:"enabled"`
 	UpstreamHttpPort int32                  `json:"upstreamHttpPort"`

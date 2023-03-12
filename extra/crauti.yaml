@@ -1,3 +1,4 @@
-k8sAutodiscover: true
+kubernetes:
+  autodiscover: true
 gatewayListenAddress: ":8080"
 adminApiListenAddress: ":9090"

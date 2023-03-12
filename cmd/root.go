@@ -56,7 +56,7 @@ var rootCmd = &cobra.Command{
 		log.Printf("gateway listening on '%s'", conf.Config.GatewayListenAddress)
 		gwServer := gateway.NewServer(conf.Config.GatewayListenAddress)
 
-		if conf.Config.K8sAutodiscover {
+		if conf.Config.Kubernetes.Autodiscover {
 			kubeconfig, _ := cmd.Flags().GetString("kubeconfig")
 			// stop signal for the informer
 			stopper := make(chan struct{})
