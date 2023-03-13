@@ -15,6 +15,7 @@ import (
 type svcUpdater struct {
 	server *gateway.Server
 
+	// this field contains
 	data map[string]corev1.Service
 
 	mu sync.Mutex
@@ -37,12 +38,13 @@ func (s *svcUpdater) synch() {
 		mp := []conf.MountPoint{}
 
 		for _, svc := range s.data {
-			annotation := parser.parse(svc)
-			if !annotation.Enabled {
+
+			annotatedConfig := parser.parse(svc)
+			if !annotatedConfig.Enabled {
 				continue
 			}
 
-			port := annotation.UpstreamHttpPort
+			port := annotatedConfig.UpstreamHttpPort
 			if port == 0 {
 				if len(svc.Spec.Ports) == 1 {
 					port = svc.Spec.Ports[0].Port
@@ -52,7 +54,7 @@ func (s *svcUpdater) synch() {
 				}
 			}
 
-			for _, item := range annotation.MountPoints {
+			for _, item := range annotatedConfig.MountPoints {
 				url := fmt.Sprintf("http://%s.%s:%d%s",
 					svc.Name, svc.Namespace, port, item.Source)
 

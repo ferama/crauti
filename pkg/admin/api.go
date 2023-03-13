@@ -29,18 +29,18 @@ func (r *adminRoutes) Health(c *gin.Context) {
 }
 
 func (r *adminRoutes) Routes(c *gin.Context) {
-	type responseItem struct {
-		Upstream string `json:"Upstream"`
-		Path     string `json:"Path"`
-	}
-	var response []responseItem
+	// type responseItem struct {
+	// 	Upstream string `json:"Upstream"`
+	// 	Path     string `json:"Path"`
+	// }
+	// var response []responseItem
 
-	for _, route := range conf.Crauti.MountPoints {
-		response = append(response, responseItem{
-			route.Upstream,
-			route.Path,
-		})
-	}
+	// for _, route := range conf.Crauti.MountPoints {
+	// 	response = append(response, responseItem{
+	// 		route.Upstream,
+	// 		route.Path,
+	// 	})
+	// }
 
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, conf.Crauti.MountPoints)
 }
