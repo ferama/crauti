@@ -42,11 +42,11 @@ func NewSvcHandler(
 		panic(err.Error())
 	}
 	var factory informers.SharedInformerFactory
-	if conf.Crauti.Kubernetes.WatchNamespace != "" {
+	if conf.ConfInst.Kubernetes.WatchNamespace != "" {
 		factory = informers.NewSharedInformerFactoryWithOptions(
 			clientSet,
 			resyncTime,
-			informers.WithNamespace(conf.Crauti.Kubernetes.WatchNamespace),
+			informers.WithNamespace(conf.ConfInst.Kubernetes.WatchNamespace),
 		)
 	} else {
 		factory = informers.NewSharedInformerFactoryWithOptions(

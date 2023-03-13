@@ -1,5 +1,7 @@
 package conf
 
+import "time"
+
 type MountPoint struct {
 	// crauti gateway mount path
 	// like /api/config
@@ -34,9 +36,24 @@ type cors struct {
 	Val string `yaml:"val,omitempty"`
 }
 
+type redis struct {
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	Password string `yaml:"password"`
+}
+
+type cache struct {
+	Enabled    bool          `yaml:"enabled"`
+	Redis      redis         `yaml:"redis"`
+	TTL        time.Duration `yaml:"cacheTTL"`
+	Methods    []string      `yaml:"methods"`
+	KeyHeaders []string      `yaml:"keyHeaders"`
+}
+
 // middelewares configuration struct
 type middlewares struct {
-	Cors cors `yaml:"cors"`
+	Cors  cors  `yaml:"cors"`
+	Cache cache `yaml:"cache"`
 }
 
 // /////////////////////////////////////////////////////////////////////////////

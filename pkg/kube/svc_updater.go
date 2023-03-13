@@ -16,15 +16,15 @@ type svcUpdater struct {
 	server *gateway.Server
 
 	// this field contains
-	data map[string]corev1.Service
+	services map[string]corev1.Service
 
 	mu sync.Mutex
 }
 
 func newSvcUpdater(server *gateway.Server) *svcUpdater {
 	s := &svcUpdater{
-		server: server,
-		data:   make(map[string]corev1.Service),
+		server:   server,
+		services: make(map[string]corev1.Service),
 	}
 	go s.synch()
 
@@ -37,7 +37,7 @@ func (s *svcUpdater) synch() {
 		s.mu.Lock()
 		mp := []conf.MountPoint{}
 
-		for _, svc := range s.data {
+		for _, svc := range s.services {
 
 			annotatedConfig := parser.parse(svc)
 			if !annotatedConfig.Enabled {
@@ -85,19 +85,19 @@ func (s *svcUpdater) add(key string, service corev1.Service) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.data[key] = service
+	s.services[key] = service
 }
 
 func (s *svcUpdater) delete(key string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	delete(s.data, key)
+	delete(s.services, key)
 }
 
 func (s *svcUpdater) GetAll() map[string]corev1.Service {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return s.data
+	return s.services
 }

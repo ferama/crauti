@@ -7,12 +7,15 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var Crauti config
+var ConfInst config
 
 func setDefaults() {
 	viper.SetDefault("K8sAutodiscover", true)
 	viper.SetDefault("GatewayListenAddress", ":8080")
 	viper.SetDefault("AdminApiListenAddress", ":9090")
+
+	viper.SetDefault("Middlewares.Cache.Redis.Host", "localhost")
+	viper.SetDefault("Middlewares.Cache.Redis.Port", 6379)
 }
 
 func init() {
@@ -30,25 +33,25 @@ func init() {
 }
 
 func Update() {
-	Crauti.reset()
+	ConfInst.reset()
 
-	err := viper.Unmarshal(&Crauti)
+	err := viper.Unmarshal(&ConfInst)
 	if err != nil {
 		log.Fatalf("unable to decode into struct, %v", err)
 	}
 
 	// merge mountpoints middleware configuration
-	for idx, i := range Crauti.MountPoints {
-		m := Crauti.Middlewares
+	for idx, i := range ConfInst.MountPoints {
+		m := ConfInst.Middlewares
 		b, _ := yaml.Marshal(i.Middlewares)
 		yaml.Unmarshal(b, &m)
-		Crauti.MountPoints[idx].Middlewares = m
+		ConfInst.MountPoints[idx].Middlewares = m
 	}
 }
 
 // debug utility
 func Dump() (string, error) {
-	b, err := yaml.Marshal(Crauti)
+	b, err := yaml.Marshal(ConfInst)
 	if err != nil {
 		return "", err
 	}

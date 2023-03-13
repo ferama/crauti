@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ferama/crauti/pkg/admin"
+	"github.com/ferama/crauti/pkg/cache"
 	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/gateway"
 	"github.com/ferama/crauti/pkg/kube"
@@ -53,10 +54,10 @@ var rootCmd = &cobra.Command{
 		}
 
 		// the api gateway server
-		log.Printf("gateway listening on '%s'", conf.Crauti.GatewayListenAddress)
-		gwServer := gateway.NewServer(conf.Crauti.GatewayListenAddress)
+		log.Printf("gateway listening on '%s'", conf.ConfInst.GatewayListenAddress)
+		gwServer := gateway.NewServer(conf.ConfInst.GatewayListenAddress)
 
-		if conf.Crauti.Kubernetes.Autodiscover {
+		if conf.ConfInst.Kubernetes.Autodiscover {
 			kubeconfig, _ := cmd.Flags().GetString("kubeconfig")
 			// stop signal for the informer
 			stopper := make(chan struct{})
@@ -86,9 +87,10 @@ var rootCmd = &cobra.Command{
 		// but a dedicated port could be a better choice. The idea here
 		// is to leave this api/port not exposed directly.
 		admin.Routes(gwServer, ginrouter.Group("/"))
+		cache.Routes(ginrouter.Group("/cache"))
 
-		log.Printf("admin api listening on '%s'", conf.Crauti.AdminApiListenAddress)
-		go ginrouter.Run(conf.Crauti.AdminApiListenAddress)
+		log.Printf("admin api listening on '%s'", conf.ConfInst.AdminApiListenAddress)
+		go ginrouter.Run(conf.ConfInst.AdminApiListenAddress)
 
 		// start the gateway server
 		gwServer.Start()

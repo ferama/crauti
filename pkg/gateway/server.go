@@ -39,7 +39,7 @@ func (s *Server) UpdateHandlers() {
 		}
 	}()
 
-	for _, i := range conf.Crauti.MountPoints {
+	for _, i := range conf.ConfInst.MountPoints {
 
 		var chain http.Handler
 		chain = root
@@ -48,7 +48,7 @@ func (s *Server) UpdateHandlers() {
 		// is exectuted first
 		chain, _ = reverseproxy.NewReverseProxy(chain, i)
 
-		if conf.Crauti.Middlewares.Cors.Enabled {
+		if conf.ConfInst.Middlewares.Cors.Enabled {
 			// install the cors middleware
 			chain = cors.NewCors(chain)
 		}
