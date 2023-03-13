@@ -1,6 +1,7 @@
 package kube
 
 import (
+	"github.com/ferama/crauti/pkg/conf"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/klog/v2"
@@ -24,24 +25,33 @@ or you can use yaml instead
 		crauti/conf: |
 			enabled: true
 			mountPoints:
-			  - source: "/"
-    			destination: "/api/test"
-			  - source: "/"
-    			destination: "/test2"
+				- source: "/"
+				  destination: "/test1-t1"
+				  # overrides global middlewares conf
+				  middlewares:
+					cors:
+					  enabled: true
+				- source: "/"
+    			  destination: "/test2"
 
 */
 
 type annotationMountPoint struct {
-	Source      string `json:"source"`
-	Destination string `json:"destination"`
+	// struct composition with deault conf MountPoint definition
+	conf.MountPoint
+
+	// Custom fields for better user experience while
+	// using conf on service annotations
+	Source      string `yaml:"source"`
+	Destination string `yaml:"destination"`
 }
 
 // this is the service annotation config. It will be mapped
 // to crauti configuguration
 type crautiAnnotatedConfig struct {
-	Enabled          bool                   `json:"enabled"`
-	UpstreamHttpPort int32                  `json:"upstreamHttpPort"`
-	MountPoints      []annotationMountPoint `json:"mountPoints"`
+	Enabled          bool                   `yaml:"enabled"`
+	UpstreamHttpPort int32                  `yaml:"upstreamHttpPort"`
+	MountPoints      []annotationMountPoint `yaml:"mountPoints"`
 }
 
 type annotationParser struct{}

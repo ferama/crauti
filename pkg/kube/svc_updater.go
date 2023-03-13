@@ -61,9 +61,12 @@ func (s *svcUpdater) synch() {
 				mp = append(mp, conf.MountPoint{
 					Upstream: url,
 					Path:     item.Destination,
+					// TODO: needs structure merge?
+					// probably not, because the following call to conf.Update()
+					// should merge them correctly. Needs testing
+					Middlewares: item.Middlewares,
 				})
 			}
-
 		}
 		s.mu.Unlock()
 
