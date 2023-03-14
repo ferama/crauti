@@ -37,17 +37,17 @@ type cors struct {
 }
 
 type redis struct {
-	Host     string `yaml:"host"`
-	Port     int    `yaml:"port"`
-	Password string `yaml:"password"`
+	Host     string `yaml:"host,omitempty"`
+	Port     int    `yaml:"port,omitempty"`
+	Password string `yaml:"password,omitempty"`
 }
 
 type cache struct {
 	Enabled    bool          `yaml:"enabled"`
-	Redis      redis         `yaml:"redis"`
-	TTL        time.Duration `yaml:"cacheTTL"`
-	Methods    []string      `yaml:"methods"`
-	KeyHeaders []string      `yaml:"keyHeaders"`
+	Redis      redis         `yaml:"redis,omitempty"`
+	TTL        time.Duration `yaml:"cacheTTL,omitempty"`
+	Methods    []string      `yaml:"methods,omitempty"`
+	KeyHeaders []string      `yaml:"keyHeaders,omitempty"`
 }
 
 // middelewares configuration struct
