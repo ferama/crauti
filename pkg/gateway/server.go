@@ -46,11 +46,11 @@ func (s *Server) UpdateHandlers() {
 
 		// Middlewares are executed in reverse order: the last one
 		// is exectuted first
-		chain, _ = reverseproxy.NewReverseProxy(chain, i)
+		chain, _ = reverseproxy.NewReverseProxyMiddleware(chain, i)
 
 		if conf.ConfInst.Middlewares.Cors.Enabled {
 			// install the cors middleware
-			chain = cors.NewCors(chain)
+			chain = cors.NewCorsMiddleware(chain)
 		}
 
 		mux.Handle(i.Path, chain)

@@ -9,7 +9,7 @@ import (
 	"github.com/ferama/crauti/pkg/conf"
 )
 
-type ReverseProxy struct {
+type reverseProxyMiddleware struct {
 	next http.Handler
 	// the upstream url
 	upstream *url.URL
@@ -19,7 +19,7 @@ type ReverseProxy struct {
 	rp *httputil.ReverseProxy
 }
 
-func NewReverseProxy(
+func NewReverseProxyMiddleware(
 	next http.Handler,
 	mountPoint conf.MountPoint,
 ) (http.Handler, error) {
@@ -29,7 +29,7 @@ func NewReverseProxy(
 		return nil, err
 	}
 
-	p := &ReverseProxy{
+	p := &reverseProxyMiddleware{
 		next:      next,
 		upstream:  upstreamUrl,
 		rp:        httputil.NewSingleHostReverseProxy(upstreamUrl),
@@ -54,8 +54,8 @@ func NewReverseProxy(
 	return p, nil
 }
 
-func (p *ReverseProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h := http.StripPrefix(p.mountPath, p.rp)
+func (m *reverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h := http.StripPrefix(m.mountPath, m.rp)
 	h.ServeHTTP(w, r)
-	p.next.ServeHTTP(w, r)
+	m.next.ServeHTTP(w, r)
 }

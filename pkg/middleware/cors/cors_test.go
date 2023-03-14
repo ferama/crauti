@@ -13,7 +13,7 @@ func TestMustHaveCors(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"I won?": true}`))
 	})
-	m := &Cors{
+	m := &corsMiddleware{
 		next: root,
 	}
 	s := httptest.NewServer(m)
@@ -70,7 +70,7 @@ func TestMustNotHaveCors(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"I won?": true}`))
 	})
-	m := &Cors{
+	m := &corsMiddleware{
 		next: root,
 	}
 	s := httptest.NewServer(m)

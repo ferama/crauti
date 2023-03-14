@@ -5,21 +5,21 @@ import (
 )
 
 // this is a simple middleware sample
-type Cors struct {
+type corsMiddleware struct {
 	next http.Handler
 }
 
-func NewCors(next http.Handler) http.Handler {
-	h := &Cors{
+func NewCorsMiddleware(next http.Handler) http.Handler {
+	h := &corsMiddleware{
 		next: next,
 	}
 	return h
 }
 
-func (h *Cors) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (m *corsMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	rw := &responseWriter{
 		w: w,
 		r: r,
 	}
-	h.next.ServeHTTP(rw, r)
+	m.next.ServeHTTP(rw, r)
 }
