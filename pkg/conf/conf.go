@@ -16,6 +16,8 @@ func setDefaults() {
 
 	viper.SetDefault("Middlewares.Cache.Redis.Host", "localhost")
 	viper.SetDefault("Middlewares.Cache.Redis.Port", 6379)
+	viper.SetDefault("Middlewares.Cache.TTL", "5m")
+	viper.SetDefault("Middlewares.Cache.Methods", "GET,HEAD,OPTIONS")
 }
 
 func init() {
@@ -45,6 +47,9 @@ func Update() {
 		m := ConfInst.Middlewares
 		b, _ := yaml.Marshal(i.Middlewares)
 		yaml.Unmarshal(b, &m)
+
+		m.Cache.merge(i.Middlewares.Cache)
+
 		ConfInst.MountPoints[idx].Middlewares = m
 	}
 }

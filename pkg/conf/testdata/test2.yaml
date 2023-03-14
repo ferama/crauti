@@ -1,0 +1,22 @@
+kubernetes:
+  autodiscover: false
+middlewares:
+  cors:
+    enabled: false
+  cache:
+    enabled: true
+    redis:
+      host: localhost
+    methods:
+      - GET
+      - POST
+    keyHeaders:
+      - header1
+mountPoints:
+  - upstream: https://httpbin.org/get
+    path: /get
+    middlewares:
+      cache:
+        TTL: 30s
+        enabled: false
+        methods: []

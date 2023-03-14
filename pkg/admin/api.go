@@ -2,6 +2,7 @@ package admin
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/gateway"
@@ -19,7 +20,7 @@ func Routes(gwServer *gateway.Server, router *gin.RouterGroup) {
 	}
 
 	router.GET("health", r.Health)
-	router.GET("routes", r.Routes)
+	router.GET("routes/:encoding", r.Routes)
 }
 
 func (r *adminRoutes) Health(c *gin.Context) {
@@ -29,5 +30,15 @@ func (r *adminRoutes) Health(c *gin.Context) {
 }
 
 func (r *adminRoutes) Routes(c *gin.Context) {
+	type binding struct {
+		Encoding string `uri:"encoding"`
+	}
+	var encoding binding
+	if err := c.ShouldBindUri(&encoding); err == nil {
+		if strings.ToLower(encoding.Encoding) == "yaml" {
+			c.YAML(http.StatusOK, conf.ConfInst.MountPoints)
+			return
+		}
+	}
 	c.JSON(http.StatusOK, conf.ConfInst.MountPoints)
 }

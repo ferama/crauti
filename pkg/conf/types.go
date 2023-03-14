@@ -50,6 +50,23 @@ type cache struct {
 	KeyHeaders []string      `yaml:"keyHeaders,omitempty"`
 }
 
+// slice types needs manually merging logic
+// When not defined (nil case) we should use the global values
+// If defined but empty ([] case), we should use a nil value
+func (c *cache) merge(target cache) {
+	if target.Methods == nil {
+		c.Methods = ConfInst.Middlewares.Cache.Methods
+	} else if len(target.Methods) == 0 {
+		c.Methods = nil
+	}
+
+	if target.KeyHeaders == nil {
+		c.KeyHeaders = ConfInst.Middlewares.Cache.KeyHeaders
+	} else if len(target.KeyHeaders) == 0 {
+		c.KeyHeaders = nil
+	}
+}
+
 // middelewares configuration struct
 type middlewares struct {
 	Cors  cors  `yaml:"cors"`
