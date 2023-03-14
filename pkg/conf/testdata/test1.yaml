@@ -3,7 +3,6 @@ kubernetes:
 middlewares:
   cors:
     enabled: true
-    val: test1
 mountPoints:
   - upstream: https://httpbin.org/get
     path: /get

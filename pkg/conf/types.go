@@ -29,11 +29,6 @@ type kubernetes struct {
 
 type cors struct {
 	Enabled bool `yaml:"enabled"`
-
-	// TODO: remove this. for test only
-	// omitempty here is important, merge will fail otherwise
-	//
-	Val string `yaml:"val,omitempty"`
 }
 
 type redis struct {
