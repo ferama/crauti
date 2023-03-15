@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/ferama/crauti/pkg/conf"
+	"github.com/ferama/crauti/pkg/middleware/cache"
 	"github.com/ferama/crauti/pkg/middleware/cors"
 	"github.com/ferama/crauti/pkg/middleware/reverseproxy"
 )
@@ -48,9 +49,19 @@ func (s *Server) UpdateHandlers() {
 		// is exectuted first
 		chain, _ = reverseproxy.NewReverseProxyMiddleware(chain, i)
 
-		if conf.ConfInst.Middlewares.Cors.Enabled {
+		if i.Middlewares.Cors.Enabled {
 			// install the cors middleware
 			chain = cors.NewCorsMiddleware(chain)
+		}
+
+		cacheConf := i.Middlewares.Cache
+		if cacheConf.Enabled {
+			chain = cache.NewCacheMiddleware(
+				chain,
+				cacheConf.Methods,
+				cacheConf.KeyHeaders,
+				&cacheConf.TTL,
+			)
 		}
 
 		mux.Handle(i.Path, chain)
