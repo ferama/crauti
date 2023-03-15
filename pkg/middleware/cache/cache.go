@@ -48,7 +48,7 @@ type cacheMiddleware struct {
 	keyHeaders []string
 
 	// cache time to live
-	cacheTTL *time.Duration
+	cacheTTL time.Duration
 
 	mu      sync.Mutex
 	lockmap map[string]*sync.Mutex
@@ -58,7 +58,7 @@ func NewCacheMiddleware(
 	next http.Handler,
 	httpMethods []string,
 	keyHeaders []string,
-	cacheTTL *time.Duration,
+	cacheTTL time.Duration,
 ) http.Handler {
 
 	kh := []string{}
@@ -120,13 +120,13 @@ func (m *cacheMiddleware) calculateCacheKey(r *http.Request) string {
 }
 
 func (m *cacheMiddleware) serveFromCache(key string, w http.ResponseWriter, r *http.Request) bool {
-	val, _ := cache.CacheInst.Get(key)
+	val, _ := cache.Instance().Get(key)
 	if val != nil {
 		log.Printf("%s[HIT]%s %s ", green, reset, key)
 
 		// retrieve headers string from the cache, recontsruct them
 		// and put into response
-		headers, _ := cache.CacheInst.Get(fmt.Sprintf("HEADERS:%s", key))
+		headers, _ := cache.Instance().Get(fmt.Sprintf("HEADERS:%s", key))
 		if headers != nil {
 			reader := bufio.NewReader(strings.NewReader(string(headers) + "\r\n"))
 			tp := textproto.NewReader(reader)

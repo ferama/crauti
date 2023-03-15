@@ -13,7 +13,7 @@ type cacheRoutes struct {
 // Routes setup the root api routes
 func Routes(router *gin.RouterGroup) {
 	r := &cacheRoutes{
-		cache: CacheInst,
+		cache: Instance(),
 	}
 
 	router.POST("flush", r.Flush)

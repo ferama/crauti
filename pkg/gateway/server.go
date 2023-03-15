@@ -60,7 +60,7 @@ func (s *Server) UpdateHandlers() {
 				chain,
 				cacheConf.Methods,
 				cacheConf.KeyHeaders,
-				&cacheConf.TTL,
+				cacheConf.TTL,
 			)
 		}
 

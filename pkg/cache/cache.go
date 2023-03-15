@@ -3,14 +3,26 @@ package cache
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/ferama/crauti/pkg/conf"
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 )
 
-var red = conf.ConfInst.Middlewares.Cache.Redis
-var CacheInst = newCache(red.Host, red.Port, red.Password)
+var (
+	once     sync.Once
+	instance *cache
+)
+
+func Instance() *cache {
+	once.Do(func() {
+		var red = conf.ConfInst.Middlewares.Cache.Redis
+		instance = newCache(red.Host, red.Port, red.Password)
+	})
+
+	return instance
+}
 
 type cache struct {
 	rdb *redis.Client
@@ -41,9 +53,9 @@ func (c *cache) Get(key string) ([]byte, error) {
 	return val, nil
 }
 
-func (c *cache) Set(key string, body []byte, ttl *time.Duration) error {
+func (c *cache) Set(key string, body []byte, ttl time.Duration) error {
 	ctx := context.Background()
-	err := c.rdb.Set(ctx, key, body, *ttl)
+	err := c.rdb.Set(ctx, key, body, ttl)
 	if err != nil {
 		return err.Err()
 	}

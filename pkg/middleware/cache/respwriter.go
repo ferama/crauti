@@ -44,7 +44,7 @@ func (rw *responseWriter) Write(data []byte) (int, error) {
 	return rw.w.Write(data)
 }
 
-func (rw *responseWriter) Done(cacheTTL *time.Duration) {
+func (rw *responseWriter) Done(cacheTTL time.Duration) {
 	// build headers cache content. The idea here is to store
 	// all the headers sent from backend to send them back to the client
 	// when the request hit the cache
@@ -59,7 +59,7 @@ func (rw *responseWriter) Done(cacheTTL *time.Duration) {
 	// do not cache empty responses if they are not OPTIONS request
 	// this fix an issue with the frontend
 	if len(rw.buf.Bytes()) > 0 || rw.r.Method == http.MethodOptions {
-		cache.CacheInst.Set(fmt.Sprintf("HEADERS:%s", rw.key), []byte(headers), cacheTTL)
-		cache.CacheInst.Set(rw.key, rw.buf.Bytes(), cacheTTL)
+		cache.Instance().Set(fmt.Sprintf("HEADERS:%s", rw.key), []byte(headers), cacheTTL)
+		cache.Instance().Set(rw.key, rw.buf.Bytes(), cacheTTL)
 	}
 }
