@@ -9,6 +9,49 @@ import (
 
 var ConfInst config
 
+type MountPoint struct {
+	// crauti gateway mount path
+	// like /api/config
+	Path string `yaml:"path"`
+	// full upstream definition
+	// like http://my-service.my-namespace:port
+	Upstream string `yaml:"upstream"`
+	// middlewares configuration can be overridden setting
+	// changed values here
+	Middlewares middlewares `yaml:"middlewares"`
+}
+
+// middelewares configuration struct
+type middlewares struct {
+	Cors  cors  `yaml:"cors"`
+	Cache Cache `yaml:"cache"`
+}
+
+type kubernetes struct {
+	// if service discover is enabled or not
+	Autodiscover bool `yaml:"autodiscover"`
+	// if not empyt, limits discovery to the specified namespace
+	WatchNamespace string `yaml:"watchNamespace"`
+}
+
+// config holds all the config values
+type config struct {
+	// Listeners conf
+	GatewayListenAddress  string `yaml:"gatewayListenAddress"`
+	AdminApiListenAddress string `yaml:"adminApiListenAddress"`
+	// kubernetes relatech conf
+	Kubernetes kubernetes `yaml:"kubernetes"`
+	// global middlewares configuration
+	Middlewares middlewares `yaml:"middlewares"`
+	// define mount points
+	MountPoints []MountPoint `yaml:"mountPoints"`
+}
+
+// resets the config fields. called on dynamic conf update
+func (c *config) reset() {
+	c.MountPoints = nil
+}
+
 func setDefaults() {
 	viper.SetDefault("K8sAutodiscover", true)
 	viper.SetDefault("GatewayListenAddress", ":8080")

@@ -20,7 +20,7 @@ func Routes(gwServer *gateway.Server, router *gin.RouterGroup) {
 	}
 
 	router.GET("health", r.Health)
-	router.GET("routes/:encoding", r.Routes)
+	router.GET("config/:encoding", r.Config)
 }
 
 func (r *adminRoutes) Health(c *gin.Context) {
@@ -29,16 +29,16 @@ func (r *adminRoutes) Health(c *gin.Context) {
 	})
 }
 
-func (r *adminRoutes) Routes(c *gin.Context) {
+func (r *adminRoutes) Config(c *gin.Context) {
 	type binding struct {
 		Encoding string `uri:"encoding"`
 	}
 	var encoding binding
 	if err := c.ShouldBindUri(&encoding); err == nil {
 		if strings.ToLower(encoding.Encoding) == "yaml" {
-			c.YAML(http.StatusOK, conf.ConfInst.MountPoints)
+			c.YAML(http.StatusOK, conf.ConfInst)
 			return
 		}
 	}
-	c.JSON(http.StatusOK, conf.ConfInst.MountPoints)
+	c.JSON(http.StatusOK, conf.ConfInst)
 }

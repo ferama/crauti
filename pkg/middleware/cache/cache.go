@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/ferama/crauti/pkg/cache"
+	"github.com/ferama/crauti/pkg/conf"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
@@ -56,22 +57,20 @@ type cacheMiddleware struct {
 
 func NewCacheMiddleware(
 	next http.Handler,
-	httpMethods []string,
-	keyHeaders []string,
-	cacheTTL time.Duration,
+	conf conf.Cache,
 ) http.Handler {
 
 	kh := []string{}
 	c := cases.Title(language.English)
-	for _, h := range keyHeaders {
+	for _, h := range conf.KeyHeaders {
 		kh = append(kh, c.String(h))
 	}
 
 	cm := &cacheMiddleware{
 		next:        next,
 		keyHeaders:  kh,
-		httpMethods: httpMethods,
-		cacheTTL:    cacheTTL,
+		httpMethods: conf.Methods,
+		cacheTTL:    conf.TTL,
 		lockmap:     make(map[string]*sync.Mutex),
 	}
 
