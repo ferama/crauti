@@ -23,8 +23,9 @@ type MountPoint struct {
 
 // middelewares configuration struct
 type middlewares struct {
-	Cors  cors  `yaml:"cors"`
-	Cache Cache `yaml:"cache"`
+	Cors    cors    `yaml:"cors"`
+	Cache   Cache   `yaml:"cache"`
+	Timeout timeout `yaml:"timeout"`
 }
 
 type kubernetes struct {
@@ -65,6 +66,9 @@ func setDefaults() {
 
 	// Cors defaults
 	viper.SetDefault("Middlewares.Cors.Enabled", true)
+
+	// Timeout defaults
+	viper.SetDefault("Middlewares.Timeout.Duration", "5s")
 
 	// Cache defaults
 	viper.SetDefault("Middlewares.Cache.Enabled", false)

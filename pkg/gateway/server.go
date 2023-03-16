@@ -58,7 +58,7 @@ func (s *Server) UpdateHandlers() {
 			)
 		}
 
-		chain = timeout.NewTimeoutMiddleware(chain)
+		chain = timeout.NewTimeoutMiddleware(chain, i.Middlewares.Timeout.Duration)
 
 		corsConf := i.Middlewares.Cors
 		if corsConf.IsEnabled() {
