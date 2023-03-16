@@ -17,7 +17,7 @@ mountPoints:
     path: /get
     middlewares:
       cache:
-        enabled: true
+        # enabled: true
         TTL: 30s
         methods:
           - GET

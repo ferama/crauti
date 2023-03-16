@@ -92,7 +92,6 @@ func Update() {
 		yaml.Unmarshal(b, &m)
 
 		m.Cache.merge(i.Middlewares.Cache)
-		m.Cors.merge(i.Middlewares.Cors)
 
 		ConfInst.MountPoints[idx].Middlewares = m
 	}

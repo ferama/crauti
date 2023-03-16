@@ -9,11 +9,17 @@ type redis struct {
 }
 
 type Cache struct {
-	Enabled    bool          `yaml:"enabled"`
+	// Do not use this directly. Use the IsEnabled function instead
+	Enabled    *bool         `yaml:"enabled,omitempty"`
 	Redis      redis         `yaml:"redis,omitempty"`
 	TTL        time.Duration `yaml:"cacheTTL,omitempty"`
 	Methods    []string      `yaml:"methods,omitempty"`
 	KeyHeaders []string      `yaml:"keyHeaders,omitempty"`
+}
+
+// Helper function that check for nil value on Enabled field
+func (c *Cache) IsEnabled() bool {
+	return c.Enabled != nil && *c.Enabled
 }
 
 // slice types needs manually merging logic
