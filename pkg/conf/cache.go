@@ -10,6 +10,7 @@ type redis struct {
 
 type Cache struct {
 	// Do not use this directly. Use the IsEnabled function instead
+	// See the conf.Update() function for more details
 	Enabled    *bool         `yaml:"enabled,omitempty"`
 	Redis      redis         `yaml:"redis,omitempty"`
 	TTL        time.Duration `yaml:"cacheTTL,omitempty"`

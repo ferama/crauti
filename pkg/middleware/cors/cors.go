@@ -1,7 +1,6 @@
 package cors
 
 import (
-	"log"
 	"net/http"
 )
 
@@ -18,8 +17,6 @@ func NewCorsMiddleware(next http.Handler) http.Handler {
 }
 
 func (m *corsMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Println("test 2")
-
 	rw := &responseWriter{
 		w: w,
 		r: r,

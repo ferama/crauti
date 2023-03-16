@@ -57,6 +57,17 @@ func setDefaults() {
 	viper.SetDefault("GatewayListenAddress", ":8080")
 	viper.SetDefault("AdminApiListenAddress", ":9090")
 
+	///////////////////////////////////////////////////////
+	//
+	// Middlewares defaults
+	//
+	///////////////////////////////////////////////////////
+
+	// Cors defaults
+	viper.SetDefault("Middlewares.Cors.Enabled", true)
+
+	// Cache defaults
+	viper.SetDefault("Middlewares.Cache.Enabled", false)
 	viper.SetDefault("Middlewares.Cache.Redis.Host", "localhost")
 	viper.SetDefault("Middlewares.Cache.Redis.Port", 6379)
 	viper.SetDefault("Middlewares.Cache.TTL", "5m")
@@ -87,8 +98,17 @@ func Update() {
 
 	// merge mountpoints middleware configuration
 	for idx, i := range ConfInst.MountPoints {
+		// m is the default(global) Middlewares configuration
 		m := ConfInst.Middlewares
+
 		b, _ := yaml.Marshal(i.Middlewares)
+		// I'm using unmarshal here to merge the mountPoint specific configuration
+		// into the global one and then some row above, to assign the merged conf
+		// to the monutPoint. There are some quirks that needs to be managed
+		//
+		// 	1. slices needs manually merging logic (Cache.merge methods for example)
+		//	2. boolean needs to be treated like pointer to boolean to reflect the three
+		// 	   available states: true, false, nil/undefined
 		yaml.Unmarshal(b, &m)
 
 		m.Cache.merge(i.Middlewares.Cache)

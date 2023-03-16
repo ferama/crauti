@@ -50,12 +50,6 @@ func (s *Server) UpdateHandlers() {
 		// is exectuted first
 		chain, _ = reverseproxy.NewReverseProxyMiddleware(chain, i)
 
-		corsConf := i.Middlewares.Cors
-		if corsConf.IsEnabled() {
-			// install the cors middleware
-			chain = cors.NewCorsMiddleware(chain)
-		}
-
 		cacheConf := i.Middlewares.Cache
 		if cacheConf.IsEnabled() {
 			chain = cache.NewCacheMiddleware(
@@ -65,6 +59,12 @@ func (s *Server) UpdateHandlers() {
 		}
 
 		chain = timeout.NewTimeoutMiddleware(chain)
+
+		corsConf := i.Middlewares.Cors
+		if corsConf.IsEnabled() {
+			// install the cors middleware
+			chain = cors.NewCorsMiddleware(chain)
+		}
 
 		mux.Handle(i.Path, chain)
 	}

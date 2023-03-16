@@ -13,6 +13,9 @@ func (rw *responseWriter) Header() http.Header {
 	return rw.w.Header()
 }
 
+// test it with something like
+//
+//	curl -v -H "Origin: localhost" http://localhost:8080/get
 func (rw *responseWriter) WriteHeader(statusCode int) {
 	// remove cors headers they could be cached. we will
 	// add them back soon if the Origin header is present
