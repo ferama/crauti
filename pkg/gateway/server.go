@@ -8,6 +8,7 @@ import (
 	"github.com/ferama/crauti/pkg/middleware/cache"
 	"github.com/ferama/crauti/pkg/middleware/cors"
 	"github.com/ferama/crauti/pkg/middleware/reverseproxy"
+	"github.com/ferama/crauti/pkg/middleware/timeout"
 )
 
 type Server struct {
@@ -62,6 +63,8 @@ func (s *Server) UpdateHandlers() {
 				cacheConf,
 			)
 		}
+
+		chain = timeout.NewTimeoutMiddleware(chain)
 
 		mux.Handle(i.Path, chain)
 	}

@@ -49,3 +49,13 @@ func Test3(t *testing.T) {
 		t.Fatal("header1 expected")
 	}
 }
+
+func TestBooleans(t *testing.T) {
+	loadConf("test3.yaml")
+	if !ConfInst.MountPoints[0].Middlewares.Cache.Enabled {
+		t.Fatal("cache should be enabled on mount point")
+	}
+	if ConfInst.MountPoints[0].Middlewares.Cors.Enabled {
+		t.Fatal("cors should not be enabled on mount point")
+	}
+}
