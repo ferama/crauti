@@ -8,6 +8,7 @@ import (
 	"github.com/ferama/crauti/pkg/middleware"
 	"github.com/ferama/crauti/pkg/middleware/cache"
 	"github.com/ferama/crauti/pkg/middleware/cors"
+	loggermiddleware "github.com/ferama/crauti/pkg/middleware/logger"
 )
 
 type Server struct {
@@ -65,6 +66,9 @@ func (s *Server) UpdateHandlers() {
 			chain = cors.NewCorsMiddleware(chain)
 		}
 
+		// should be the first middleware to be able to measure
+		// stuff like time, bytes etc
+		chain = loggermiddleware.NewLoggerMiddleware(chain)
 		mux.Handle(i.Path, chain)
 	}
 

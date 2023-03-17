@@ -71,5 +71,6 @@ func NewReverseProxyMiddleware(
 func (m *reverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h := http.StripPrefix(m.mountPath, m.rp)
 	h.ServeHTTP(w, r)
+
 	m.next.ServeHTTP(w, r)
 }

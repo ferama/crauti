@@ -12,7 +12,7 @@ func GetLogger(component string) *zerolog.Logger {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: "2006-01-02T15:04:05"})
 
 	logger := log.With().
-		Str("component", component).
+		Str("src", component).
 		Logger()
 	return &logger
 }

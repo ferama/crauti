@@ -12,16 +12,19 @@ import (
 	"github.com/ferama/crauti/pkg/logger"
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"k8s.io/client-go/util/homedir"
 )
 
-func init() {
-	// zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-	// // zerolog.SetGlobalLevel(zerolog.InfoLevel)
-	// log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: "2006-01-02T15:04:05"})
+var log *zerolog.Logger
 
+func init() {
+	log = logger.GetLogger("root")
+}
+
+func init() {
 	if home := homedir.HomeDir(); home != "" {
 		rootCmd.Flags().StringP("kubeconfig", "k", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
 	} else {
@@ -35,8 +38,6 @@ func init() {
 var rootCmd = &cobra.Command{
 	Use: "crauti",
 	Run: func(cmd *cobra.Command, args []string) {
-		log := logger.GetLogger("global")
-
 		config, _ := cmd.Flags().GetString("config")
 		if config != "" {
 			viper.SetConfigFile(config)
@@ -94,7 +95,7 @@ var rootCmd = &cobra.Command{
 		admin.Routes(gwServer, ginrouter.Group("/"))
 		cache.Routes(ginrouter.Group("/cache"))
 
-		log.Info().Msgf("admin api listening on '%s'", conf.ConfInst.AdminApiListenAddress)
+		log.Info().Msgf("admin listening on '%s'", conf.ConfInst.AdminApiListenAddress)
 		go ginrouter.Run(conf.ConfInst.AdminApiListenAddress)
 
 		// start the gateway server
