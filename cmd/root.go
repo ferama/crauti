@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-	"log"
 	"path/filepath"
 	"time"
 
@@ -11,6 +9,7 @@ import (
 	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/gateway"
 	"github.com/ferama/crauti/pkg/kube"
+	"github.com/ferama/crauti/pkg/logger"
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
@@ -19,6 +18,10 @@ import (
 )
 
 func init() {
+	// zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	// // zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	// log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: "2006-01-02T15:04:05"})
+
 	if home := homedir.HomeDir(); home != "" {
 		rootCmd.Flags().StringP("kubeconfig", "k", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
 	} else {
@@ -32,13 +35,15 @@ func init() {
 var rootCmd = &cobra.Command{
 	Use: "crauti",
 	Run: func(cmd *cobra.Command, args []string) {
+		log := logger.GetLogger("global")
+
 		config, _ := cmd.Flags().GetString("config")
 		if config != "" {
 			viper.SetConfigFile(config)
 		}
 		err := viper.ReadInConfig() // Find and read the config file
 		if err != nil {             // Handle errors reading the config file
-			log.Println("no config file detected, using default values")
+			log.Print("no config file detected, using default values")
 		}
 		conf.Update()
 
@@ -54,7 +59,7 @@ var rootCmd = &cobra.Command{
 		}
 
 		// the api gateway server
-		log.Printf("gateway listening on '%s'", conf.ConfInst.GatewayListenAddress)
+		log.Info().Msgf("gateway listening on '%s'", conf.ConfInst.GatewayListenAddress)
 		gwServer := gateway.NewServer(conf.ConfInst.GatewayListenAddress)
 
 		if conf.ConfInst.Kubernetes.Autodiscover {
@@ -64,11 +69,11 @@ var rootCmd = &cobra.Command{
 			defer close(stopper)
 			// the kubernetes services informer
 			kube.NewSvcHandler(gwServer, kubeconfig, stopper)
-			log.Println("k8s service informer started")
+			log.Info().Msgf("k8s service informer started")
 		} else {
 			gwServer.UpdateHandlers()
 			viper.OnConfigChange(func(e fsnotify.Event) {
-				fmt.Println("config file changed:", e.Name)
+				log.Print("config file changed:", e.Name)
 				conf.Update()
 				gwServer.UpdateHandlers()
 			})
@@ -89,7 +94,7 @@ var rootCmd = &cobra.Command{
 		admin.Routes(gwServer, ginrouter.Group("/"))
 		cache.Routes(ginrouter.Group("/cache"))
 
-		log.Printf("admin api listening on '%s'", conf.ConfInst.AdminApiListenAddress)
+		log.Info().Msgf("admin api listening on '%s'", conf.ConfInst.AdminApiListenAddress)
 		go ginrouter.Run(conf.ConfInst.AdminApiListenAddress)
 
 		// start the gateway server

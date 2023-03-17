@@ -1,13 +1,22 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strings"
 
 	"github.com/ferama/crauti/pkg/conf"
+	"github.com/ferama/crauti/pkg/logger"
+	"github.com/rs/zerolog"
 )
+
+var log *zerolog.Logger
+
+func init() {
+	log = logger.GetLogger("reverseproxy")
+}
 
 type reverseProxyMiddleware struct {
 	next http.Handler
@@ -49,6 +58,11 @@ func NewReverseProxyMiddleware(
 		if !strings.HasSuffix(p.mountPath, "/") {
 			r.URL.Path = strings.TrimSuffix(r.URL.Path, "/")
 		}
+	}
+	p.rp.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+		log.Error().
+			Str("upstream", fmt.Sprintf("%s://%s:%s", p.upstream.Scheme, p.upstream.Host, p.upstream.Port())).
+			Msg(err.Error())
 	}
 
 	return p, nil

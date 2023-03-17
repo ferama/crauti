@@ -23,9 +23,6 @@ func (m *timeoutMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), m.timeout)
 	defer func() {
 		cancel()
-		// if ctx.Err() == context.DeadlineExceeded {
-		// 	w.WriteHeader(http.StatusGatewayTimeout)
-		// }
 		w.Write([]byte("bad gateway: connection timeout\n"))
 	}()
 

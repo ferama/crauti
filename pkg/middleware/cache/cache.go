@@ -3,7 +3,6 @@ package cache
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"net/http"
 	"net/textproto"
 	"sort"
@@ -13,16 +12,10 @@ import (
 
 	"github.com/ferama/crauti/pkg/cache"
 	"github.com/ferama/crauti/pkg/conf"
+	"github.com/ferama/crauti/pkg/logger"
+	"github.com/rs/zerolog"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
-)
-
-const (
-	red    = "\033[0;31m"
-	green  = "\033[0;32m"
-	yellow = "\033[0;33m"
-	blue   = "\033[0;34m"
-	reset  = "\033[0m"
 )
 
 const (
@@ -30,6 +23,12 @@ const (
 	CachedContentHeaderValue   = "crauti/cache"
 	UpstreamContentHeaderValue = "crauti/upstream"
 )
+
+var log *zerolog.Logger
+
+func init() {
+	log = logger.GetLogger("cache")
+}
 
 func contains(slice []string, val string) bool {
 	for _, item := range slice {
@@ -121,7 +120,9 @@ func (m *cacheMiddleware) calculateCacheKey(r *http.Request) string {
 func (m *cacheMiddleware) serveFromCache(key string, w http.ResponseWriter, r *http.Request) bool {
 	val, _ := cache.Instance().Get(key)
 	if val != nil {
-		log.Printf("%s[HIT]%s %s ", green, reset, key)
+		log.Info().
+			Str("status", "HIT").
+			Str("key", key).Msg("")
 
 		// retrieve headers string from the cache, recontsruct them
 		// and put into response
@@ -151,7 +152,9 @@ func (m *cacheMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// method needs to be ignored or because it is disabled,
 	// directly serve it ignoring the cache
 	if !contains(m.httpMethods, r.Method) {
-		log.Printf("%s[BYP]%s %s%s ", blue, reset, r.Method, r.URL)
+		log.Info().
+			Str("status", "BYP").
+			Str("key", fmt.Sprintf("%s%s", r.Method, r.URL)).Msg("")
 		m.next.ServeHTTP(w, r)
 		return
 	}
@@ -210,9 +213,14 @@ func (m *cacheMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if m.serveFromCache(cacheKey, w, r) {
 			return
 		}
-		log.Printf("%s[MIS]%s %s", red, reset, cacheKey)
+		log.Info().
+			Str("status", "MIS").
+			Str("key", cacheKey).Msg("")
+
 	} else {
-		log.Printf("%s[IGN]%s %s", yellow, reset, cacheKey)
+		log.Info().
+			Str("status", "IGN").
+			Str("key", cacheKey).Msg("")
 	}
 
 	// If I'm here, I need to poke the backend
