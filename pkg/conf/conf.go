@@ -2,6 +2,7 @@ package conf
 
 import (
 	"log"
+	"time"
 
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
@@ -23,9 +24,9 @@ type MountPoint struct {
 
 // middelewares configuration struct
 type middlewares struct {
-	Cors    cors    `yaml:"cors"`
-	Cache   Cache   `yaml:"cache"`
-	Timeout timeout `yaml:"timeout"`
+	Cors    cors          `yaml:"cors"`
+	Cache   Cache         `yaml:"cache"`
+	Timeout time.Duration `yaml:"timeout,omitempty"`
 }
 
 type kubernetes struct {
@@ -68,7 +69,7 @@ func setDefaults() {
 	viper.SetDefault("Middlewares.Cors.Enabled", true)
 
 	// Timeout defaults
-	viper.SetDefault("Middlewares.Timeout.Duration", "5s")
+	viper.SetDefault("Middlewares.Timeout", "5s")
 
 	// Cache defaults
 	viper.SetDefault("Middlewares.Cache.Enabled", false)

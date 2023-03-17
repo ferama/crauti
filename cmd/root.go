@@ -80,7 +80,7 @@ var rootCmd = &cobra.Command{
 		ginrouter := gin.New()
 		ginrouter.Use(
 			// do not log k8s calls to health
-			gin.LoggerWithWriter(gin.DefaultWriter, "/health"),
+			// gin.LoggerWithWriter(gin.DefaultWriter, "/health"),
 			gin.Recovery(),
 		)
 		// we could also mount the gin router into the default mux

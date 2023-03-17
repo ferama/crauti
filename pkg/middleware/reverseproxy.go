@@ -1,4 +1,4 @@
-package reverseproxy
+package middleware
 
 import (
 	"net/http"
