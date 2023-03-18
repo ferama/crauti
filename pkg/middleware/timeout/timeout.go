@@ -1,9 +1,11 @@
-package middleware
+package timeout
 
 import (
 	"context"
 	"net/http"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 type timeoutMiddleware struct {
@@ -21,15 +23,14 @@ func NewTimeoutMiddleware(next http.Handler, timeout time.Duration) http.Handler
 
 func (m *timeoutMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), m.timeout)
+
 	defer func() {
 		cancel()
-		w.Write([]byte("bad gateway: connection timeout\n"))
-		// root := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-		// var chain http.Handler
-		// chain = root
 
-		// chain = loggermiddleware.NewLogPrinterMiddleware(chain)
-		// chain.ServeHTTP(w, r)
+		// BUG TODO: logs printer middleware do not get the Timeout Status
+		w.WriteHeader(http.StatusGatewayTimeout)
+		w.Write([]byte("bad gateway: connection timeout\n"))
+		log.Info().Msg("test")
 	}()
 
 	r = r.WithContext(ctx)

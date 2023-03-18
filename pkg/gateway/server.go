@@ -5,10 +5,11 @@ import (
 	"net/http"
 
 	"github.com/ferama/crauti/pkg/conf"
-	"github.com/ferama/crauti/pkg/middleware"
 	"github.com/ferama/crauti/pkg/middleware/cache"
 	"github.com/ferama/crauti/pkg/middleware/cors"
 	loggermiddleware "github.com/ferama/crauti/pkg/middleware/logger"
+	"github.com/ferama/crauti/pkg/middleware/proxy"
+	"github.com/ferama/crauti/pkg/middleware/timeout"
 )
 
 type Server struct {
@@ -50,7 +51,7 @@ func (s *Server) UpdateHandlers() {
 
 		// Middlewares are executed in reverse order: the last one
 		// is exectuted first
-		chain, _ = middleware.NewReverseProxyMiddleware(chain, i)
+		chain, _ = proxy.NewReverseProxyMiddleware(chain, i)
 
 		cacheConf := i.Middlewares.Cache
 		if cacheConf.IsEnabled() {
@@ -60,7 +61,7 @@ func (s *Server) UpdateHandlers() {
 			)
 		}
 
-		chain = middleware.NewTimeoutMiddleware(chain, i.Middlewares.Timeout)
+		chain = timeout.NewTimeoutMiddleware(chain, i.Middlewares.Timeout)
 
 		corsConf := i.Middlewares.Cors
 		if corsConf.IsEnabled() {
