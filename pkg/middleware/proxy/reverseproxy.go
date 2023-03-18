@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httputil"
@@ -17,6 +18,14 @@ var log *zerolog.Logger
 
 func init() {
 	log = logger.GetLogger("reverseproxy")
+}
+
+type contextKey string
+
+const ProxyContextKey contextKey = "proxy-middleware-context"
+
+type ProxyContext struct {
+	Upstream *url.URL
 }
 
 type reverseProxyMiddleware struct {
@@ -70,13 +79,16 @@ func NewReverseProxyMiddleware(
 }
 
 func (m *reverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	cacheContext := r.Context().Value(cache.CacheContextKey)
 
+	r = r.WithContext(context.WithValue(
+		r.Context(),
+		ProxyContextKey,
+		ProxyContext{Upstream: m.upstream}))
+
+	cacheContext := r.Context().Value(cache.CacheContextKey)
 	if cacheContext == nil || cacheContext.(cache.CacheContext).Status != cache.CacheStatusHit {
 		h := http.StripPrefix(m.mountPath, m.rp)
 		h.ServeHTTP(w, r)
-
 	}
-
 	m.next.ServeHTTP(w, r)
 }

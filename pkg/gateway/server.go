@@ -31,7 +31,15 @@ func NewServer(listenAddr string) *Server {
 }
 
 func (s *Server) UpdateHandlers() {
-	root := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	root := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-r.Context().Done():
+			w.WriteHeader(http.StatusGatewayTimeout)
+			w.Write([]byte("bad gateway: connection timeout\n"))
+		default:
+		}
+		loggermiddleware.Printer(w, r)
+	})
 
 	mux := http.NewServeMux()
 
@@ -47,8 +55,6 @@ func (s *Server) UpdateHandlers() {
 		var chain http.Handler
 		chain = root
 
-		chain = loggermiddleware.NewLogPrinterMiddleware(chain)
-
 		// Middlewares are executed in reverse order: the last one
 		// is exectuted first
 		chain, _ = proxy.NewReverseProxyMiddleware(chain, i)
@@ -61,14 +67,13 @@ func (s *Server) UpdateHandlers() {
 			)
 		}
 
-		chain = timeout.NewTimeoutMiddleware(chain, i.Middlewares.Timeout)
-
 		corsConf := i.Middlewares.Cors
 		if corsConf.IsEnabled() {
 			// install the cors middleware
 			chain = cors.NewCorsMiddleware(chain)
 		}
 
+		chain = timeout.NewTimeoutMiddleware(chain, i.Middlewares.Timeout)
 		// should be the first middleware to be able to measure
 		// stuff like time, bytes etc
 		chain = loggermiddleware.NewLogCollectorMiddleware(chain)
