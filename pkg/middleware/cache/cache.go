@@ -156,6 +156,10 @@ func (m *cacheMiddleware) serveFromCache(key string, w http.ResponseWriter, r *h
 		w.Header().Set(GeneratorHeaderKey, CachedContentHeaderValue)
 		w.WriteHeader(http.StatusOK)
 		w.Write(val)
+
+		ctx := context.WithValue(r.Context(), CacheContextKey, CacheContext{Status: CacheStatusHit})
+		r = r.WithContext(ctx)
+		m.next.ServeHTTP(w, r)
 		return true
 	}
 	return false
@@ -186,8 +190,6 @@ func (m *cacheMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !ignoreCache {
 		// try to get response from cache
 		if m.serveFromCache(cacheKey, w, r) {
-			// ctx := context.WithValue(r.Context(), CacheContextKey, CacheStatusHit)
-			// r = r.WithContext(ctx)
 			return
 		}
 		// No more then one concurrent request of the same kind (with the same enc) should hit the backend.

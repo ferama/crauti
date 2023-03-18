@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 )
@@ -38,6 +39,8 @@ type kubernetes struct {
 
 // config holds all the config values
 type config struct {
+	// debug log level
+	Debug bool `yaml:"debug"`
 	// Listeners conf
 	GatewayListenAddress  string `yaml:"gatewayListenAddress"`
 	AdminApiListenAddress string `yaml:"adminApiListenAddress"`
@@ -55,7 +58,9 @@ func (c *config) reset() {
 }
 
 func setDefaults() {
-	viper.SetDefault("K8sAutodiscover", true)
+	viper.SetDefault("Debug", false)
+
+	// viper.SetDefault("Kubernetes.Autodiscover", true)
 	viper.SetDefault("GatewayListenAddress", ":8080")
 	viper.SetDefault("AdminApiListenAddress", ":9090")
 
@@ -69,7 +74,7 @@ func setDefaults() {
 	viper.SetDefault("Middlewares.Cors.Enabled", true)
 
 	// Timeout defaults
-	viper.SetDefault("Middlewares.Timeout", "5s")
+	viper.SetDefault("Middlewares.Timeout", "10s")
 
 	// Cache defaults
 	viper.SetDefault("Middlewares.Cache.Enabled", false)
@@ -119,6 +124,12 @@ func Update() {
 		m.Cache.merge(i.Middlewares.Cache)
 
 		ConfInst.MountPoints[idx].Middlewares = m
+	}
+
+	if ConfInst.Debug {
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	} else {
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 
 	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/logger"
+	"github.com/ferama/crauti/pkg/middleware/cache"
 	"github.com/rs/zerolog"
 )
 
@@ -60,7 +61,7 @@ func NewReverseProxyMiddleware(
 		}
 	}
 	p.rp.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
-		log.Error().
+		log.Debug().
 			Str("upstream", fmt.Sprintf("%s://%s:%s", p.upstream.Scheme, p.upstream.Host, p.upstream.Port())).
 			Msg(err.Error())
 	}
@@ -69,8 +70,13 @@ func NewReverseProxyMiddleware(
 }
 
 func (m *reverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h := http.StripPrefix(m.mountPath, m.rp)
-	h.ServeHTTP(w, r)
+	cacheContext := r.Context().Value(cache.CacheContextKey)
+
+	if cacheContext == nil || cacheContext.(cache.CacheContext).Status != cache.CacheStatusHit {
+		h := http.StripPrefix(m.mountPath, m.rp)
+		h.ServeHTTP(w, r)
+
+	}
 
 	m.next.ServeHTTP(w, r)
 }

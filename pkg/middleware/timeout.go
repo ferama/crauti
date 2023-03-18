@@ -24,6 +24,12 @@ func (m *timeoutMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		cancel()
 		w.Write([]byte("bad gateway: connection timeout\n"))
+		// root := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+		// var chain http.Handler
+		// chain = root
+
+		// chain = loggermiddleware.NewLogPrinterMiddleware(chain)
+		// chain.ServeHTTP(w, r)
 	}()
 
 	r = r.WithContext(ctx)
