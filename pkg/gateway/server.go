@@ -30,13 +30,7 @@ func NewServer(listenAddr string) *Server {
 }
 
 func (s *Server) UpdateHandlers() {
-	root := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// lc := r.Context().Value(logger.LoggerContextKey).(logger.WrapResponseWriter)
-		// log.Print(lc.BytesWritten())
-		// ww := w.(*cors.ResponseWriter)
-		// www := ww.W.(logger.WrapResponseWriter)
-		// www.Status()
-	})
+	root := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 	mux := http.NewServeMux()
 

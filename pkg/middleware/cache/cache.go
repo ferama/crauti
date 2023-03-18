@@ -2,6 +2,7 @@ package cache
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"net/http"
 	"net/textproto"
@@ -22,6 +23,11 @@ const (
 	GeneratorHeaderKey         = "X-Generator"
 	CachedContentHeaderValue   = "crauti/cache"
 	UpstreamContentHeaderValue = "crauti/upstream"
+
+	CacheStatusBypass  = "BYP"
+	CacheStatusHit     = "HIT"
+	CacheStatusIgnored = "IGN"
+	CacheStatusMiss    = "MIS"
 )
 
 var log *zerolog.Logger
@@ -33,6 +39,10 @@ func init() {
 type contextKey string
 
 const CacheContextKey contextKey = "cache-middleware-context"
+
+type CacheContext struct {
+	Status string
+}
 
 func contains(slice []string, val string) bool {
 	for _, item := range slice {
@@ -124,9 +134,9 @@ func (m *cacheMiddleware) calculateCacheKey(r *http.Request) string {
 func (m *cacheMiddleware) serveFromCache(key string, w http.ResponseWriter, r *http.Request) bool {
 	val, _ := cache.Instance().Get(key)
 	if val != nil {
-		log.Info().
-			Str("status", "HIT").
-			Str("key", key).Msg("")
+		log.Debug().
+			Str("status", CacheStatusHit).
+			Str("key", key).Send()
 
 		// retrieve headers string from the cache, recontsruct them
 		// and put into response
@@ -156,9 +166,11 @@ func (m *cacheMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// method needs to be ignored or because it is disabled,
 	// directly serve it ignoring the cache
 	if !contains(m.httpMethods, r.Method) {
-		log.Info().
-			Str("status", "BYP").
-			Str("key", fmt.Sprintf("%s%s", r.Method, r.URL)).Msg("")
+		ctx := context.WithValue(r.Context(), CacheContextKey, CacheContext{Status: CacheStatusBypass})
+		r = r.WithContext(ctx)
+		log.Debug().
+			Str("status", CacheStatusBypass).
+			Str("key", fmt.Sprintf("%s%s", r.Method, r.URL)).Send()
 		m.next.ServeHTTP(w, r)
 		return
 	}
@@ -174,6 +186,8 @@ func (m *cacheMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !ignoreCache {
 		// try to get response from cache
 		if m.serveFromCache(cacheKey, w, r) {
+			// ctx := context.WithValue(r.Context(), CacheContextKey, CacheStatusHit)
+			// r = r.WithContext(ctx)
 			return
 		}
 		// No more then one concurrent request of the same kind (with the same enc) should hit the backend.
@@ -217,14 +231,23 @@ func (m *cacheMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if m.serveFromCache(cacheKey, w, r) {
 			return
 		}
-		log.Info().
-			Str("status", "MIS").
-			Str("key", cacheKey).Msg("")
+		log.Debug().
+			Str("status", CacheStatusMiss).
+			Str("key", cacheKey).Send()
+
+		r = r.WithContext(context.WithValue(
+			r.Context(),
+			CacheContextKey,
+			CacheContext{Status: CacheStatusMiss}))
 
 	} else {
-		log.Info().
-			Str("status", "IGN").
-			Str("key", cacheKey).Msg("")
+		log.Debug().
+			Str("status", CacheStatusIgnored).
+			Str("key", cacheKey).Send()
+		r = r.WithContext(context.WithValue(
+			r.Context(),
+			CacheContextKey,
+			CacheContext{Status: CacheStatusIgnored}))
 	}
 
 	// If I'm here, I need to poke the backend
