@@ -30,7 +30,13 @@ func NewServer(listenAddr string) *Server {
 }
 
 func (s *Server) UpdateHandlers() {
-	root := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	root := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// lc := r.Context().Value(logger.LoggerContextKey).(logger.WrapResponseWriter)
+		// log.Print(lc.BytesWritten())
+		// ww := w.(*cors.ResponseWriter)
+		// www := ww.W.(logger.WrapResponseWriter)
+		// www.Status()
+	})
 
 	mux := http.NewServeMux()
 
@@ -45,6 +51,8 @@ func (s *Server) UpdateHandlers() {
 
 		var chain http.Handler
 		chain = root
+
+		chain = loggermiddleware.NewLogPrinterMiddleware(chain)
 
 		// Middlewares are executed in reverse order: the last one
 		// is exectuted first
@@ -68,7 +76,7 @@ func (s *Server) UpdateHandlers() {
 
 		// should be the first middleware to be able to measure
 		// stuff like time, bytes etc
-		chain = loggermiddleware.NewLoggerMiddleware(chain)
+		chain = loggermiddleware.NewLogCollectorMiddleware(chain)
 		mux.Handle(i.Path, chain)
 	}
 

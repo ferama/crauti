@@ -30,6 +30,10 @@ func init() {
 	log = logger.GetLogger("cache")
 }
 
+type contextKey string
+
+const CacheContextKey contextKey = "cache-middleware-context"
+
 func contains(slice []string, val string) bool {
 	for _, item := range slice {
 		if item == val {
