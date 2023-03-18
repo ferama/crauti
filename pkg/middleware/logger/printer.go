@@ -12,27 +12,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// {
-// 	"timestamp":"2023-03-18T20:30:38+00:00",
-// 	"requestID":"0f9c2aecee8c1deae250e017d4f4d960",
-// 	"proxyUpstreamName":"elk-elk-kibana-http",
-// 	"proxyAlternativeUpstreamName":"",
-// 	"upstreamStatus":"200",
-// 	"upstreamAddr":"172.20.36.212:5601",
-// 	"httpRequest":{
-// 	   "requestMethod":"POST",
-// 	   "requestUrl":"kibana.paas.relatech.link/api/lens/stats",
-// 	   "status":200,
-// 	   "requestSize":"96",
-// 	   "responseSize":"2",
-// 	   "userAgent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36",
-// 	   "remoteIp":"10.99.99.2",
-// 	   "referer":"https://kibana.paas.relatech.link/app/lens",
-// 	   "latency":"1.007 s",
-// 	   "protocol":"HTTP/2.0"
-// 	}
-//  }
-
 func Printer(w http.ResponseWriter, r *http.Request) {
 	logContext := r.Context().Value(loggerContextKey).(logCollectorContext)
 

@@ -41,11 +41,11 @@ type reverseProxyMiddleware struct {
 func NewReverseProxyMiddleware(
 	next http.Handler,
 	mountPoint conf.MountPoint,
-) (http.Handler, error) {
+) http.Handler {
 
 	upstreamUrl, err := url.Parse(mountPoint.Upstream)
 	if err != nil {
-		return nil, err
+		log.Fatal().Err(err)
 	}
 
 	p := &reverseProxyMiddleware{
@@ -75,7 +75,7 @@ func NewReverseProxyMiddleware(
 			Msg(err.Error())
 	}
 
-	return p, nil
+	return p
 }
 
 func (m *reverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
