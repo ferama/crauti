@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"net/http/httputil"
@@ -59,12 +60,15 @@ func NewReverseProxyMiddleware(
 	p.rp.Director = func(r *http.Request) {
 		director(r)
 		// set the request host to the real upstream host
-		r.Host = upstreamUrl.Host
+		// When is this really needed? Enabling this one
+		// causes not wanted behaviours trying to fully prox a virtual host
+		// target
+		// r.Host = upstreamUrl.Host
+
 		// This to support configs like:
 		// - upstream: https://api.myurl.cloud/config/v1/apps
 		//	 path: /api/config/v1/apps
 		// This allow to fine tune proxy config for each upstream endpoint
-		// TODO: verify if we can have any side effects
 		if !strings.HasSuffix(p.mountPath, "/") {
 			r.URL.Path = strings.TrimSuffix(r.URL.Path, "/")
 		}
@@ -73,6 +77,10 @@ func NewReverseProxyMiddleware(
 		log.Debug().
 			Str("upstream", fmt.Sprintf("%s://%s:%s", p.upstream.Scheme, p.upstream.Host, p.upstream.Port())).
 			Msg(err.Error())
+	}
+
+	p.rp.Transport = &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 
 	return p
@@ -86,6 +94,8 @@ func (m *reverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		ProxyContext{Upstream: m.upstream}))
 
 	cacheContext := r.Context().Value(cache.CacheContextKey)
+	// if we do not have tha cache middleware enabled or if it is enabled but the requests
+	// doesn't hit the cache, poke the upstream
 	if cacheContext == nil || cacheContext.(cache.CacheContext).Status != cache.CacheStatusHit {
 		h := http.StripPrefix(m.mountPath, m.rp)
 		h.ServeHTTP(w, r)

@@ -191,14 +191,16 @@ func (m *cacheMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cacheKey := m.calculateCacheKey(r)
+
 	ignoreCache := false
 	// It works like the amazon api gateway
 	// https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-caching.html
 	if r.Header.Get("Cache-Control") == "max-age=0" {
+		log.Debug().Str("key", cacheKey).Msg("ignore cache request with Cache-Control header")
 		ignoreCache = true
 	}
 
-	cacheKey := m.calculateCacheKey(r)
 	if !ignoreCache {
 		// try to get response from cache
 		if m.serveFromCache(cacheKey, w, r) {

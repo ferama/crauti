@@ -76,6 +76,6 @@ func (s *Server) UpdateHandlers() {
 	s.srv.Handler = mux
 }
 
-func (s *Server) Start() {
-	s.srv.ListenAndServe()
+func (s *Server) Start() error {
+	return s.srv.ListenAndServe()
 }
