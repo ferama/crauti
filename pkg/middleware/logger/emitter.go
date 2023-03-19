@@ -36,7 +36,10 @@ func (m *logEmitterMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	elapsed := time.Since(logContext.StartTime).Round(1 * time.Millisecond).Seconds()
 
-	url := fmt.Sprintf("%s%s?%s", r.Host, r.URL.Path, r.URL.RawQuery)
+	url := fmt.Sprintf("%s%s", r.Host, r.URL.Path)
+	if r.URL.RawQuery != "" {
+		url = fmt.Sprintf("%s?%s", url, r.URL.RawQuery)
+	}
 	remoteAddr := strings.Split(r.RemoteAddr, ":")[0]
 	event := log.Info().
 		Dict("httpRequest", zerolog.Dict().
