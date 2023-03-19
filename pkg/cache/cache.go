@@ -44,6 +44,15 @@ func newCache(host string, port int, password string) *cache {
 	return c
 }
 
+func (c *cache) GetInt(key string) (int, error) {
+	ctx := context.Background()
+	val, err := c.rdb.Get(ctx, key).Int()
+	if err != nil {
+		return 0, err
+	}
+	return val, nil
+}
+
 func (c *cache) Get(key string) ([]byte, error) {
 	ctx := context.Background()
 	val, err := c.rdb.Get(ctx, key).Bytes()
@@ -53,7 +62,7 @@ func (c *cache) Get(key string) ([]byte, error) {
 	return val, nil
 }
 
-func (c *cache) Set(key string, body []byte, ttl time.Duration) error {
+func (c *cache) Set(key string, body interface{}, ttl time.Duration) error {
 	ctx := context.Background()
 	err := c.rdb.Set(ctx, key, body, ttl)
 	if err != nil {

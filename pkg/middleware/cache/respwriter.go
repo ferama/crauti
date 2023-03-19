@@ -15,6 +15,8 @@ type responseWriter struct {
 	w   http.ResponseWriter
 	buf bytes.Buffer
 
+	statusCode int
+
 	key string
 }
 
@@ -36,6 +38,7 @@ func (rw *responseWriter) Header() http.Header {
 }
 
 func (rw *responseWriter) WriteHeader(statusCode int) {
+	rw.statusCode = statusCode
 	rw.w.WriteHeader(statusCode)
 }
 
@@ -59,7 +62,8 @@ func (rw *responseWriter) Done(cacheTTL time.Duration) {
 	// do not cache empty responses if they are not OPTIONS request
 	// this fix an issue with the frontend
 	if len(rw.buf.Bytes()) > 0 || rw.r.Method == http.MethodOptions {
-		cache.Instance().Set(fmt.Sprintf("HEADERS:%s", rw.key), []byte(headers), cacheTTL)
-		cache.Instance().Set(rw.key, rw.buf.Bytes(), cacheTTL)
+		cache.Instance().Set(buildRedisKey(headersKeyHead, rw.key), []byte(headers), cacheTTL)
+		cache.Instance().Set(buildRedisKey(statusKeyHead, rw.key), rw.statusCode, cacheTTL)
+		cache.Instance().Set(buildRedisKey(bodyKeyHead, rw.key), rw.buf.Bytes(), cacheTTL)
 	}
 }

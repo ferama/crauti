@@ -20,14 +20,21 @@ import (
 )
 
 const (
+	// headers
 	GeneratorHeaderKey         = "X-Generator"
 	CachedContentHeaderValue   = "crauti/cache"
 	UpstreamContentHeaderValue = "crauti/upstream"
 
+	// statuses
 	CacheStatusBypass  = "BYP"
 	CacheStatusHit     = "HIT"
 	CacheStatusIgnored = "IGN"
 	CacheStatusMiss    = "MIS"
+
+	// redis key head
+	bodyKeyHead    = "BODY"
+	headersKeyHead = "HEADERS"
+	statusKeyHead  = "STATUS"
 )
 
 var log *zerolog.Logger
@@ -42,6 +49,10 @@ const CacheContextKey contextKey = "cache-middleware-context"
 
 type CacheContext struct {
 	Status string
+}
+
+func buildRedisKey(keyHead string, key string) string {
+	return fmt.Sprintf("%s:%s", keyHead, key)
 }
 
 func contains(slice []string, val string) bool {
@@ -132,15 +143,15 @@ func (m *cacheMiddleware) calculateCacheKey(r *http.Request) string {
 }
 
 func (m *cacheMiddleware) serveFromCache(key string, w http.ResponseWriter, r *http.Request) bool {
-	val, _ := cache.Instance().Get(key)
-	if val != nil {
+	body, _ := cache.Instance().Get(buildRedisKey(bodyKeyHead, key))
+	if body != nil {
 		log.Debug().
 			Str("status", CacheStatusHit).
 			Str("key", key).Send()
 
 		// retrieve headers string from the cache, recontsruct them
 		// and put into response
-		headers, _ := cache.Instance().Get(fmt.Sprintf("HEADERS:%s", key))
+		headers, _ := cache.Instance().Get(buildRedisKey(headersKeyHead, key))
 		if headers != nil {
 			reader := bufio.NewReader(strings.NewReader(string(headers) + "\r\n"))
 			tp := textproto.NewReader(reader)
@@ -154,8 +165,9 @@ func (m *cacheMiddleware) serveFromCache(key string, w http.ResponseWriter, r *h
 		}
 
 		w.Header().Set(GeneratorHeaderKey, CachedContentHeaderValue)
-		w.WriteHeader(http.StatusOK)
-		w.Write(val)
+		status, _ := cache.Instance().GetInt(buildRedisKey(statusKeyHead, key))
+		w.WriteHeader(status)
+		w.Write(body)
 
 		ctx := context.WithValue(r.Context(), CacheContextKey, CacheContext{Status: CacheStatusHit})
 		r = r.WithContext(ctx)
