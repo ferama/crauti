@@ -75,7 +75,7 @@ func NewReverseProxyMiddleware(
 	}
 	p.rp.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
 		log.Debug().
-			Str("upstream", fmt.Sprintf("%s://%s:%s", p.upstream.Scheme, p.upstream.Host, p.upstream.Port())).
+			Str("upstream", fmt.Sprintf("%s://%s", p.upstream.Scheme, p.upstream.Host)).
 			Msg(err.Error())
 	}
 
@@ -97,8 +97,15 @@ func (m *reverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	// if we do not have tha cache middleware enabled or if it is enabled but the requests
 	// doesn't hit the cache, poke the upstream
 	if cacheContext == nil || cacheContext.(cache.CacheContext).Status != cache.CacheStatusHit {
+		log.Debug().
+			Str("upstream", fmt.Sprintf("%s://%s", m.upstream.Scheme, m.upstream.Host)).
+			Msg("poke upstream")
 		h := http.StripPrefix(m.mountPath, m.rp)
 		h.ServeHTTP(w, r)
+	} else {
+		log.Debug().
+			Str("upstream", fmt.Sprintf("%s://%s", m.upstream.Scheme, m.upstream.Host)).
+			Msg("do not poke upstream: already got from cache")
 	}
 	m.next.ServeHTTP(w, r)
 }
