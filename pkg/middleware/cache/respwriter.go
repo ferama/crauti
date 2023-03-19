@@ -11,24 +11,25 @@ import (
 )
 
 type responseWriter struct {
-	r   *http.Request
-	w   http.ResponseWriter
-	buf bytes.Buffer
+	r *http.Request
+	w http.ResponseWriter
+
+	bodyBuf bytes.Buffer
 
 	statusCode int
 
-	key string
+	cacheKey string
 }
 
 func newResponseWriter(
 	r *http.Request,
 	w http.ResponseWriter,
-	key string) *responseWriter {
+	cacheKey string) *responseWriter {
 
 	rw := &responseWriter{
-		r:   r,
-		w:   w,
-		key: key,
+		r:        r,
+		w:        w,
+		cacheKey: cacheKey,
 	}
 	return rw
 }
@@ -38,12 +39,13 @@ func (rw *responseWriter) Header() http.Header {
 }
 
 func (rw *responseWriter) WriteHeader(statusCode int) {
+	// store the status code to be able to cache it laters
 	rw.statusCode = statusCode
 	rw.w.WriteHeader(statusCode)
 }
 
 func (rw *responseWriter) Write(data []byte) (int, error) {
-	rw.buf.Write(data)
+	rw.bodyBuf.Write(data)
 	return rw.w.Write(data)
 }
 
@@ -60,10 +62,12 @@ func (rw *responseWriter) Done(cacheTTL time.Duration) {
 		}
 	}
 	// do not cache empty responses if they are not OPTIONS request
-	// this fix an issue with the frontend
-	if len(rw.buf.Bytes()) > 0 || rw.r.Method == http.MethodOptions {
-		cache.Instance().Set(buildRedisKey(headersKeyHead, rw.key), []byte(headers), cacheTTL)
-		cache.Instance().Set(buildRedisKey(statusKeyHead, rw.key), rw.statusCode, cacheTTL)
-		cache.Instance().Set(buildRedisKey(bodyKeyHead, rw.key), rw.buf.Bytes(), cacheTTL)
+	if len(rw.bodyBuf.Bytes()) > 0 || rw.r.Method == http.MethodOptions {
+		// headers
+		cache.Instance().Set(buildRedisKey(headersKeyHead, rw.cacheKey), []byte(headers), cacheTTL)
+		// status
+		cache.Instance().Set(buildRedisKey(statusKeyHead, rw.cacheKey), rw.statusCode, cacheTTL)
+		// body
+		cache.Instance().Set(buildRedisKey(bodyKeyHead, rw.cacheKey), rw.bodyBuf.Bytes(), cacheTTL)
 	}
 }

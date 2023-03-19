@@ -108,7 +108,7 @@ func (m *cacheMiddleware) encodeKeyHeader(enc string, k string, v string) string
 	return enc
 }
 
-func (m *cacheMiddleware) calculateCacheKey(r *http.Request) string {
+func (m *cacheMiddleware) buildCacheKey(r *http.Request) string {
 	// ensure sorted headers (to target the right cache key)
 	keys := make([]string, 0, len(r.Header))
 	for k := range r.Header {
@@ -165,12 +165,19 @@ func (m *cacheMiddleware) serveFromCache(key string, w http.ResponseWriter, r *h
 		}
 
 		w.Header().Set(GeneratorHeaderKey, CachedContentHeaderValue)
+
+		// get cached status and write back to the response
 		status, _ := cache.Instance().GetInt(buildRedisKey(statusKeyHead, key))
 		w.WriteHeader(status)
 		w.Write(body)
 
+		// set the hit status into the context
 		ctx := context.WithValue(r.Context(), CacheContextKey, CacheContext{Status: CacheStatusHit})
 		r = r.WithContext(ctx)
+
+		// we can safely proceed calling the next op here. We set the cache
+		// status into the context, so the next ops can adapt their behaviour using
+		// this information
 		m.next.ServeHTTP(w, r)
 		return true
 	}
@@ -187,11 +194,12 @@ func (m *cacheMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Debug().
 			Str("status", CacheStatusBypass).
 			Str("key", fmt.Sprintf("%s%s", r.Method, r.URL)).Send()
+
 		m.next.ServeHTTP(w, r)
 		return
 	}
 
-	cacheKey := m.calculateCacheKey(r)
+	cacheKey := m.buildCacheKey(r)
 
 	ignoreCache := false
 	// It works like the amazon api gateway
@@ -266,7 +274,7 @@ func (m *cacheMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			CacheContext{Status: CacheStatusIgnored}))
 	}
 
-	// If I'm here, I need to poke the backend
+	// If I'm here, I need to poke the backend and fill the cache
 	rw := newResponseWriter(r, w, cacheKey)
 
 	rw.Header().Set(GeneratorHeaderKey, UpstreamContentHeaderValue)
