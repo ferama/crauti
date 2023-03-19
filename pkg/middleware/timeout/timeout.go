@@ -6,29 +6,24 @@ import (
 	"time"
 )
 
-type TimeoutMiddleware struct {
+type timeoutMiddleware struct {
 	next    http.Handler
 	timeout time.Duration
 }
 
 func NewTimeoutMiddleware(next http.Handler, timeout time.Duration) http.Handler {
-	m := &TimeoutMiddleware{
+	m := &timeoutMiddleware{
 		next:    next,
 		timeout: timeout,
 	}
 	return m
 }
 
-func (m *TimeoutMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (m *timeoutMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), m.timeout)
 	r = r.WithContext(ctx)
 
-	defer func() {
-		cancel()
-		// w.WriteHeader(http.StatusGatewayTimeout)
-		// w.Write([]byte("bad gateway: connection timeout\n"))
-
-	}()
+	defer cancel()
 
 	m.next.ServeHTTP(w, r)
 }

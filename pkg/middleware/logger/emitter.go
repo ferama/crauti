@@ -24,14 +24,6 @@ func NewLogEmitterrMiddleware(next http.Handler) http.Handler {
 }
 
 func (m *logEmitterMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	select {
-	// a timeout occurred?
-	case <-r.Context().Done():
-		w.WriteHeader(http.StatusGatewayTimeout)
-		w.Write([]byte("bad gateway: connection timeout\n"))
-	default:
-	}
-
 	logContext := r.Context().Value(loggerContextKey).(logCollectorContext)
 
 	elapsed := time.Since(logContext.StartTime).Round(1 * time.Millisecond).Seconds()

@@ -48,6 +48,8 @@ func (s *Server) UpdateHandlers() {
 		chain = root
 
 		chain = loggermiddleware.NewLogEmitterrMiddleware(chain)
+		// this need to run just before the logEmitter one (remember the reverse order of run)
+		chain = timeout.NewTimeoutHandlerMiddleware(chain)
 		// Middlewares are executed in reverse order: the last one
 		// is exectuted first
 		chain = proxy.NewReverseProxyMiddleware(chain, i)
