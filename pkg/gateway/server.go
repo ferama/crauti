@@ -31,16 +31,7 @@ func NewServer(listenAddr string) *Server {
 }
 
 func (s *Server) UpdateHandlers() {
-	root := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		select {
-		// a timeout occurred?
-		case <-r.Context().Done():
-			w.WriteHeader(http.StatusGatewayTimeout)
-			w.Write([]byte("bad gateway: connection timeout\n"))
-		default:
-		}
-		loggermiddleware.Printer(w, r)
-	})
+	root := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 	mux := http.NewServeMux()
 
@@ -56,6 +47,7 @@ func (s *Server) UpdateHandlers() {
 		var chain http.Handler
 		chain = root
 
+		chain = loggermiddleware.NewLogEmitterrMiddleware(chain)
 		// Middlewares are executed in reverse order: the last one
 		// is exectuted first
 		chain = proxy.NewReverseProxyMiddleware(chain, i)
