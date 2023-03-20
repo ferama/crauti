@@ -31,7 +31,8 @@ const (
 	CacheStatusIgnored = "IGN"
 	CacheStatusMiss    = "MIS"
 
-	// redis key head
+	// redis key heads. The redis key is build using the format
+	//  KEYHEAD:KEYENCODING
 	bodyKeyHead    = "BODY"
 	headersKeyHead = "HEADERS"
 	statusKeyHead  = "STATUS"

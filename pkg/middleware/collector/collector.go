@@ -30,16 +30,22 @@ func NewCollectorMiddleware(next http.Handler) http.Handler {
 }
 
 func (m *collectorMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	// use a custom response writer to be able to capture stuff
+	// like status and response bytes written...
 	rw := &responseWriter{
 		w: w,
 		r: r,
 	}
 
+	// ... and put the response writer into the context to be accessed
+	// from emitter
 	lcc := collectorContext{
 		ResponseWriter: rw,
 		StartTime:      time.Now(),
 	}
 	ctx := context.WithValue(r.Context(), collectorContextKey, lcc)
 	r = r.WithContext(ctx)
+
 	m.next.ServeHTTP(rw, r)
 }
