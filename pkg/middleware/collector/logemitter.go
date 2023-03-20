@@ -2,8 +2,8 @@ package collector
 
 import (
 	"fmt"
+	"net"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/ferama/crauti/pkg/middleware/cache"
@@ -26,24 +26,25 @@ func NewLogEmitterrMiddleware(next http.Handler) http.Handler {
 func (m *logEmitterMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	logContext := r.Context().Value(collectorContextKey).(collectorContext)
 
-	elapsed := time.Since(logContext.StartTime).Round(1 * time.Millisecond).Seconds()
+	totalLatency := time.Since(logContext.StartTime).Round(1 * time.Millisecond).Seconds()
 
-	url := fmt.Sprintf("%s%s", r.Host, r.URL.Path)
+	uri := r.URL.Path
 	if r.URL.RawQuery != "" {
-		url = fmt.Sprintf("%s?%s", url, r.URL.RawQuery)
+		uri = fmt.Sprintf("%s?%s", uri, r.URL.RawQuery)
 	}
-	remoteAddr := strings.Split(r.RemoteAddr, ":")[0]
+	remoteAddr, _, _ := net.SplitHostPort(r.RemoteAddr)
 
 	httpRequestDict := zerolog.Dict().
-		Str("requestMethod", r.Method).
-		Str("requestUrl", url).
+		Str("method", r.Method).
+		Str("host", r.Host).
+		Str("uri", uri).
 		Int("status", logContext.ResponseWriter.Status()).
 		Int64("requestSize", r.ContentLength).
 		Int("responseSize", logContext.ResponseWriter.BytesWritten()).
 		Str("userAgent", r.UserAgent()).
 		Str("remoteIp", remoteAddr).
 		Str("referer", r.Referer()).
-		Float64("latency", elapsed).
+		Float64("latency", totalLatency).
 		Str("protocol", r.Proto)
 
 	event := log.Info().
@@ -57,8 +58,15 @@ func (m *logEmitterMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	proxyContext := r.Context().Value(proxy.ProxyContextKey)
 	if proxyContext != nil {
 		pc := proxyContext.(proxy.ProxyContext)
-		upstream := fmt.Sprintf("%s://%s", pc.Upstream.Scheme, pc.Upstream.Hostname())
-		event.Str("proxyUpstream", upstream)
+		upstream := fmt.Sprintf("%s:%s", pc.Upstream.Hostname(), pc.Upstream.Port())
+		upstreamLatency := time.Since(pc.UpstreamRequestStartTime).Round(1 * time.Millisecond).Seconds()
+
+		proxyUpstreamDict := zerolog.Dict().
+			Str("host", upstream).
+			Float64("latency", upstreamLatency)
+
+		event.Dict("proxyUpstream", proxyUpstreamDict)
+
 	}
 
 	event.Send()

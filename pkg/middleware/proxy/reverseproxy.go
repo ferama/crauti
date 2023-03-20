@@ -8,6 +8,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/logger"
@@ -26,7 +27,8 @@ type contextKey string
 const ProxyContextKey contextKey = "proxy-middleware-context"
 
 type ProxyContext struct {
-	Upstream *url.URL
+	Upstream                 *url.URL
+	UpstreamRequestStartTime time.Time
 }
 
 type reverseProxyMiddleware struct {
@@ -91,7 +93,10 @@ func (m *reverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	r = r.WithContext(context.WithValue(
 		r.Context(),
 		ProxyContextKey,
-		ProxyContext{Upstream: m.upstream}))
+		ProxyContext{
+			Upstream:                 m.upstream,
+			UpstreamRequestStartTime: time.Now(),
+		}))
 
 	cacheContext := r.Context().Value(cache.CacheContextKey)
 	// if we do not have tha cache middleware enabled or if it is enabled but the requests
