@@ -11,7 +11,8 @@ type contextKey string
 const loggerContextKey contextKey = "logcollector-middleware-context"
 
 type logCollectorContext struct {
-	ResponseWriter WrapResponseWriter
+	// ResponseWriter WrapResponseWriter
+	ResponseWriter *responseWriter
 	StartTime      time.Time
 }
 
@@ -27,13 +28,16 @@ func NewLogCollectorMiddleware(next http.Handler) http.Handler {
 }
 
 func (m *logCollectorMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ww := NewWrapResponseWriter(w, r.ProtoMajor)
+	rw := &responseWriter{
+		w: w,
+		r: r,
+	}
 
 	lcc := logCollectorContext{
-		ResponseWriter: ww,
+		ResponseWriter: rw,
 		StartTime:      time.Now(),
 	}
 	ctx := context.WithValue(r.Context(), loggerContextKey, lcc)
 	r = r.WithContext(ctx)
-	m.next.ServeHTTP(ww, r)
+	m.next.ServeHTTP(rw, r)
 }

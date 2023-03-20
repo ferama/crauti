@@ -33,19 +33,21 @@ func (m *logEmitterMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		url = fmt.Sprintf("%s?%s", url, r.URL.RawQuery)
 	}
 	remoteAddr := strings.Split(r.RemoteAddr, ":")[0]
+
+	httpRequestDict := zerolog.Dict().
+		Str("requestMethod", r.Method).
+		Str("requestUrl", url).
+		Int("status", logContext.ResponseWriter.Status()).
+		Int64("requestSize", r.ContentLength).
+		Int("responseSize", logContext.ResponseWriter.BytesWritten()).
+		Str("userAgent", r.UserAgent()).
+		Str("remoteIp", remoteAddr).
+		Str("referer", r.Referer()).
+		Float64("latency", elapsed).
+		Str("protocol", r.Proto)
+
 	event := log.Info().
-		Dict("httpRequest", zerolog.Dict().
-			Str("requestMethod", r.Method).
-			Str("requestUrl", url).
-			Int("status", logContext.ResponseWriter.Status()).
-			Int64("requestSize", r.ContentLength).
-			Int("responseSize", logContext.ResponseWriter.BytesWritten()).
-			Str("userAgent", r.UserAgent()).
-			Str("remoteIp", remoteAddr).
-			Str("referer", r.Referer()).
-			Float64("latency", elapsed).
-			Str("protocol", r.Proto),
-		)
+		Dict("httpRequest", httpRequestDict)
 
 	cacheContext := r.Context().Value(cache.CacheContextKey)
 	if cacheContext != nil {
