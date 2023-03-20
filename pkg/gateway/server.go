@@ -6,8 +6,8 @@ import (
 
 	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/middleware/cache"
+	"github.com/ferama/crauti/pkg/middleware/collector"
 	"github.com/ferama/crauti/pkg/middleware/cors"
-	loggermiddleware "github.com/ferama/crauti/pkg/middleware/logger"
 	"github.com/ferama/crauti/pkg/middleware/proxy"
 	"github.com/ferama/crauti/pkg/middleware/timeout"
 )
@@ -47,7 +47,7 @@ func (s *Server) UpdateHandlers() {
 		var chain http.Handler
 		chain = root
 
-		chain = loggermiddleware.NewLogEmitterrMiddleware(chain)
+		chain = collector.NewLogEmitterrMiddleware(chain)
 		// this need to run just before the logEmitter one (remember the reverse order of run)
 		chain = timeout.NewTimeoutHandlerMiddleware(chain)
 		// Middlewares are executed in reverse order: the last one
@@ -71,7 +71,7 @@ func (s *Server) UpdateHandlers() {
 		chain = timeout.NewTimeoutMiddleware(chain, i.Middlewares.Timeout)
 		// should be the first middleware to be able to measure
 		// stuff like time, bytes etc
-		chain = loggermiddleware.NewLogCollectorMiddleware(chain)
+		chain = collector.NewCollectorMiddleware(chain)
 		mux.Handle(i.Path, chain)
 	}
 

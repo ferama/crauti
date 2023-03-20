@@ -1,4 +1,4 @@
-package logger
+package collector
 
 import (
 	"fmt"
@@ -24,7 +24,7 @@ func NewLogEmitterrMiddleware(next http.Handler) http.Handler {
 }
 
 func (m *logEmitterMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	logContext := r.Context().Value(loggerContextKey).(logCollectorContext)
+	logContext := r.Context().Value(collectorContextKey).(collectorContext)
 
 	elapsed := time.Since(logContext.StartTime).Round(1 * time.Millisecond).Seconds()
 
