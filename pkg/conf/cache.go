@@ -18,6 +18,22 @@ type Cache struct {
 	KeyHeaders []string      `yaml:"keyHeaders,omitempty"`
 }
 
+func (c *Cache) clone() Cache {
+	enabled := *c.Enabled
+	out := Cache{
+		Enabled: &enabled,
+		Redis: redis{
+			Host:     c.Redis.Host,
+			Port:     c.Redis.Port,
+			Password: c.Redis.Password,
+		},
+		TTL: c.TTL,
+	}
+	out.Methods = append(out.Methods, c.Methods...)
+	out.KeyHeaders = append(out.KeyHeaders, c.KeyHeaders...)
+	return out
+}
+
 // Helper function that check for nil value on Enabled field
 func (c *Cache) IsEnabled() bool {
 	return c.Enabled != nil && *c.Enabled

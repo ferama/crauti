@@ -60,3 +60,13 @@ func TestBooleans(t *testing.T) {
 		t.Fatal("cors should not be enabled on mount point")
 	}
 }
+
+func TestBooleans2(t *testing.T) {
+	loadConf("test4.yaml")
+	if ConfInst.Middlewares.Cache.IsEnabled() {
+		t.Fatal("cache should be disabled globally")
+	}
+	if ConfInst.MountPoints[0].Middlewares.Cache.IsEnabled() {
+		t.Fatal("cache should be disabled on mountPoint by default")
+	}
+}

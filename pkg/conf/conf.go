@@ -30,6 +30,15 @@ type middlewares struct {
 	Timeout time.Duration `yaml:"timeout,omitempty"`
 }
 
+func (m *middlewares) clone() middlewares {
+	c := middlewares{
+		Cors:    m.Cors.clone(),
+		Cache:   m.Cache.clone(),
+		Timeout: m.Timeout,
+	}
+	return c
+}
+
 type kubernetes struct {
 	// if service discover is enabled or not
 	Autodiscover bool `yaml:"autodiscover"`
@@ -71,7 +80,7 @@ func setDefaults() {
 	///////////////////////////////////////////////////////
 
 	// Cors defaults
-	viper.SetDefault("Middlewares.Cors.Enabled", true)
+	viper.SetDefault("Middlewares.Cors.Enabled", false)
 
 	// Timeout defaults
 	viper.SetDefault("Middlewares.Timeout", "60s")
@@ -109,7 +118,7 @@ func Update() {
 	// merge mountpoints middleware configuration
 	for idx, i := range ConfInst.MountPoints {
 		// m is the default(global) Middlewares configuration
-		m := ConfInst.Middlewares
+		m := ConfInst.Middlewares.clone()
 
 		b, _ := yaml.Marshal(i.Middlewares)
 		// I'm using unmarshal here to merge the mountPoint specific configuration

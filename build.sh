@@ -12,6 +12,9 @@ build() {
         -o ./bin/crauti-${GOOS}-${GOARCH}${EXT} .
 }
 
+go clean -testcache
+go test ./... -v -cover -race || exit 1
+
 ### multi arch binary build
 GOOS=linux GOARCH=arm64 build
 GOOS=linux GOARCH=amd64 build

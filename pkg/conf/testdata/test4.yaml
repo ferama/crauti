@@ -1,0 +1,10 @@
+kubernetes:
+  autodiscover: false
+mountPoints:
+  - upstream: https://httpbin.org/get
+    path: /get1
+  - upstream: https://httpbin.org/get
+    path: /get2
+    middlewares:
+      cache:
+        enabled: true
