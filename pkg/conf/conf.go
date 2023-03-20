@@ -74,7 +74,7 @@ func setDefaults() {
 	viper.SetDefault("Middlewares.Cors.Enabled", true)
 
 	// Timeout defaults
-	viper.SetDefault("Middlewares.Timeout", "10s")
+	viper.SetDefault("Middlewares.Timeout", "60s")
 
 	// Cache defaults
 	viper.SetDefault("Middlewares.Cache.Enabled", false)
