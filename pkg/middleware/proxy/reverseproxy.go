@@ -36,7 +36,7 @@ type reverseProxyMiddleware struct {
 	// the upstream url
 	upstream *url.URL
 	// the request directet to this mountPath will be proxied to the upstream
-	mountPath string
+	mountPoint conf.MountPoint
 	// a reverse proxy instance
 	rp *httputil.ReverseProxy
 }
@@ -52,28 +52,13 @@ func NewReverseProxyMiddleware(
 	}
 
 	p := &reverseProxyMiddleware{
-		next:      next,
-		upstream:  upstreamUrl,
-		rp:        httputil.NewSingleHostReverseProxy(upstreamUrl),
-		mountPath: mountPoint.Path,
+		next:       next,
+		upstream:   upstreamUrl,
+		rp:         httputil.NewSingleHostReverseProxy(upstreamUrl),
+		mountPoint: mountPoint,
 	}
+	p.rp.Director = p.director()
 
-	director := p.rp.Director
-	p.rp.Director = func(r *http.Request) {
-		director(r)
-		// set the request host to the real upstream host
-		if !mountPoint.SkipHostHeader {
-			r.Host = upstreamUrl.Host
-		}
-
-		// This to support configs like:
-		// - upstream: https://api.myurl.cloud/config/v1/apps
-		//	 path: /api/config/v1/apps
-		// This allow to fine tune proxy config for each upstream endpoint
-		if !strings.HasSuffix(p.mountPath, "/") {
-			r.URL.Path = strings.TrimSuffix(r.URL.Path, "/")
-		}
-	}
 	p.rp.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
 		log.Debug().
 			Str("upstream", fmt.Sprintf("%s://%s", p.upstream.Scheme, p.upstream.Host)).
@@ -85,6 +70,28 @@ func NewReverseProxyMiddleware(
 	}
 
 	return p
+}
+
+func (m *reverseProxyMiddleware) director() func(r *http.Request) {
+	director := m.rp.Director
+	mountPoint := m.mountPoint
+	upstreamUrl := m.upstream
+
+	return func(r *http.Request) {
+		director(r)
+		// set the request host to the real upstream host
+		if !mountPoint.SkipHostHeader {
+			r.Host = upstreamUrl.Host
+		}
+
+		// This to support configs like:
+		// - upstream: https://api.myurl.cloud/config/v1/apps
+		//	 path: /api/config/v1/apps
+		// This allow to fine tune proxy config for each upstream endpoint
+		if !strings.HasSuffix(mountPoint.Path, "/") {
+			r.URL.Path = strings.TrimSuffix(r.URL.Path, "/")
+		}
+	}
 }
 
 func (m *reverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -104,8 +111,20 @@ func (m *reverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		log.Debug().
 			Str("upstream", fmt.Sprintf("%s://%s", m.upstream.Scheme, m.upstream.Host)).
 			Msg("poke upstream")
-		h := http.StripPrefix(m.mountPath, m.rp)
-		h.ServeHTTP(w, r)
+
+		proxy := http.StripPrefix(m.mountPoint.Path, m.rp)
+
+		defer func() {
+			if rec := recover(); rec != nil {
+				log.Error().
+					Str("upstream", fmt.Sprintf("%s://%s", m.upstream.Scheme, m.upstream.Host)).
+					Msg("request aborted")
+
+				m.next.ServeHTTP(w, r)
+			}
+		}()
+		proxy.ServeHTTP(w, r)
+
 	} else {
 		log.Debug().
 			Str("upstream", fmt.Sprintf("%s://%s", m.upstream.Scheme, m.upstream.Host)).
