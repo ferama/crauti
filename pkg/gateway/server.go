@@ -3,7 +3,6 @@ package gateway
 import (
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/middleware/cache"
@@ -20,10 +19,10 @@ type Server struct {
 func NewServer(listenAddr string) *Server {
 	s := &Server{
 		srv: &http.Server{
-			ReadHeaderTimeout: 5 * time.Second,
-			WriteTimeout:      10 * time.Second,
-			IdleTimeout:       120 * time.Second,
-			Addr:              listenAddr,
+			// ReadHeaderTimeout: 5 * time.Second,
+			// WriteTimeout:      10 * time.Second,
+			// IdleTimeout:       120 * time.Second,
+			Addr: listenAddr,
 		},
 	}
 	s.UpdateHandlers()

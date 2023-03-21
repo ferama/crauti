@@ -62,10 +62,9 @@ func NewReverseProxyMiddleware(
 	p.rp.Director = func(r *http.Request) {
 		director(r)
 		// set the request host to the real upstream host
-		// When is this really needed? Enabling this one
-		// causes not wanted behaviours trying to fully prox a virtual host
-		// target
-		// r.Host = upstreamUrl.Host
+		if !mountPoint.SkipHostHeader {
+			r.Host = upstreamUrl.Host
+		}
 
 		// This to support configs like:
 		// - upstream: https://api.myurl.cloud/config/v1/apps

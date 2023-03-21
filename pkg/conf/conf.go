@@ -18,6 +18,11 @@ type MountPoint struct {
 	// full upstream definition
 	// like http://my-service.my-namespace:port
 	Upstream string `yaml:"upstream"`
+
+	// default false. If true, the ReverseProxy will not set
+	// the Host header to the real upstream host while forwarding the
+	// request to the upstream
+	SkipHostHeader bool `yaml:"skipHostHeader"`
 	// middlewares configuration can be overridden setting
 	// changed values here
 	Middlewares middlewares `yaml:"middlewares"`
