@@ -115,11 +115,17 @@ func (m *reverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		proxy := http.StripPrefix(m.mountPoint.Path, m.rp)
 
 		defer func() {
+			// the call to proxy.ServeHTTP some rows below, will panic! if
+			// the request is aborted client side. The panic is transparent (it is handled
+			// somewhere needs investigation). The point is that an aborted request
+			// is not logged anywhere and this code is needed just to do that.
 			if rec := recover(); rec != nil {
 				log.Error().
 					Str("upstream", fmt.Sprintf("%s://%s", m.upstream.Scheme, m.upstream.Host)).
 					Msg("request aborted")
 
+				// Even if the request is aborted I'm processing the next chain ring
+				// here that actually is the timeoutHandler followed by the log emitter
 				m.next.ServeHTTP(w, r)
 			}
 		}()
