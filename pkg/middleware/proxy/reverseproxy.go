@@ -36,6 +36,7 @@ const ProxyContextKey contextKey = "proxy-middleware-context"
 
 type ProxyContext struct {
 	Upstream                 *url.URL
+	MountPath                string
 	UpstreamRequestStartTime time.Time
 }
 
@@ -110,6 +111,7 @@ func (m *reverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		ProxyContextKey,
 		ProxyContext{
 			Upstream:                 m.upstream,
+			MountPath:                m.mountPoint.Path,
 			UpstreamRequestStartTime: time.Now(),
 		}))
 

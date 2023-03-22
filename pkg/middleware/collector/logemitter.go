@@ -63,6 +63,7 @@ func (m *logEmitterMiddleware) emitLogs(r *http.Request) {
 
 		proxyUpstreamDict := zerolog.Dict().
 			Str("host", upstream).
+			Str("mountPath", pc.MountPath).
 			Float64("latency", upstreamLatency)
 
 		event.Dict("proxyUpstream", proxyUpstreamDict)
