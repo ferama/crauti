@@ -1,16 +1,23 @@
 package gateway
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/ferama/crauti/pkg/conf"
+	"github.com/ferama/crauti/pkg/logger"
 	"github.com/ferama/crauti/pkg/middleware/cache"
 	"github.com/ferama/crauti/pkg/middleware/collector"
 	"github.com/ferama/crauti/pkg/middleware/cors"
 	"github.com/ferama/crauti/pkg/middleware/proxy"
 	"github.com/ferama/crauti/pkg/middleware/timeout"
+	"github.com/rs/zerolog"
 )
+
+var log *zerolog.Logger
+
+func init() {
+	log = logger.GetLogger("gateway")
+}
 
 type Server struct {
 	srv *http.Server
@@ -37,7 +44,7 @@ func (s *Server) UpdateHandlers() {
 
 	defer func() {
 		if err := recover(); err != nil {
-			log.Println("[ERROR] panic occurred:", err)
+			log.Printf("%s", err)
 			s.srv.Handler = mux
 		}
 	}()
@@ -72,6 +79,7 @@ func (s *Server) UpdateHandlers() {
 		// should be the first middleware to be able to measure
 		// stuff like time, bytes etc
 		chain = collector.NewCollectorMiddleware(chain)
+
 		mux.Handle(i.Path, chain)
 	}
 	s.srv.Handler = mux

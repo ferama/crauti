@@ -23,16 +23,14 @@ var log *zerolog.Logger
 
 func init() {
 	log = logger.GetLogger("root")
-}
 
-func init() {
 	if home := homedir.HomeDir(); home != "" {
 		rootCmd.Flags().StringP("kubeconfig", "k", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
 	} else {
 		rootCmd.Flags().StringP("kubeconfig", "k", "", "absolute path to the kubeconfig file")
 	}
-	rootCmd.Flags().StringP("config", "c", "", "set config file path")
 
+	rootCmd.Flags().StringP("config", "c", "", "set config file path")
 	rootCmd.Flags().BoolP("debug", "d", false, "debug")
 }
 
@@ -53,6 +51,7 @@ func setupAdminServer(gwServer *gateway.Server) {
 		})
 	})
 
+	// install the prometheus metrics endpoint
 	ginrouter.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	// we could also mount the gin router into the default mux

@@ -23,7 +23,7 @@ func NewLogEmitterrMiddleware(next http.Handler) http.Handler {
 	return m
 }
 
-func (m *logEmitterMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (m *logEmitterMiddleware) emitLogs(r *http.Request) {
 	logContext := r.Context().Value(collectorContextKey).(collectorContext)
 
 	totalLatency := time.Since(logContext.StartTime).Round(1 * time.Millisecond).Seconds()
@@ -70,6 +70,15 @@ func (m *logEmitterMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	event.Send()
+}
 
+func (m *logEmitterMiddleware) emitMetrics(r *http.Request) {
+	crautiOpsProcessed.Inc()
+}
+
+func (m *logEmitterMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	m.emitLogs(r)
+	m.emitMetrics(r)
 	m.next.ServeHTTP(w, r)
 }
