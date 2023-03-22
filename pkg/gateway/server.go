@@ -42,7 +42,7 @@ func (s *Server) setupRootHandler(mux *http.ServeMux) {
 	var chain http.Handler
 
 	chain = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-	chain = collector.NewLogEmitterrMiddleware(chain)
+	chain = collector.NewLogEmitterrMiddleware(chain, "")
 
 	next := chain
 	chain = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -77,7 +77,7 @@ func (s *Server) UpdateHandlers() {
 		var chain http.Handler
 		chain = root
 
-		chain = collector.NewLogEmitterrMiddleware(chain)
+		chain = collector.NewLogEmitterrMiddleware(chain, i.Path)
 		// this need to run just before the logEmitter one (remember the reverse order of run)
 		chain = timeout.NewTimeoutHandlerMiddleware(chain)
 		// Middlewares are executed in reverse order: the last one

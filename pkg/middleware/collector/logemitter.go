@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ferama/crauti/pkg/middleware/cache"
@@ -14,11 +15,23 @@ import (
 
 type logEmitterMiddleware struct {
 	next http.Handler
+
+	metricPrefix string
 }
 
-func NewLogEmitterrMiddleware(next http.Handler) http.Handler {
+func NewLogEmitterrMiddleware(next http.Handler, mountPointPath string) http.Handler {
+	// TODO: build metric prefix
+	// each mount point should hold its own metrics
+	// then I could have global one too
+	// Maintaintain a prometheus.Collector map and cleanup the collectors
+	// on server.UpdateHandlers
+	mp := strings.ToLower(mountPointPath)
+
+	// prometheus.DefaultRegisterer.Unregister(crautiOpsProcessed)
+
 	m := &logEmitterMiddleware{
-		next: next,
+		next:         next,
+		metricPrefix: mp,
 	}
 	return m
 }
