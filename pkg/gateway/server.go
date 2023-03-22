@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/ferama/crauti/pkg/conf"
@@ -37,6 +38,23 @@ func NewServer(listenAddr string) *Server {
 	return s
 }
 
+func (s *Server) setupRootHandler(mux *http.ServeMux) {
+	var chain http.Handler
+
+	chain = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	chain = collector.NewLogEmitterrMiddleware(chain)
+
+	next := chain
+	chain = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "crauti: 404 not found\n")
+		next.ServeHTTP(w, r)
+	})
+
+	chain = collector.NewCollectorMiddleware(chain)
+	mux.Handle("/", chain)
+}
+
 func (s *Server) UpdateHandlers() {
 	root := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
@@ -49,7 +67,12 @@ func (s *Server) UpdateHandlers() {
 		}
 	}()
 
+	hasRootHandler := false
 	for _, i := range conf.ConfInst.MountPoints {
+
+		if i.Path == "/" {
+			hasRootHandler = true
+		}
 
 		var chain http.Handler
 		chain = root
@@ -81,6 +104,13 @@ func (s *Server) UpdateHandlers() {
 		chain = collector.NewCollectorMiddleware(chain)
 
 		mux.Handle(i.Path, chain)
+	}
+
+	// if a root path (the / mountPoint) handler was not defined in mountPoints
+	// define a custom one here. The root handler, will respond to request for
+	// not found resources.
+	if !hasRootHandler {
+		s.setupRootHandler(mux)
 	}
 	s.srv.Handler = mux
 }
