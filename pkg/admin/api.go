@@ -19,14 +19,8 @@ func Routes(gwServer *gateway.Server, router *gin.RouterGroup) {
 		gwServer: gwServer,
 	}
 
-	router.GET("health", r.Health)
+	router.GET("config", r.Config)
 	router.GET("config/:encoding", r.Config)
-}
-
-func (r *adminRoutes) Health(c *gin.Context) {
-	c.JSON(200, gin.H{
-		"message": "ok",
-	})
 }
 
 func (r *adminRoutes) Config(c *gin.Context) {

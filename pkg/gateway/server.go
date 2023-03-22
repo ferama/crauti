@@ -74,7 +74,6 @@ func (s *Server) UpdateHandlers() {
 		chain = collector.NewCollectorMiddleware(chain)
 		mux.Handle(i.Path, chain)
 	}
-
 	s.srv.Handler = mux
 }
 
