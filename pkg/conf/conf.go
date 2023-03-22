@@ -78,7 +78,7 @@ func setDefaults() {
 
 	// viper.SetDefault("Kubernetes.Autodiscover", true)
 	viper.SetDefault("GatewayListenAddress", ":8080")
-	viper.SetDefault("AdminApiListenAddress", ":9090")
+	viper.SetDefault("AdminApiListenAddress", ":8181")
 
 	///////////////////////////////////////////////////////
 	//
