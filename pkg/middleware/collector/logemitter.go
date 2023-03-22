@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/ferama/crauti/pkg/middleware/cache"
 	"github.com/ferama/crauti/pkg/middleware/proxy"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -16,22 +16,16 @@ import (
 type logEmitterMiddleware struct {
 	next http.Handler
 
-	metricPrefix string
+	metricPathKey string
 }
 
 func NewLogEmitterrMiddleware(next http.Handler, mountPointPath string) http.Handler {
-	// TODO: build metric prefix
-	// each mount point should hold its own metrics
-	// then I could have global one too
-	// Maintaintain a prometheus.Collector map and cleanup the collectors
-	// on server.UpdateHandlers
-	mp := strings.ToLower(mountPointPath)
-
-	// prometheus.DefaultRegisterer.Unregister(crautiOpsProcessed)
-
+	if mountPointPath != "" {
+		MetricsInstance().RegisterMountPath(mountPointPath)
+	}
 	m := &logEmitterMiddleware{
-		next:         next,
-		metricPrefix: mp,
+		next:          next,
+		metricPathKey: mountPointPath,
 	}
 	return m
 }
@@ -87,7 +81,29 @@ func (m *logEmitterMiddleware) emitLogs(r *http.Request) {
 }
 
 func (m *logEmitterMiddleware) emitMetrics(r *http.Request) {
-	crautiOpsProcessed.Inc()
+	logContext := r.Context().Value(collectorContextKey).(collectorContext)
+	s := logContext.ResponseWriter.Status()
+	if s >= 200 && s <= 299 {
+		key := MetricsInstance().GetProcessedTotalMapKey(m.metricPathKey, "200")
+		c, ok := MetricsInstance().Get(key)
+		if ok {
+			c.(prometheus.Counter).Inc()
+		}
+	}
+	if s >= 400 && s <= 499 {
+		key := MetricsInstance().GetProcessedTotalMapKey(m.metricPathKey, "400")
+		c, ok := MetricsInstance().Get(key)
+		if ok {
+			c.(prometheus.Counter).Inc()
+		}
+	}
+	if s >= 500 && s <= 599 {
+		key := MetricsInstance().GetProcessedTotalMapKey(m.metricPathKey, "500")
+		c, ok := MetricsInstance().Get(key)
+		if ok {
+			c.(prometheus.Counter).Inc()
+		}
+	}
 }
 
 func (m *logEmitterMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {

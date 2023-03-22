@@ -56,6 +56,8 @@ func (s *Server) setupRootHandler(mux *http.ServeMux) {
 }
 
 func (s *Server) UpdateHandlers() {
+	collector.MetricsInstance().UnregisterAll()
+
 	root := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 	mux := http.NewServeMux()
