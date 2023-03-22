@@ -30,8 +30,10 @@ type MountPoint struct {
 
 // middelewares configuration struct
 type middlewares struct {
-	Cors    cors          `yaml:"cors"`
-	Cache   Cache         `yaml:"cache"`
+	Cors  cors  `yaml:"cors"`
+	Cache Cache `yaml:"cache"`
+	// on timeout expiration, the context will be canceled and request
+	// aborted. Use -1 or any value lesser than 0 to disable timeout
 	Timeout time.Duration `yaml:"timeout,omitempty"`
 }
 

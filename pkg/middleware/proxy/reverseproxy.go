@@ -4,6 +4,8 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"io"
+	golog "log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -19,6 +21,12 @@ import (
 var log *zerolog.Logger
 
 func init() {
+	// apparently there is no way to use a custom logger like zerolog
+	// Most cases are handled overriding the ErrorHandler
+	// Disabling golog here, it should only affect the copy buffer failure that is already
+	// handled recovering from panic in the ServeHTTP method below
+	golog.SetOutput(io.Discard)
+
 	log = logger.GetLogger("reverseproxy")
 }
 
@@ -63,6 +71,7 @@ func NewReverseProxyMiddleware(
 		log.Debug().
 			Str("upstream", fmt.Sprintf("%s://%s", p.upstream.Scheme, p.upstream.Host)).
 			Msg(err.Error())
+		w.WriteHeader(http.StatusBadGateway)
 	}
 
 	p.rp.Transport = &http.Transport{
@@ -115,9 +124,9 @@ func (m *reverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		proxy := http.StripPrefix(m.mountPoint.Path, m.rp)
 
 		defer func() {
-			// the call to proxy.ServeHTTP some rows below, will panic! if
+			// the call to proxy.ServeHTTP some rows below, will panic if
 			// the request is aborted client side. The panic is transparent (it is handled
-			// somewhere needs investigation). The point is that an aborted request
+			// somewhere, needs investigation). The point is that an aborted request
 			// is not logged anywhere and this code is needed just to do that.
 			if rec := recover(); rec != nil {
 				log.Error().

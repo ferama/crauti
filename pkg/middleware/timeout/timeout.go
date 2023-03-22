@@ -20,10 +20,12 @@ func NewTimeoutMiddleware(next http.Handler, timeout time.Duration) http.Handler
 }
 
 func (m *timeoutMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), m.timeout)
-	r = r.WithContext(ctx)
+	if m.timeout > 0 {
+		ctx, cancel := context.WithTimeout(r.Context(), m.timeout)
+		r = r.WithContext(ctx)
 
-	defer cancel()
+		defer cancel()
+	}
 
 	m.next.ServeHTTP(w, r)
 }
