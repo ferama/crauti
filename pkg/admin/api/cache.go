@@ -1,34 +1,31 @@
-package cache
+package api
 
 import (
 	"net/http"
 
+	"github.com/ferama/crauti/pkg/cache"
 	"github.com/gin-gonic/gin"
 )
 
-type cacheRoutes struct {
-	cache *cache
-}
+type cacheGroup struct{}
 
-// Routes setup the root api routes
-func Routes(router *gin.RouterGroup) {
-	r := &cacheRoutes{
-		cache: Instance(),
-	}
+// cacheRoutes setup the root api routes
+func cacheRoutes(router *gin.RouterGroup) {
+	r := &cacheGroup{}
 
 	router.POST("flush", r.Flush)
 	router.POST("flushall", r.FlushAll)
 }
 
-func (r *cacheRoutes) FlushAll(c *gin.Context) {
-	r.cache.FlushallAsync()
+func (r *cacheGroup) FlushAll(c *gin.Context) {
+	cache.Instance().FlushallAsync()
 	c.JSON(200, gin.H{
 		"message": "full cache flush requested",
 	})
 }
 
 // curl -X POST -d '{"match": "GET/api/config*"}' http://localhost:9000/cache/flush
-func (r *cacheRoutes) Flush(c *gin.Context) {
+func (r *cacheGroup) Flush(c *gin.Context) {
 	type mapping struct {
 		Match string `json:"match"`
 	}
@@ -39,7 +36,7 @@ func (r *cacheRoutes) Flush(c *gin.Context) {
 		})
 		return
 	}
-	go r.cache.Flush(data.Match)
+	go cache.Instance().Flush(data.Match)
 
 	c.JSON(200, gin.H{
 		"message": "cache flush requested",

@@ -1,29 +1,24 @@
-package admin
+package api
 
 import (
 	"net/http"
 	"strings"
 
 	"github.com/ferama/crauti/pkg/conf"
-	"github.com/ferama/crauti/pkg/gateway"
 	"github.com/gin-gonic/gin"
 )
 
-type adminRoutes struct {
-	gwServer *gateway.Server
-}
+type adminGroup struct{}
 
 // Routes setup the root api routes
-func Routes(gwServer *gateway.Server, router *gin.RouterGroup) {
-	r := &adminRoutes{
-		gwServer: gwServer,
-	}
+func adminRoutes(router *gin.RouterGroup) {
+	r := &adminGroup{}
 
 	router.GET("config", r.Config)
 	router.GET("config/:encoding", r.Config)
 }
 
-func (r *adminRoutes) Config(c *gin.Context) {
+func (r *adminGroup) Config(c *gin.Context) {
 	type binding struct {
 		Encoding string `uri:"encoding"`
 	}

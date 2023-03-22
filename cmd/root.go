@@ -4,15 +4,13 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/ferama/crauti/pkg/admin"
-	"github.com/ferama/crauti/pkg/cache"
+	"github.com/ferama/crauti/pkg/admin/api"
 	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/gateway"
 	"github.com/ferama/crauti/pkg/kube"
 	"github.com/ferama/crauti/pkg/logger"
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-gonic/gin"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -44,21 +42,10 @@ func setupAdminServer(gwServer *gateway.Server) {
 		gin.Recovery(),
 	)
 
-	// setup health endpoint
-	ginrouter.GET("health", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "ok",
-		})
-	})
-
-	// install the prometheus metrics endpoint
-	ginrouter.GET("/metrics", gin.WrapH(promhttp.Handler()))
-
 	// we could also mount the gin router into the default mux
 	// but a dedicated port could be a better choice. The idea here
 	// is to leave this api/port not exposed directly.
-	admin.Routes(gwServer, ginrouter.Group("/api"))
-	cache.Routes(ginrouter.Group("/cache"))
+	api.RootRouter(ginrouter)
 
 	log.Info().Msgf("admin listening on '%s'", conf.ConfInst.AdminApiListenAddress)
 	go ginrouter.Run(conf.ConfInst.AdminApiListenAddress)
