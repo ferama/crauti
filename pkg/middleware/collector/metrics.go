@@ -36,36 +36,46 @@ func newMetrics() *metrics {
 	return m
 }
 
-func (m *metrics) GetProcessedTotalMapKey(mountPath string, code string) string {
-	mapKey := fmt.Sprintf("%s_%s_%s", CrautiProcessedTotal, mountPath, code)
+func (m *metrics) GetProcessedTotalMapKey(mountPath string, code int) string {
+	var mapKey string
+	if code >= 200 && code <= 299 {
+		mapKey = fmt.Sprintf("%s_%s_%d", CrautiProcessedTotal, mountPath, 200)
+	}
+	if code >= 400 && code <= 499 {
+		mapKey = fmt.Sprintf("%s_%s_%d", CrautiProcessedTotal, mountPath, 400)
+	}
+	if code >= 500 && code <= 599 {
+		mapKey = fmt.Sprintf("%s_%s_%d", CrautiProcessedTotal, mountPath, 500)
+	}
 	return mapKey
 }
 
+// Register per mountPath prometheus metrics
 func (m *metrics) RegisterMountPath(mountPath string) {
 	// https://pkg.go.dev/github.com/prometheus/client_golang/prometheus#Histogram
 
-	code := "200"
+	code := 200
 	mapKey := m.GetProcessedTotalMapKey(mountPath, code)
 	m.collectors[mapKey] = promauto.NewCounter(prometheus.CounterOpts{
 		Name:        CrautiProcessedTotal,
 		Help:        "Total processed requests",
-		ConstLabels: prometheus.Labels{"code": code, "mountPath": mountPath},
+		ConstLabels: prometheus.Labels{"code": fmt.Sprint(code), "mountPath": mountPath},
 	})
 
-	code = "400"
+	code = 400
 	mapKey = m.GetProcessedTotalMapKey(mountPath, code)
 	m.collectors[mapKey] = promauto.NewCounter(prometheus.CounterOpts{
 		Name:        CrautiProcessedTotal,
 		Help:        "Total processed requests",
-		ConstLabels: prometheus.Labels{"code": code, "mountPath": mountPath},
+		ConstLabels: prometheus.Labels{"code": fmt.Sprint(code), "mountPath": mountPath},
 	})
 
-	code = "500"
+	code = 500
 	mapKey = m.GetProcessedTotalMapKey(mountPath, code)
 	m.collectors[mapKey] = promauto.NewCounter(prometheus.CounterOpts{
 		Name:        CrautiProcessedTotal,
 		Help:        "Total processed requests",
-		ConstLabels: prometheus.Labels{"code": code, "mountPath": mountPath},
+		ConstLabels: prometheus.Labels{"code": fmt.Sprint(code), "mountPath": mountPath},
 	})
 
 }

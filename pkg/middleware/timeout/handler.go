@@ -24,9 +24,9 @@ func (m *timeoutHandlerMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	default:
 	}
 
-	// still serve the next op. If a timeout occurred, next ops can alway detect
+	// still serve the next op. If a timeout occurred, next ops can always detect
 	// it using the r.Context().Done() channel.
-	// Actually the ReverseProxyMiddleware already handle it using the behabiour
+	// Actually the ReverseProxyMiddleware already handle it using the behaviour
 	// inherited from httputil.NewSingleHostReverseProxy
 	// Ideally the only next op should be the log emitter and no more changes should
 	// be made to the response.
