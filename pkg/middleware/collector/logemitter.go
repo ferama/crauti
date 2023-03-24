@@ -10,7 +10,6 @@ import (
 	"github.com/ferama/crauti/pkg/middleware/proxy"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
 type logEmitterMiddleware struct {
@@ -82,12 +81,22 @@ func (m *logEmitterMiddleware) emitLogs(r *http.Request) {
 
 func (m *logEmitterMiddleware) emitMetrics(r *http.Request) {
 	logContext := r.Context().Value(collectorContextKey).(collectorContext)
+
+	// status counter
 	s := logContext.ResponseWriter.Status()
 	key := MetricsInstance().GetProcessedTotalMapKey(m.metricPathKey, s)
 	c, ok := MetricsInstance().Get(key)
 	if ok {
 		c.(prometheus.Counter).Inc()
 	}
+
+	totalLatency := time.Since(logContext.StartTime).Round(1 * time.Millisecond).Seconds()
+	key = MetricsInstance().GetRequestLatencyMapKey(m.metricPathKey)
+	c, ok = MetricsInstance().Get(key)
+	if ok {
+		c.(prometheus.Observer).Observe(totalLatency)
+	}
+
 }
 
 func (m *logEmitterMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
