@@ -19,9 +19,9 @@ type emitterMiddleware struct {
 	metricPathKey string
 }
 
-func NewEmitterrMiddleware(next http.Handler, mountPointPath string) http.Handler {
+func NewEmitterrMiddleware(next http.Handler, mountPointPath string, upstream string) http.Handler {
 	if mountPointPath != "" {
-		MetricsInstance().RegisterMountPath(mountPointPath)
+		MetricsInstance().RegisterMountPath(mountPointPath, upstream)
 	}
 	m := &emitterMiddleware{
 		next:          next,
@@ -111,6 +111,16 @@ func (m *emitterMiddleware) emitMetrics(r *http.Request) {
 		c, ok = MetricsInstance().Get(key)
 		if ok {
 			c.(prometheus.Observer).Observe(upstreamLatency)
+		}
+	}
+
+	cacheContext := r.Context().Value(cache.CacheContextKey)
+	if cacheContext != nil {
+		status := cacheContext.(cache.CacheContext).Status
+		key = MetricsInstance().GetCacheTotalMapKey(m.metricPathKey, status)
+		c, ok = MetricsInstance().Get(key)
+		if ok {
+			c.(prometheus.Counter).Inc()
 		}
 	}
 }
