@@ -4,25 +4,20 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/ferama/crauti/pkg/logger"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 var (
-	log      *zerolog.Logger
 	once     sync.Once
 	instance *metrics
 )
 
-func init() {
-	log = logger.GetLogger("metrics")
-}
-
 const (
 	CrautiProcessedRequestsTotal = "crauti_processed_requests_total"
 	CrautiRequestLatency         = "crauti_request_latency"
+	CrautiUpstreamRequestLatency = "crauti_upstream_request_latency"
 )
 
 func MetricsInstance() *metrics {
@@ -62,6 +57,11 @@ func (m *metrics) GetProcessedTotalMapKey(mountPath string, code int) string {
 
 func (m *metrics) GetRequestLatencyMapKey(mountPath string) string {
 	mapKey := fmt.Sprintf("%s_%s", CrautiRequestLatency, mountPath)
+	return mapKey
+}
+
+func (m *metrics) GetUpstreamRequestLatencyMapKey(mountPath string) string {
+	mapKey := fmt.Sprintf("%s_%s", CrautiUpstreamRequestLatency, mountPath)
 	return mapKey
 }
 
@@ -112,6 +112,14 @@ func (m *metrics) RegisterMountPath(mountPath string) {
 	m.collectors[mapKey] = promauto.NewHistogram(prometheus.HistogramOpts{
 		Name:        CrautiRequestLatency,
 		Help:        "Request latency",
+		ConstLabels: prometheus.Labels{"mountPath": mountPath},
+		Buckets:     []float64{0.3, 0.5, 3},
+	})
+
+	mapKey = m.GetUpstreamRequestLatencyMapKey(mountPath)
+	m.collectors[mapKey] = promauto.NewHistogram(prometheus.HistogramOpts{
+		Name:        CrautiUpstreamRequestLatency,
+		Help:        "Proxy upstream request latency",
 		ConstLabels: prometheus.Labels{"mountPath": mountPath},
 		Buckets:     []float64{0.3, 0.5, 3},
 	})

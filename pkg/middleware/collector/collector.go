@@ -48,4 +48,8 @@ func (m *collectorMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	r = r.WithContext(ctx)
 
 	m.next.ServeHTTP(rw, r)
+
+	// the emitting stage is handled by logemitter. I cannot do
+	// it here becouse at this point I don't have the full context required for
+	// logging (think about the cache context for example)
 }

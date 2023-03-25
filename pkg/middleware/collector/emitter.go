@@ -10,29 +10,30 @@ import (
 	"github.com/ferama/crauti/pkg/middleware/proxy"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
-type logEmitterMiddleware struct {
+type emitterMiddleware struct {
 	next http.Handler
 
 	metricPathKey string
 }
 
-func NewLogEmitterrMiddleware(next http.Handler, mountPointPath string) http.Handler {
+func NewEmitterrMiddleware(next http.Handler, mountPointPath string) http.Handler {
 	if mountPointPath != "" {
 		MetricsInstance().RegisterMountPath(mountPointPath)
 	}
-	m := &logEmitterMiddleware{
+	m := &emitterMiddleware{
 		next:          next,
 		metricPathKey: mountPointPath,
 	}
 	return m
 }
 
-func (m *logEmitterMiddleware) emitLogs(r *http.Request) {
-	logContext := r.Context().Value(collectorContextKey).(collectorContext)
+func (m *emitterMiddleware) emitLogs(r *http.Request) {
+	collectorContext := r.Context().Value(collectorContextKey).(collectorContext)
 
-	totalLatency := time.Since(logContext.StartTime).Round(1 * time.Millisecond).Seconds()
+	totalLatency := time.Since(collectorContext.StartTime)
 
 	uri := r.URL.Path
 	if r.URL.RawQuery != "" {
@@ -44,13 +45,14 @@ func (m *logEmitterMiddleware) emitLogs(r *http.Request) {
 		Str("method", r.Method).
 		Str("host", r.Host).
 		Str("uri", uri).
-		Int("status", logContext.ResponseWriter.Status()).
+		Int("status", collectorContext.ResponseWriter.Status()).
 		Int64("requestSize", r.ContentLength).
-		Int("responseSize", logContext.ResponseWriter.BytesWritten()).
+		Int("responseSize", collectorContext.ResponseWriter.BytesWritten()).
 		Str("userAgent", r.UserAgent()).
 		Str("remoteIp", remoteAddr).
 		Str("referer", r.Referer()).
-		Float64("latency", totalLatency).
+		Float64("latency", totalLatency.Seconds()).
+		Str("latency_human", totalLatency.Round(1*time.Millisecond).String()).
 		Str("protocol", r.Proto)
 
 	event := log.Info().
@@ -65,12 +67,13 @@ func (m *logEmitterMiddleware) emitLogs(r *http.Request) {
 	if proxyContext != nil {
 		pc := proxyContext.(proxy.ProxyContext)
 		upstream := fmt.Sprintf("%s:%s", pc.Upstream.Hostname(), pc.Upstream.Port())
-		upstreamLatency := time.Since(pc.UpstreamRequestStartTime).Round(1 * time.Millisecond).Seconds()
+		upstreamLatency := time.Since(pc.UpstreamRequestStartTime)
 
 		proxyUpstreamDict := zerolog.Dict().
 			Str("host", upstream).
 			Str("mountPath", pc.MountPath).
-			Float64("latency", upstreamLatency)
+			Float64("latency", upstreamLatency.Seconds()).
+			Str("latency_human", upstreamLatency.Round(1*time.Millisecond).String())
 
 		event.Dict("proxyUpstream", proxyUpstreamDict)
 
@@ -79,27 +82,40 @@ func (m *logEmitterMiddleware) emitLogs(r *http.Request) {
 	event.Send()
 }
 
-func (m *logEmitterMiddleware) emitMetrics(r *http.Request) {
-	logContext := r.Context().Value(collectorContextKey).(collectorContext)
+func (m *emitterMiddleware) emitMetrics(r *http.Request) {
+	collectorContext := r.Context().Value(collectorContextKey).(collectorContext)
 
 	// status counter
-	s := logContext.ResponseWriter.Status()
+	s := collectorContext.ResponseWriter.Status()
 	key := MetricsInstance().GetProcessedTotalMapKey(m.metricPathKey, s)
 	c, ok := MetricsInstance().Get(key)
 	if ok {
 		c.(prometheus.Counter).Inc()
 	}
 
-	totalLatency := time.Since(logContext.StartTime).Round(1 * time.Millisecond).Seconds()
+	// request latency
+	totalLatency := time.Since(collectorContext.StartTime).Seconds()
 	key = MetricsInstance().GetRequestLatencyMapKey(m.metricPathKey)
 	c, ok = MetricsInstance().Get(key)
 	if ok {
 		c.(prometheus.Observer).Observe(totalLatency)
 	}
 
+	// upstream request latency
+	proxyContext := r.Context().Value(proxy.ProxyContextKey)
+	if proxyContext != nil {
+		pc := proxyContext.(proxy.ProxyContext)
+		upstreamLatency := time.Since(pc.UpstreamRequestStartTime).Seconds()
+
+		key = MetricsInstance().GetUpstreamRequestLatencyMapKey(m.metricPathKey)
+		c, ok = MetricsInstance().Get(key)
+		if ok {
+			c.(prometheus.Observer).Observe(upstreamLatency)
+		}
+	}
 }
 
-func (m *logEmitterMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (m *emitterMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	m.emitLogs(r)
 	m.emitMetrics(r)
