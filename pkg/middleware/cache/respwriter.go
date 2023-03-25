@@ -55,14 +55,19 @@ func (rw *responseWriter) Done(cacheTTL time.Duration) {
 	// when the request hit the cache
 	headers := ""
 	for k, v := range rw.Header() {
+		if k == "X-Generator" {
+			continue
+		}
 		if headers != "" {
 			headers = fmt.Sprintf("%s\r\n%s: %s", headers, k, strings.Join(v, ","))
 		} else {
 			headers = fmt.Sprintf("%s: %s", k, strings.Join(v, ","))
 		}
 	}
-	// do not cache empty responses if they are not OPTIONS request
-	if len(rw.bodyBuf.Bytes()) > 0 || rw.r.Method == http.MethodOptions {
+	// do not cache empty responses if they are not OPTIONS or HEAD request
+	if len(rw.bodyBuf.Bytes()) > 0 ||
+		rw.r.Method == http.MethodOptions ||
+		rw.r.Method == http.MethodHead {
 		// headers
 		cache.Instance().Set(buildRedisKey(headersKeyHead, rw.cacheKey), []byte(headers), cacheTTL)
 		// status
