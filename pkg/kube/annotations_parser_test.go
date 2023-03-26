@@ -12,7 +12,7 @@ func TestParser(t *testing.T) {
 				"enabled": true,
 				"upstreamHttpPort": 8080,
 				"mountPoints": [
-					{"source": "/", "destination": "/api/config"}
+					{"source": "/", "path": "/api/config"}
 				]
 		}`,
 	}
@@ -40,7 +40,7 @@ enabled: true
 upstreamHttpPort: 8080
 mountPoints:
   - source: "/"
-    destination: "/api/config"
+    path: "/api/config"
 `}
 	svc.Annotations = annotations
 	conf = parser.parse(*svc)
