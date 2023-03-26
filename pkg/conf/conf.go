@@ -19,10 +19,6 @@ type MountPoint struct {
 	// like http://my-service.my-namespace:port
 	Upstream string `yaml:"upstream"`
 
-	// default false. If true, the ReverseProxy will not set
-	// the Host header to the real upstream host while forwarding the
-	// request to the upstream
-	SkipHostHeader bool `yaml:"skipHostHeader"`
 	// middlewares configuration can be overridden setting
 	// changed values here
 	Middlewares middlewares `yaml:"middlewares"`
@@ -32,6 +28,7 @@ type MountPoint struct {
 type middlewares struct {
 	Cors  cors  `yaml:"cors"`
 	Cache Cache `yaml:"cache"`
+	Proxy Proxy `yaml:"proxy"`
 	// on timeout expiration, the context will be canceled and request
 	// aborted. Use -1 or any value lesser than 0 to disable timeout
 	Timeout time.Duration `yaml:"timeout,omitempty"`
@@ -41,6 +38,7 @@ func (m *middlewares) clone() middlewares {
 	c := middlewares{
 		Cors:    m.Cors.clone(),
 		Cache:   m.Cache.clone(),
+		Proxy:   m.Proxy.clone(),
 		Timeout: m.Timeout,
 	}
 	return c
@@ -91,6 +89,9 @@ func setDefaults() {
 
 	// Timeout defaults
 	viper.SetDefault("Middlewares.Timeout", "60s")
+
+	// Reverse Proxy defualts
+	viper.SetDefault("Middlewares.Proxy.PreserveHostHeader", true)
 
 	// Cache defaults
 	viper.SetDefault("Middlewares.Cache.Enabled", false)

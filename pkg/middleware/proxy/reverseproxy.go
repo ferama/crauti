@@ -90,7 +90,7 @@ func (m *reverseProxyMiddleware) director() func(r *http.Request) {
 	return func(r *http.Request) {
 		director(r)
 		// set the request host to the real upstream host
-		if !mountPoint.SkipHostHeader {
+		if m.mountPoint.Middlewares.Proxy.IsHostHeaderPreerved() {
 			r.Host = upstreamUrl.Host
 		}
 
