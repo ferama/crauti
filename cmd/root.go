@@ -4,13 +4,12 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/ferama/crauti/pkg/admin/api"
+	"github.com/ferama/crauti/pkg/admin"
 	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/gateway"
 	"github.com/ferama/crauti/pkg/kube"
 	"github.com/ferama/crauti/pkg/logger"
 	"github.com/fsnotify/fsnotify"
-	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -30,25 +29,6 @@ func init() {
 
 	rootCmd.Flags().StringP("config", "c", "", "set config file path")
 	rootCmd.Flags().BoolP("debug", "d", false, "debug")
-}
-
-func setupAdminServer(gwServer *gateway.Server) {
-	// Install admin apis
-	gin.SetMode(gin.ReleaseMode)
-	ginrouter := gin.New()
-	ginrouter.Use(
-		// do not log k8s calls to health
-		// gin.LoggerWithWriter(gin.DefaultWriter, "/health"),
-		gin.Recovery(),
-	)
-
-	// we could also mount the gin router into the default mux
-	// but a dedicated port could be a better choice. The idea here
-	// is to leave this api/port not exposed directly.
-	api.RootRouter(ginrouter)
-
-	log.Info().Msgf("admin listening on '%s'", conf.ConfInst.AdminApiListenAddress)
-	go ginrouter.Run(conf.ConfInst.AdminApiListenAddress)
 }
 
 var rootCmd = &cobra.Command{
@@ -97,7 +77,9 @@ var rootCmd = &cobra.Command{
 			viper.WatchConfig()
 		}
 
-		setupAdminServer(gwServer)
+		// setupAdminServer(gwServer)
+		adminServer := admin.NewAdminServer()
+		go adminServer.Start()
 
 		// start the gateway server
 		gwServer.Start()
