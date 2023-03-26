@@ -72,3 +72,21 @@ func (a *annotationParser) parse(svc corev1.Service) *crautiAnnotatedConfig {
 
 	return config
 }
+
+func (a *annotationParser) crautiAnnotationsEquals(svc1 corev1.Service, svc2 corev1.Service) bool {
+	var ann1, ann2 string
+	for key, value := range svc1.Annotations {
+		if key == crautiAnnotationConfKey {
+			ann1 = value
+			break
+		}
+	}
+	for key, value := range svc2.Annotations {
+		if key == crautiAnnotationConfKey {
+			ann2 = value
+			break
+		}
+	}
+
+	return ann1 == ann2
+}
