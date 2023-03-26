@@ -1,4 +1,4 @@
-package cache
+package redis
 
 import (
 	"context"
@@ -15,7 +15,7 @@ var (
 	instance *cache
 )
 
-func Instance() *cache {
+func CacheInstance() *cache {
 	once.Do(func() {
 		var red = conf.ConfInst.Middlewares.Cache.Redis
 		instance = newCache(red.Host, red.Port, red.Password)

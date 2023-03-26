@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ferama/crauti/pkg/cache"
+	"github.com/ferama/crauti/pkg/redis"
 )
 
 type responseWriter struct {
@@ -69,10 +69,10 @@ func (rw *responseWriter) Done(cacheTTL time.Duration) {
 		rw.r.Method == http.MethodOptions ||
 		rw.r.Method == http.MethodHead {
 		// headers
-		cache.Instance().Set(buildRedisKey(headersKeyHead, rw.cacheKey), []byte(headers), cacheTTL)
+		redis.CacheInstance().Set(buildRedisKey(headersKeyHead, rw.cacheKey), []byte(headers), cacheTTL)
 		// status
-		cache.Instance().Set(buildRedisKey(statusKeyHead, rw.cacheKey), rw.statusCode, cacheTTL)
+		redis.CacheInstance().Set(buildRedisKey(statusKeyHead, rw.cacheKey), rw.statusCode, cacheTTL)
 		// body
-		cache.Instance().Set(buildRedisKey(bodyKeyHead, rw.cacheKey), rw.bodyBuf.Bytes(), cacheTTL)
+		redis.CacheInstance().Set(buildRedisKey(bodyKeyHead, rw.cacheKey), rw.bodyBuf.Bytes(), cacheTTL)
 	}
 }

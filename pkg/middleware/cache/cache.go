@@ -11,9 +11,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ferama/crauti/pkg/cache"
 	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/logger"
+	"github.com/ferama/crauti/pkg/redis"
 	"github.com/rs/zerolog"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -144,7 +144,7 @@ func (m *cacheMiddleware) buildCacheKey(r *http.Request) string {
 }
 
 func (m *cacheMiddleware) serveFromCache(key string, w http.ResponseWriter, r *http.Request) bool {
-	body, _ := cache.Instance().Get(buildRedisKey(bodyKeyHead, key))
+	body, _ := redis.CacheInstance().Get(buildRedisKey(bodyKeyHead, key))
 	if body != nil {
 		log.Debug().
 			Str("status", CacheStatusHit).
@@ -152,7 +152,7 @@ func (m *cacheMiddleware) serveFromCache(key string, w http.ResponseWriter, r *h
 
 		// retrieve headers string from the cache, recontsruct them
 		// and put into response
-		headers, _ := cache.Instance().Get(buildRedisKey(headersKeyHead, key))
+		headers, _ := redis.CacheInstance().Get(buildRedisKey(headersKeyHead, key))
 		if headers != nil {
 			reader := bufio.NewReader(strings.NewReader(string(headers) + "\r\n"))
 			tp := textproto.NewReader(reader)
@@ -168,7 +168,7 @@ func (m *cacheMiddleware) serveFromCache(key string, w http.ResponseWriter, r *h
 		w.Header().Set(GeneratorHeaderKey, CachedContentHeaderValue)
 
 		// get cached status and write back to the response
-		status, _ := cache.Instance().GetInt(buildRedisKey(statusKeyHead, key))
+		status, _ := redis.CacheInstance().GetInt(buildRedisKey(statusKeyHead, key))
 		w.WriteHeader(status)
 		w.Write(body)
 

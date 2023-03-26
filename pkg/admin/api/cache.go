@@ -18,7 +18,7 @@ func cacheRoutes(router *gin.RouterGroup) {
 }
 
 func (r *cacheGroup) FlushAll(c *gin.Context) {
-	cache.Instance().FlushallAsync()
+	cache.CacheInstance().FlushallAsync()
 	c.JSON(200, gin.H{
 		"message": "full cache flush requested",
 	})
@@ -36,7 +36,7 @@ func (r *cacheGroup) Flush(c *gin.Context) {
 		})
 		return
 	}
-	go cache.Instance().Flush(data.Match)
+	go cache.CacheInstance().Flush(data.Match)
 
 	c.JSON(200, gin.H{
 		"message": "cache flush requested",
