@@ -76,8 +76,8 @@ var rootCmd = &cobra.Command{
 		}
 
 		// the api gateway server
-		log.Info().Msgf("gateway listening on '%s'", conf.ConfInst.GatewayListenAddress)
-		gwServer := gateway.NewServer(conf.ConfInst.GatewayListenAddress)
+		log.Info().Msgf("gateway listening on '%s'", conf.ConfInst.Gateway.ListenAddress)
+		gwServer := gateway.NewServer(conf.ConfInst.Gateway.ListenAddress)
 
 		if conf.ConfInst.Kubernetes.Autodiscover {
 			kubeconfig, _ := cmd.Flags().GetString("kubeconfig")

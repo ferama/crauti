@@ -51,13 +51,20 @@ type kubernetes struct {
 	WatchNamespace string `yaml:"watchNamespace"`
 }
 
+type gateway struct {
+	ListenAddress string        `yaml:"listenAddress"`
+	WriteTimeout  time.Duration `yaml:"writeTimeout"`
+	ReadTimeout   time.Duration `yaml:"readTimeout"`
+	IdleTimeout   time.Duration `yaml:"idleTimeout"`
+}
+
 // config holds all the config values
 type config struct {
 	// debug log level
 	Debug bool `yaml:"debug"`
 	// Listeners conf
-	GatewayListenAddress  string `yaml:"gatewayListenAddress"`
-	AdminApiListenAddress string `yaml:"adminApiListenAddress"`
+	Gateway               gateway `yaml:"gateway"`
+	AdminApiListenAddress string  `yaml:"adminApiListenAddress"`
 	// kubernetes relatech conf
 	Kubernetes kubernetes `yaml:"kubernetes"`
 	// global middlewares configuration
@@ -74,8 +81,13 @@ func (c *config) reset() {
 func setDefaults() {
 	viper.SetDefault("Debug", false)
 
+	// Gateway conf
+	viper.SetDefault("Gateway.ListenAddress", ":8080")
+	viper.SetDefault("Gateway.ReadTimeout", "120s")
+	viper.SetDefault("Gateway.WriteTimeout", "120s")
+	viper.SetDefault("Gateway.IdleTimeout", "360s")
+
 	// viper.SetDefault("Kubernetes.Autodiscover", true)
-	viper.SetDefault("GatewayListenAddress", ":8080")
 	viper.SetDefault("AdminApiListenAddress", ":8181")
 
 	///////////////////////////////////////////////////////
@@ -88,7 +100,9 @@ func setDefaults() {
 	viper.SetDefault("Middlewares.Cors.Enabled", false)
 
 	// Timeout defaults
-	viper.SetDefault("Middlewares.Timeout", "60s")
+	// this timeout acts like the Gateway.WriteTimeout but it can be set
+	// per mountPoint
+	viper.SetDefault("Middlewares.Timeout", "-1") // disabled by default
 
 	// Reverse Proxy defualts
 	viper.SetDefault("Middlewares.Proxy.PreserveHostHeader", true)

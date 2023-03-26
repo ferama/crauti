@@ -28,9 +28,10 @@ func NewServer(listenAddr string) *Server {
 	s := &Server{
 		srv: &http.Server{
 			// ReadHeaderTimeout: 5 * time.Second,
-			// WriteTimeout:      10 * time.Second,
-			// IdleTimeout:       120 * time.Second,
-			Addr: listenAddr,
+			ReadTimeout:  conf.ConfInst.Gateway.ReadTimeout,
+			WriteTimeout: conf.ConfInst.Gateway.WriteTimeout,
+			IdleTimeout:  conf.ConfInst.Gateway.IdleTimeout,
+			Addr:         listenAddr,
 		},
 	}
 	s.UpdateHandlers()
