@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/ferama/crauti/pkg/cache"
+	"github.com/ferama/crauti/pkg/redis"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,7 +18,7 @@ func cacheRoutes(router *gin.RouterGroup) {
 }
 
 func (r *cacheGroup) FlushAll(c *gin.Context) {
-	cache.CacheInstance().FlushallAsync()
+	redis.CacheInstance().FlushallAsync()
 	c.JSON(200, gin.H{
 		"message": "full cache flush requested",
 	})
@@ -36,7 +36,7 @@ func (r *cacheGroup) Flush(c *gin.Context) {
 		})
 		return
 	}
-	go cache.CacheInstance().Flush(data.Match)
+	go redis.CacheInstance().Flush(data.Match)
 
 	c.JSON(200, gin.H{
 		"message": "cache flush requested",
