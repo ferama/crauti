@@ -14,17 +14,17 @@ func loadConf(file string) {
 	Update()
 }
 
-// func Test1(t *testing.T) {
-// 	loadConf("test1.yaml")
+func Test1(t *testing.T) {
+	loadConf("test1.yaml")
 
-// 	if !ConfInst.Middlewares.Cors.Enabled {
-// 		t.Error("expected global cors enabled")
-// 	}
+	if !ConfInst.Middlewares.Cors.IsEnabled() {
+		t.Error("expected global cors enabled")
+	}
 
-// 	if ConfInst.MountPoints[0].Middlewares.Cors.Enabled {
-// 		t.Error("cors should be disabled in mountpoints")
-// 	}
-// }
+	if ConfInst.MountPoints[0].Middlewares.Cors.IsEnabled() {
+		t.Error("cors should be disabled in mountpoints")
+	}
+}
 
 func Test2(t *testing.T) {
 	loadConf("test2.yaml")

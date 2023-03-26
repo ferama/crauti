@@ -102,7 +102,7 @@ func setDefaults() {
 	// Timeout defaults
 	// this timeout acts like the Gateway.WriteTimeout but it can be set
 	// per mountPoint
-	viper.SetDefault("Middlewares.Timeout", "-1") // disabled by default
+	viper.SetDefault("Middlewares.Timeout", "-1s") // disabled by default
 
 	// Reverse Proxy defualts
 	viper.SetDefault("Middlewares.Proxy.PreserveHostHeader", true)
