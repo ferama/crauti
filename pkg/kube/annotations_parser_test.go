@@ -30,7 +30,7 @@ func TestParser(t *testing.T) {
 		t.Fatal("8080 expected")
 	}
 
-	if conf.MountPoints[0].Destination != "/api/config" {
+	if conf.MountPoints[0].Path != "/api/config" {
 		t.Fatal("/api/config expected")
 	}
 
@@ -53,7 +53,7 @@ mountPoints:
 		t.Fatal("8080 expected")
 	}
 
-	if conf.MountPoints[0].Destination != "/api/config" {
+	if conf.MountPoints[0].Path != "/api/config" {
 		t.Fatal("/api/config expected")
 	}
 }

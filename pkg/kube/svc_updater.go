@@ -71,7 +71,7 @@ func (s *svcUpdater) synch() {
 
 				mp = append(mp, conf.MountPoint{
 					Upstream: url,
-					Path:     item.Destination,
+					Path:     item.Path,
 					// TODO: needs structure merge?
 					// probably not, because the following call to conf.Update()
 					// should merge them correctly. Needs testing
@@ -99,7 +99,7 @@ func (s *svcUpdater) add(key string, service corev1.Service) {
 	// if I already have the serivice and the crauti annotation are
 	// exactly the same, no resync is required
 	if svc, ok := s.services[key]; ok {
-		if parser.crautiAnnotationsEquals(svc, service) {
+		if parser.crautiAnnotationsEqual(svc, service) {
 			s.shouldResync = false
 		}
 	}

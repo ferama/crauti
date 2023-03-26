@@ -15,8 +15,8 @@ Annotations example:
 	annotations:
 		crauti/conf: |
 			{"enabled": true, "mountPoints": [
-				{"source": "/", "destination": "/api/test"},
-				{"source": "/", "destination": "/test2"}
+				{"source": "/", "path": "/api/test"},
+				{"source": "/", "path": "/test2"}
 			]}
 
 or you can use yaml instead
@@ -26,13 +26,13 @@ or you can use yaml instead
 			enabled: true
 			mountPoints:
 				- source: "/"
-				  destination: "/test1-t1"
+				  path: "/test1-t1"
 				  # overrides global middlewares conf
 				  middlewares:
 					cors:
 					  enabled: true
 				- source: "/"
-    			  destination: "/test2"
+    			  path: "/test2"
 
 */
 
@@ -42,8 +42,8 @@ type annotationMountPoint struct {
 
 	// Custom fields for better user experience while
 	// using conf on service annotations
-	Source      string `yaml:"source"`
-	Destination string `yaml:"destination"`
+	Source string `yaml:"source"`
+	Path   string `yaml:"path"`
 }
 
 // this is the service annotation config. It will be mapped
@@ -73,7 +73,7 @@ func (a *annotationParser) parse(svc corev1.Service) *crautiAnnotatedConfig {
 	return config
 }
 
-func (a *annotationParser) crautiAnnotationsEquals(svc1 corev1.Service, svc2 corev1.Service) bool {
+func (a *annotationParser) crautiAnnotationsEqual(svc1 corev1.Service, svc2 corev1.Service) bool {
 	var ann1, ann2 string
 	for key, value := range svc1.Annotations {
 		if key == crautiAnnotationConfKey {
