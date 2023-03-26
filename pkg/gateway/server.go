@@ -38,7 +38,7 @@ func NewServer(listenAddr string) *Server {
 	return s
 }
 
-func (s *Server) setupRootHandler(mux *http.ServeMux) {
+func (s *Server) buildRootHandler() http.Handler {
 	var chain http.Handler
 
 	chain = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
@@ -52,13 +52,46 @@ func (s *Server) setupRootHandler(mux *http.ServeMux) {
 	})
 
 	chain = collector.NewCollectorMiddleware(chain)
-	mux.Handle("/", chain)
+	return chain
+}
+
+func (s *Server) buildChain(mp conf.MountPoint) http.Handler {
+	root := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+	var chain http.Handler
+	chain = root
+
+	chain = collector.NewEmitterrMiddleware(chain, mp.Path, mp.Upstream)
+	// this need to run just before the logEmitter one (remember the reverse order of run)
+	chain = timeout.NewTimeoutHandlerMiddleware(chain)
+	// Middlewares are executed in reverse order: the last one
+	// is exectuted first
+	chain = proxy.NewReverseProxyMiddleware(chain, mp)
+
+	cacheConf := mp.Middlewares.Cache
+	if cacheConf.IsEnabled() {
+		chain = cache.NewCacheMiddleware(
+			chain,
+			cacheConf,
+		)
+	}
+
+	corsConf := mp.Middlewares.Cors
+	if corsConf.IsEnabled() {
+		// install the cors middleware
+		chain = cors.NewCorsMiddleware(chain)
+	}
+
+	chain = timeout.NewTimeoutMiddleware(chain, mp.Middlewares.Timeout)
+	// should be the first middleware to be able to measure
+	// stuff like time, bytes etc
+	chain = collector.NewCollectorMiddleware(chain)
+
+	return chain
 }
 
 func (s *Server) UpdateHandlers() {
 	collector.MetricsInstance().UnregisterAll()
-
-	root := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 	mux := http.NewServeMux()
 
@@ -76,35 +109,7 @@ func (s *Server) UpdateHandlers() {
 			hasRootHandler = true
 		}
 
-		var chain http.Handler
-		chain = root
-
-		chain = collector.NewEmitterrMiddleware(chain, i.Path, i.Upstream)
-		// this need to run just before the logEmitter one (remember the reverse order of run)
-		chain = timeout.NewTimeoutHandlerMiddleware(chain)
-		// Middlewares are executed in reverse order: the last one
-		// is exectuted first
-		chain = proxy.NewReverseProxyMiddleware(chain, i)
-
-		cacheConf := i.Middlewares.Cache
-		if cacheConf.IsEnabled() {
-			chain = cache.NewCacheMiddleware(
-				chain,
-				cacheConf,
-			)
-		}
-
-		corsConf := i.Middlewares.Cors
-		if corsConf.IsEnabled() {
-			// install the cors middleware
-			chain = cors.NewCorsMiddleware(chain)
-		}
-
-		chain = timeout.NewTimeoutMiddleware(chain, i.Middlewares.Timeout)
-		// should be the first middleware to be able to measure
-		// stuff like time, bytes etc
-		chain = collector.NewCollectorMiddleware(chain)
-
+		chain := s.buildChain(i)
 		mux.Handle(i.Path, chain)
 	}
 
@@ -112,7 +117,7 @@ func (s *Server) UpdateHandlers() {
 	// define a custom one here. The root handler, will respond to request for
 	// not found resources.
 	if !hasRootHandler {
-		s.setupRootHandler(mux)
+		mux.Handle("/", s.buildRootHandler())
 	}
 	s.srv.Handler = mux
 }
