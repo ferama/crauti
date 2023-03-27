@@ -1,8 +1,11 @@
 package admin
 
 import (
+	"time"
+
 	"github.com/ferama/crauti/pkg/admin/api"
 	"github.com/ferama/crauti/pkg/conf"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
@@ -22,6 +25,14 @@ func NewAdminServer() *adminServer {
 		// gin.LoggerWithWriter(gin.DefaultWriter, "/health"),
 		gin.Recovery(),
 	)
+	ginrouter.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"*"},
+		AllowHeaders:     []string{"Content-Type, Origin"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	s := &adminServer{
 		router: ginrouter,
