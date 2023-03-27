@@ -52,18 +52,18 @@ export class Home extends Component {
 
     return (
       <Container>
-        <Row>
+        {/* <Row>
           <Col><h3>Middlewares</h3></Col>
         </Row>
         <Row>
           <Col><pre>{middlewares}</pre></Col>
-        </Row>
+        </Row> */}
         <Row>
           <Col><h3>MountPoints</h3></Col>
         </Row>
         <Row>
           <Col>
-            <Table>
+            <Table striped bordered hover>
               <thead>
                 <tr>
                   <th>MountPoint</th>

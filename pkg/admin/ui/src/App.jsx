@@ -3,8 +3,6 @@ import {
   HashRouter as Router
 } from "react-router-dom";
 
-import './App.css'
-
 import ThemeProvider from 'react-bootstrap/ThemeProvider'
 
 import { AppBar } from './components/AppBar'
