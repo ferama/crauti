@@ -1,82 +1,57 @@
-import React, { Component } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Col, Container, Row } from 'react-bootstrap';
 import Table from 'react-bootstrap/Table';
 import { http } from '../lib/Axios'
-import YAML from 'yaml'
+import { Link } from 'react-router-dom';
 
-export class Home extends Component {
-  state = {
-    config: {}
-  }
-  intervalHandler = null
+export const Home = () => {
+  const [config, setConfig] = useState({})
 
-  async componentDidMount() {
-    await this.updateState()
-    this.intervalHandler = setInterval(this.updateState, 5000)
-  }
-
-  componentWillUnmount() {
-    clearInterval(this.intervalHandler)
-  }
-
-  updateState = async () => {
-    let data
-    try {
-        data = await http.get("config")
-    } catch {
-        return
+  useEffect(() => {
+    const updateState = () => {
+        http.get("config").then(data => {
+            setConfig(data.data)
+        })
     }
-    if (data.data === null) return
-    this.setState({
-        "config": data.data
-    })
-  }
+    updateState()
+    let intervalHandler = setInterval(updateState, 5000)
+    return () => {
+        clearInterval(intervalHandler)
+    }
+  },[])
 
-  render() {
-    let rows = (<></>)
-    if (this.state.config.MountPoints !== undefined) {
-      rows = this.state.config.MountPoints.map(mp => (
+  let rows = (<></>)
+  if (config.MountPoints !== undefined) {
+    rows = config.MountPoints.map(mp => {
+      return (
         <tr key={mp.Path}>
           <td>{mp.Path}</td>
           <td>{mp.Upstream}</td>
+          <td><Link to={"/mount?path=" + mp.Path}>details</Link></td>
         </tr>
-      ))
-    }
-
-    let middlewares = (<></>)
-    if (this.state.config.Middlewares !== undefined)  {
-      let d = new YAML.Document()
-      d.contents = this.state.config.Middlewares
-      middlewares = d.toString()
-    }
-
-    return (
-      <Container>
-        {/* <Row>
-          <Col><h3>Middlewares</h3></Col>
-        </Row>
-        <Row>
-          <Col><pre>{middlewares}</pre></Col>
-        </Row> */}
-        <Row>
-          <Col><h3>MountPoints</h3></Col>
-        </Row>
-        <Row>
-          <Col>
-            <Table striped bordered hover>
-              <thead>
-                <tr>
-                  <th>MountPoint</th>
-                  <th>Upstream</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows}
-              </tbody>
-            </Table>
-          </Col>
-        </Row>
-      </Container>
-    )
+    )})
   }
+  return (
+    <Container>
+      <Row>
+        <Col><h3>MountPoints</h3></Col>
+      </Row>
+      <Row>
+        <Col>
+          <Table striped bordered hover>
+            <thead>
+              <tr>
+                <th>MountPoint</th>
+                <th>Upstream</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows}
+            </tbody>
+          </Table>
+        </Col>
+      </Row>
+    </Container>
+  )
 }
