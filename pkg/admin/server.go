@@ -1,9 +1,12 @@
 package admin
 
 import (
+	"io/fs"
+	"net/http"
 	"time"
 
 	"github.com/ferama/crauti/pkg/admin/api"
+	"github.com/ferama/crauti/pkg/admin/ui"
 	"github.com/ferama/crauti/pkg/conf"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -38,6 +41,15 @@ func NewAdminServer() *adminServer {
 		router: ginrouter,
 	}
 	s.setupRoutes()
+
+	// static files custom middleware
+	// use the "dist" dir (the vite target) as static root
+	fsRoot, _ := fs.Sub(ui.StaticFiles, "dist")
+	fileserver := http.FileServer(http.FS(fsRoot))
+	ginrouter.Use(func(c *gin.Context) {
+		fileserver.ServeHTTP(c.Writer, c.Request)
+		c.Abort()
+	})
 
 	log.Info().Msgf("admin listening on '%s'", conf.ConfInst.AdminApiListenAddress)
 	return s
