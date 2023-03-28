@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Col, Container, Row } from 'react-bootstrap';
+import { Breadcrumb, BreadcrumbItem, Col, Container, Row } from 'react-bootstrap';
 import Table from 'react-bootstrap/Table';
 import { http } from '../lib/Axios'
 import { Link } from 'react-router-dom';
@@ -33,6 +33,9 @@ export const Home = () => {
   }
   return (
     <Container>
+      <Breadcrumb>
+        <BreadcrumbItem active>Home</BreadcrumbItem>
+      </Breadcrumb>
       <Row>
         <Col><h3>MountPoints</h3></Col>
       </Row>
@@ -41,7 +44,7 @@ export const Home = () => {
           <Table striped bordered hover>
             <thead>
               <tr>
-                <th>MountPoint</th>
+                <th>Path</th>
                 <th>Upstream</th>
                 <th>Actions</th>
               </tr>
