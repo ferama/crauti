@@ -34,7 +34,6 @@ type reverseProxyMiddleware struct {
 	middleware.Middleware
 
 	next http.Handler
-	// the upstream url
 }
 
 func NewReverseProxyMiddleware(next http.Handler) http.Handler {
