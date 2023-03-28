@@ -2,9 +2,13 @@ package timeout
 
 import (
 	"net/http"
+
+	"github.com/ferama/crauti/pkg/middleware"
 )
 
 type timeoutHandlerMiddleware struct {
+	middleware.Middleware
+
 	next http.Handler
 }
 

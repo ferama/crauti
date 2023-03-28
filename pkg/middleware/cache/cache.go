@@ -9,10 +9,9 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"time"
 
-	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/logger"
+	"github.com/ferama/crauti/pkg/middleware"
 	"github.com/ferama/crauti/pkg/redis"
 	"github.com/rs/zerolog"
 	"golang.org/x/text/cases"
@@ -66,44 +65,35 @@ func contains(slice []string, val string) bool {
 }
 
 type cacheMiddleware struct {
+	middleware.Middleware
+
 	next http.Handler
-
-	// cache this httpMethods only
-	httpMethods []string
-	// this headers will be considered to build the cache key
-	keyHeaders []string
-
-	// cache time to live
-	cacheTTL time.Duration
 
 	mu      sync.Mutex
 	lockmap map[string]*sync.Mutex
 }
 
-func NewCacheMiddleware(
-	next http.Handler,
-	conf conf.Cache,
-) http.Handler {
-
-	kh := []string{}
-	c := cases.Title(language.English)
-	for _, h := range conf.KeyHeaders {
-		kh = append(kh, c.String(h))
-	}
+func NewCacheMiddleware(next http.Handler) http.Handler {
 
 	cm := &cacheMiddleware{
-		next:        next,
-		keyHeaders:  kh,
-		httpMethods: conf.Methods,
-		cacheTTL:    conf.TTL,
-		lockmap:     make(map[string]*sync.Mutex),
+		next:    next,
+		lockmap: make(map[string]*sync.Mutex),
 	}
 
 	return cm
 }
 
-func (m *cacheMiddleware) encodeKeyHeader(enc string, k string, v string) string {
-	if contains(m.keyHeaders, k) {
+func (m *cacheMiddleware) encodeKeyHeader(r *http.Request, enc string, k string, v string) string {
+	chainContext := m.GetChainContext(r)
+	conf := chainContext.Conf.Middlewares.Cache
+
+	keyHeaders := []string{}
+	c := cases.Title(language.English)
+	for _, h := range conf.KeyHeaders {
+		keyHeaders = append(keyHeaders, c.String(h))
+	}
+
+	if contains(keyHeaders, k) {
 		enc = fmt.Sprintf("%s|%s", enc, v)
 	}
 	return enc
@@ -120,7 +110,7 @@ func (m *cacheMiddleware) buildCacheKey(r *http.Request) string {
 	enc := fmt.Sprintf("%s%s", r.Method, r.URL)
 	for _, k := range keys {
 		v := r.Header.Get(k)
-		enc = m.encodeKeyHeader(enc, k, v)
+		enc = m.encodeKeyHeader(r, enc, k, v)
 	}
 	// claimsContext := r.Context().Value(auth.AuthContextKey)
 	// if claimsContext != nil {
@@ -186,15 +176,22 @@ func (m *cacheMiddleware) serveFromCache(key string, w http.ResponseWriter, r *h
 }
 
 func (m *cacheMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	chainContext := m.GetChainContext(r)
+	conf := chainContext.Conf.Middlewares.Cache
 	// if the request should not be cached because the http
 	// method needs to be ignored or because it is disabled,
 	// directly serve it ignoring the cache
-	if !contains(m.httpMethods, r.Method) {
-		ctx := context.WithValue(r.Context(), CacheContextKey, CacheContext{Status: CacheStatusBypass})
-		r = r.WithContext(ctx)
-		log.Debug().
-			Str("status", CacheStatusBypass).
-			Str("key", fmt.Sprintf("%s%s", r.Method, r.URL)).Send()
+	if !contains(conf.Methods, r.Method) || !conf.IsEnabled() {
+
+		if conf.IsEnabled() {
+			ctx := context.WithValue(r.Context(), CacheContextKey, CacheContext{Status: CacheStatusBypass})
+			r = r.WithContext(ctx)
+
+			log.Debug().
+				Str("status", CacheStatusBypass).
+				Str("key", fmt.Sprintf("%s%s", r.Method, r.URL)).Send()
+
+		}
 
 		m.next.ServeHTTP(w, r)
 		return
@@ -282,5 +279,5 @@ func (m *cacheMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	m.next.ServeHTTP(rw, r)
 	// the request was served from the upstream.
 	// store the response into the cache
-	rw.Done(m.cacheTTL)
+	rw.Done(conf.TTL)
 }

@@ -3,25 +3,30 @@ package timeout
 import (
 	"context"
 	"net/http"
-	"time"
+
+	"github.com/ferama/crauti/pkg/middleware"
 )
 
 type timeoutMiddleware struct {
-	next    http.Handler
-	timeout time.Duration
+	middleware.Middleware
+
+	next http.Handler
 }
 
-func NewTimeoutMiddleware(next http.Handler, timeout time.Duration) http.Handler {
+func NewTimeoutMiddleware(next http.Handler) http.Handler {
 	m := &timeoutMiddleware{
-		next:    next,
-		timeout: timeout,
+		next: next,
 	}
 	return m
 }
 
 func (m *timeoutMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if m.timeout > 0 {
-		ctx, cancel := context.WithTimeout(r.Context(), m.timeout)
+	chainContext := m.GetChainContext(r)
+
+	timeout := chainContext.Conf.Middlewares.Timeout
+
+	if timeout > 0 {
+		ctx, cancel := context.WithTimeout(r.Context(), timeout)
 		r = r.WithContext(ctx)
 
 		defer cancel()

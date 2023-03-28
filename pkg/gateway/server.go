@@ -1,9 +1,11 @@
 package gateway
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
+	"github.com/ferama/crauti/pkg/chaincontext"
 	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/logger"
 	"github.com/ferama/crauti/pkg/middleware/cache"
@@ -43,7 +45,7 @@ func (s *Server) buildRootHandler() http.Handler {
 	var chain http.Handler
 
 	chain = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-	chain = collector.NewEmitterrMiddleware(chain, "", "")
+	chain = collector.NewEmitterrMiddleware(chain)
 
 	next := chain
 	chain = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -62,32 +64,35 @@ func (s *Server) buildChain(mp conf.MountPoint) http.Handler {
 	var chain http.Handler
 	chain = root
 
-	chain = collector.NewEmitterrMiddleware(chain, mp.Path, mp.Upstream)
+	if mp.Path != "" {
+		collector.MetricsInstance().RegisterMountPath(mp.Path, mp.Upstream)
+	}
+	chain = collector.NewEmitterrMiddleware(chain)
 	// this need to run just before the logEmitter one (remember the reverse order of run)
 	chain = timeout.NewTimeoutHandlerMiddleware(chain)
 	// Middlewares are executed in reverse order: the last one
 	// is exectuted first
-	chain = proxy.NewReverseProxyMiddleware(chain, mp)
+	chain = proxy.NewReverseProxyMiddleware(chain)
 
-	cacheConf := mp.Middlewares.Cache
-	if cacheConf.IsEnabled() {
-		chain = cache.NewCacheMiddleware(
-			chain,
-			cacheConf,
-		)
-	}
+	// install the cache middleware
+	chain = cache.NewCacheMiddleware(chain)
 
-	corsConf := mp.Middlewares.Cors
-	if corsConf.IsEnabled() {
-		// install the cors middleware
-		chain = cors.NewCorsMiddleware(chain)
-	}
+	// install the cors middleware
+	chain = cors.NewCorsMiddleware(chain)
 
-	chain = timeout.NewTimeoutMiddleware(chain, mp.Middlewares.Timeout)
+	chain = timeout.NewTimeoutMiddleware(chain)
 	// should be the first middleware to be able to measure
 	// stuff like time, bytes etc
 	chain = collector.NewCollectorMiddleware(chain)
 
+	next := chain
+	chain = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), chaincontext.ChainContextKey, chaincontext.ChainContext{
+			Conf: mp,
+		})
+		r = r.WithContext(ctx)
+		next.ServeHTTP(w, r)
+	})
 	return chain
 }
 

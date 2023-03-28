@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 	"time"
+
+	"github.com/ferama/crauti/pkg/middleware"
 )
 
 type contextKey string
@@ -19,6 +21,8 @@ type collectorContext struct {
 // to be the first middleware executed. It will collect all sort of metrics
 // and request related stuff like response status and stuff.
 type collectorMiddleware struct {
+	middleware.Middleware
+
 	next http.Handler
 }
 
