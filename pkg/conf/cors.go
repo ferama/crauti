@@ -1,19 +1,19 @@
 package conf
 
-type cors struct {
+type Cors struct {
 	// Do not use this directly. Use the IsEnabled function instead
 	Enabled *bool `yaml:"enabled,omitempty"`
 }
 
-func (c *cors) clone() cors {
+func (c *Cors) clone() Cors {
 	enabled := *c.Enabled
-	out := cors{
+	out := Cors{
 		Enabled: &enabled,
 	}
 	return out
 }
 
 // Helper function that check for nil value on Enabled field
-func (c *cors) IsEnabled() bool {
+func (c *Cors) IsEnabled() bool {
 	return c.Enabled != nil && *c.Enabled
 }

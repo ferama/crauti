@@ -1,11 +1,15 @@
 package cors
 
 import (
+	"context"
 	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/ferama/crauti/pkg/chaincontext"
+	"github.com/ferama/crauti/pkg/conf"
 )
 
 func TestMustHaveCors(t *testing.T) {
@@ -16,7 +20,26 @@ func TestMustHaveCors(t *testing.T) {
 	m := &corsMiddleware{
 		next: root,
 	}
-	s := httptest.NewServer(m)
+
+	var enabled *bool
+	b := true
+	enabled = &b
+	chain := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), chaincontext.ChainContextKey, chaincontext.ChainContext{
+			Conf: conf.MountPoint{
+				Path:     "/",
+				Upstream: "https://httpbin.org/get",
+				Middlewares: conf.Middlewares{
+					Cors: conf.Cors{
+						Enabled: enabled,
+					},
+				},
+			},
+		})
+		r = r.WithContext(ctx)
+		m.ServeHTTP(w, r)
+	})
+	s := httptest.NewServer(chain)
 	defer s.Close()
 
 	req, _ := http.NewRequest("GET", s.URL, nil)
@@ -73,7 +96,25 @@ func TestMustNotHaveCors(t *testing.T) {
 	m := &corsMiddleware{
 		next: root,
 	}
-	s := httptest.NewServer(m)
+	var enabled *bool
+	b := true
+	enabled = &b
+	chain := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), chaincontext.ChainContextKey, chaincontext.ChainContext{
+			Conf: conf.MountPoint{
+				Path:     "/",
+				Upstream: "https://httpbin.org/get",
+				Middlewares: conf.Middlewares{
+					Cors: conf.Cors{
+						Enabled: enabled,
+					},
+				},
+			},
+		})
+		r = r.WithContext(ctx)
+		m.ServeHTTP(w, r)
+	})
+	s := httptest.NewServer(chain)
 	defer s.Close()
 
 	req, _ := http.NewRequest("GET", s.URL, nil)

@@ -21,12 +21,12 @@ type MountPoint struct {
 
 	// middlewares configuration can be overridden setting
 	// changed values here
-	Middlewares middlewares `yaml:"middlewares"`
+	Middlewares Middlewares `yaml:"middlewares"`
 }
 
 // middelewares configuration struct
-type middlewares struct {
-	Cors  cors  `yaml:"cors"`
+type Middlewares struct {
+	Cors  Cors  `yaml:"cors"`
 	Cache Cache `yaml:"cache"`
 	Proxy proxy `yaml:"proxy"`
 	// on timeout expiration, the context will be canceled and request
@@ -34,8 +34,8 @@ type middlewares struct {
 	Timeout time.Duration `yaml:"timeout,omitempty"`
 }
 
-func (m *middlewares) clone() middlewares {
-	c := middlewares{
+func (m *Middlewares) clone() Middlewares {
+	c := Middlewares{
 		Cors:    m.Cors.clone(),
 		Cache:   m.Cache.clone(),
 		Proxy:   m.Proxy.clone(),
@@ -68,7 +68,7 @@ type config struct {
 	// kubernetes relatech conf
 	Kubernetes kubernetes `yaml:"kubernetes"`
 	// global middlewares configuration
-	Middlewares middlewares `yaml:"middlewares"`
+	Middlewares Middlewares `yaml:"middlewares"`
 	// define mount points
 	MountPoints []MountPoint `yaml:"mountPoints"`
 }
