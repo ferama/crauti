@@ -70,10 +70,8 @@ func (s *Server) buildChain(mp conf.MountPoint) http.Handler {
 	// Middlewares are executed in reverse order: the last one
 	// is exectuted first
 	chain = proxy.NewReverseProxyMiddleware(chain)
-
 	// install the cache middleware
 	chain = cache.NewCacheMiddleware(chain)
-
 	// install the cors middleware
 	chain = cors.NewCorsMiddleware(chain)
 

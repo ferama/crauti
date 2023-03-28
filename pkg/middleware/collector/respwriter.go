@@ -29,7 +29,7 @@ func (rw *responseWriter) WriteHeader(statusCode int) {
 	if !rw.wroteHeader {
 		rw.statusCode = statusCode
 		rw.wroteHeader = true
-		rw.WriteHeader(statusCode)
+		rw.w.WriteHeader(statusCode)
 	}
 }
 

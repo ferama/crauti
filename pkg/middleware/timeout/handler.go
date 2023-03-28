@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/ferama/crauti/pkg/middleware"
+	"github.com/ferama/crauti/pkg/utils"
 )
 
 type timeoutHandlerMiddleware struct {
@@ -23,16 +24,11 @@ func (m *timeoutHandlerMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	select {
 	// a timeout occurred?
 	case <-r.Context().Done():
-		w.WriteHeader(http.StatusGatewayTimeout)
 		w.Write([]byte("bad gateway: connection timeout\n"))
+		utils.EmitAndReturn(w, r)
+		return
 	default:
 	}
 
-	// still serve the next op. If a timeout occurred, next ops can always detect
-	// it using the r.Context().Done() channel.
-	// Actually the ReverseProxyMiddleware already handle it using the behaviour
-	// inherited from httputil.NewSingleHostReverseProxy
-	// Ideally the only next op should be the log emitter and no more changes should
-	// be made to the response.
 	m.next.ServeHTTP(w, r)
 }

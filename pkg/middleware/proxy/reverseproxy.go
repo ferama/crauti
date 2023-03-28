@@ -79,7 +79,13 @@ func (m *reverseProxyMiddleware) setupProxy(upstreamUrl *url.URL) *httputil.Reve
 		log.Debug().
 			Str("upstream", fmt.Sprintf("%s://%s", upstreamUrl.Scheme, upstreamUrl.Host)).
 			Msg(err.Error())
-		w.WriteHeader(http.StatusBadGateway)
+
+		select {
+		case <-r.Context().Done():
+			w.WriteHeader(http.StatusGatewayTimeout)
+		default:
+			w.WriteHeader(http.StatusBadGateway)
+		}
 	}
 	proxy.Transport = &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
