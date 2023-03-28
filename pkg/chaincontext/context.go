@@ -3,7 +3,6 @@ package chaincontext
 import (
 	"context"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/ferama/crauti/pkg/conf"
@@ -32,8 +31,6 @@ func (c *ChainContext) Update(r *http.Request, n ChainContext) *http.Request {
 }
 
 type ProxyContext struct {
-	Upstream                 *url.URL
-	MountPath                string
 	UpstreamRequestStartTime time.Time
 }
 

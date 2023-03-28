@@ -171,19 +171,18 @@ func (m *cacheMiddleware) serveFromCache(key string, w http.ResponseWriter, r *h
 }
 
 func (m *cacheMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	chainContext := m.GetChainContext(r)
-	conf := chainContext.Conf.Middlewares.Cache
+	ctx := m.GetChainContext(r)
+	conf := ctx.Conf.Middlewares.Cache
 	// if the request should not be cached because the http
 	// method needs to be ignored or because it is disabled,
 	// directly serve it ignoring the cache
 	if !contains(conf.Methods, r.Method) || !conf.IsEnabled() {
 
 		if conf.IsEnabled() {
-			chainContext := m.GetChainContext(r)
-			chainContext.Cache = &chaincontext.CacheContext{
+			ctx.Cache = &chaincontext.CacheContext{
 				Status: CacheStatusBypass,
 			}
-			r = chainContext.Update(r, chainContext)
+			r = ctx.Update(r, ctx)
 
 			log.Debug().
 				Str("status", CacheStatusBypass).
@@ -255,22 +254,20 @@ func (m *cacheMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Str("status", CacheStatusMiss).
 			Str("key", cacheKey).Send()
 
-		chainContext := m.GetChainContext(r)
-		chainContext.Cache = &chaincontext.CacheContext{
+		ctx.Cache = &chaincontext.CacheContext{
 			Status: CacheStatusMiss,
 		}
-		r = chainContext.Update(r, chainContext)
+		r = ctx.Update(r, ctx)
 
 	} else {
 		log.Debug().
 			Str("status", CacheStatusIgnored).
 			Str("key", cacheKey).Send()
 
-		chainContext := m.GetChainContext(r)
-		chainContext.Cache = &chaincontext.CacheContext{
+		ctx.Cache = &chaincontext.CacheContext{
 			Status: CacheStatusIgnored,
 		}
-		r = chainContext.Update(r, chainContext)
+		r = ctx.Update(r, ctx)
 	}
 
 	// If I'm here, I need to poke the backend and fill the cache

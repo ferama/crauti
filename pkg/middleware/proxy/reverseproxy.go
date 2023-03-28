@@ -89,31 +89,21 @@ func (m *reverseProxyMiddleware) setupProxy(upstreamUrl *url.URL) *httputil.Reve
 }
 
 func (m *reverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	chainContext := m.GetChainContext(r)
+	ctx := m.GetChainContext(r)
 
-	upstreamUrl, err := url.Parse(chainContext.Conf.Upstream)
+	upstreamUrl, err := url.Parse(ctx.Conf.Upstream)
 	if err != nil {
 		log.Fatal().Err(err)
 	}
 
 	proxy := m.setupProxy(upstreamUrl)
 
-	chainContext.Proxy = &chaincontext.ProxyContext{
-		Upstream:                 upstreamUrl,
-		MountPath:                chainContext.Conf.Path,
+	ctx.Proxy = &chaincontext.ProxyContext{
 		UpstreamRequestStartTime: time.Now(),
 	}
-	r = chainContext.Update(r, chainContext)
-	// r = r.WithContext(context.WithValue(
-	// 	r.Context(),
-	// 	ProxyContextKey,
-	// 	ProxyContext{
-	// 		Upstream:                 upstreamUrl,
-	// 		MountPath:                chainContext.Conf.Path,
-	// 		UpstreamRequestStartTime: time.Now(),
-	// 	}))
+	r = ctx.Update(r, ctx)
 
-	cacheContext := chainContext.Cache
+	cacheContext := ctx.Cache
 	// if we do not have tha cache middleware enabled or if it is enabled but the requests
 	// doesn't hit the cache, poke the upstream
 	if cacheContext == nil || cacheContext.Status != cache.CacheStatusHit {
@@ -121,7 +111,7 @@ func (m *reverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			Str("upstream", fmt.Sprintf("%s://%s", upstreamUrl.Scheme, upstreamUrl.Host)).
 			Msg("poke upstream")
 
-		proxy := http.StripPrefix(chainContext.Conf.Path, proxy)
+		proxy := http.StripPrefix(ctx.Conf.Path, proxy)
 
 		defer func() {
 			// the call to proxy.ServeHTTP some rows below, will panic if

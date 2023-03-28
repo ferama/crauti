@@ -62,12 +62,11 @@ func (m *emitterMiddleware) emitLogs(r *http.Request) {
 
 	proxyContext := chainContext.Proxy
 	if proxyContext != nil {
-		upstream := fmt.Sprintf("%s:%s", proxyContext.Upstream.Hostname(), proxyContext.Upstream.Port())
 		upstreamLatency := time.Since(proxyContext.UpstreamRequestStartTime)
 
 		proxyUpstreamDict := zerolog.Dict().
-			Str("host", upstream).
-			Str("mountPath", proxyContext.MountPath).
+			Str("url", chainContext.Conf.Upstream).
+			Str("mountPath", chainContext.Conf.Path).
 			Float64("latency", upstreamLatency.Seconds()).
 			Str("latency_human", upstreamLatency.Round(1*time.Millisecond).String())
 
