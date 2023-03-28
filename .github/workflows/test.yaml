@@ -17,4 +17,5 @@ jobs:
 
       - name: Run tests
         run: |
+          mkdir -p pkg/admin/ui/dist && touch pkg/admin/ui/dist/test
           go test ./... -race -coverprofile=coverage.txt -covermode=atomic
