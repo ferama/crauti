@@ -64,9 +64,6 @@ func (s *Server) buildChain(mp conf.MountPoint) http.Handler {
 	var chain http.Handler
 	chain = root
 
-	if mp.Path != "" {
-		collector.MetricsInstance().RegisterMountPath(mp.Path, mp.Upstream)
-	}
 	chain = collector.NewEmitterrMiddleware(chain)
 	// this need to run just before the logEmitter one (remember the reverse order of run)
 	chain = timeout.NewTimeoutHandlerMiddleware(chain)
@@ -85,6 +82,7 @@ func (s *Server) buildChain(mp conf.MountPoint) http.Handler {
 	// stuff like time, bytes etc
 	chain = collector.NewCollectorMiddleware(chain)
 
+	// setup chain context
 	next := chain
 	chain = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), chaincontext.ChainContextKey, chaincontext.ChainContext{
@@ -114,7 +112,10 @@ func (s *Server) UpdateHandlers() {
 		if i.Path == "/" {
 			hasRootHandler = true
 		}
-
+		// setup metrics
+		if i.Path != "" {
+			collector.MetricsInstance().RegisterMountPath(i.Path, i.Upstream)
+		}
 		chain := s.buildChain(i)
 		mux.Handle(i.Path, chain)
 	}

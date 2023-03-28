@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"github.com/ferama/crauti/pkg/middleware"
-	"github.com/ferama/crauti/pkg/middleware/cache"
-	"github.com/ferama/crauti/pkg/middleware/proxy"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -28,6 +26,8 @@ func NewEmitterrMiddleware(next http.Handler) http.Handler {
 }
 
 func (m *emitterMiddleware) emitLogs(r *http.Request) {
+	chainContext := m.GetChainContext(r)
+
 	collectorContext := r.Context().Value(collectorContextKey).(collectorContext)
 
 	totalLatency := time.Since(collectorContext.StartTime)
@@ -55,20 +55,19 @@ func (m *emitterMiddleware) emitLogs(r *http.Request) {
 	event := log.Info().
 		Dict("httpRequest", httpRequestDict)
 
-	cacheContext := r.Context().Value(cache.CacheContextKey)
+	cacheContext := chainContext.Cache
 	if cacheContext != nil {
-		event.Str("cache", cacheContext.(cache.CacheContext).Status)
+		event.Str("cache", cacheContext.Status)
 	}
 
-	proxyContext := r.Context().Value(proxy.ProxyContextKey)
+	proxyContext := chainContext.Proxy
 	if proxyContext != nil {
-		pc := proxyContext.(proxy.ProxyContext)
-		upstream := fmt.Sprintf("%s:%s", pc.Upstream.Hostname(), pc.Upstream.Port())
-		upstreamLatency := time.Since(pc.UpstreamRequestStartTime)
+		upstream := fmt.Sprintf("%s:%s", proxyContext.Upstream.Hostname(), proxyContext.Upstream.Port())
+		upstreamLatency := time.Since(proxyContext.UpstreamRequestStartTime)
 
 		proxyUpstreamDict := zerolog.Dict().
 			Str("host", upstream).
-			Str("mountPath", pc.MountPath).
+			Str("mountPath", proxyContext.MountPath).
 			Float64("latency", upstreamLatency.Seconds()).
 			Str("latency_human", upstreamLatency.Round(1*time.Millisecond).String())
 
@@ -101,11 +100,10 @@ func (m *emitterMiddleware) emitMetrics(r *http.Request) {
 		c.(prometheus.Observer).Observe(totalLatency)
 	}
 
+	proxyContext := chainContext.Proxy
 	// upstream request latency
-	proxyContext := r.Context().Value(proxy.ProxyContextKey)
 	if proxyContext != nil {
-		pc := proxyContext.(proxy.ProxyContext)
-		upstreamLatency := time.Since(pc.UpstreamRequestStartTime).Seconds()
+		upstreamLatency := time.Since(proxyContext.UpstreamRequestStartTime).Seconds()
 
 		key = MetricsInstance().GetUpstreamRequestLatencyMapKey(metricPathKey)
 		c, ok = MetricsInstance().Get(key)
@@ -114,10 +112,9 @@ func (m *emitterMiddleware) emitMetrics(r *http.Request) {
 		}
 	}
 
-	cacheContext := r.Context().Value(cache.CacheContextKey)
+	cacheContext := chainContext.Cache
 	if cacheContext != nil {
-		status := cacheContext.(cache.CacheContext).Status
-		key = MetricsInstance().GetCacheTotalMapKey(metricPathKey, status)
+		key = MetricsInstance().GetCacheTotalMapKey(metricPathKey, cacheContext.Status)
 		c, ok = MetricsInstance().Get(key)
 		if ok {
 			c.(prometheus.Counter).Inc()

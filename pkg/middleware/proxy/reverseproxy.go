@@ -1,7 +1,6 @@
 package proxy
 
 import (
-	"context"
 	"crypto/tls"
 	"fmt"
 	"io"
@@ -12,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ferama/crauti/pkg/chaincontext"
 	"github.com/ferama/crauti/pkg/logger"
 	"github.com/ferama/crauti/pkg/middleware"
 	"github.com/ferama/crauti/pkg/middleware/cache"
@@ -28,16 +28,6 @@ func init() {
 	golog.SetOutput(io.Discard)
 
 	log = logger.GetLogger("reverseproxy")
-}
-
-type contextKey string
-
-const ProxyContextKey contextKey = "proxy-middleware-context"
-
-type ProxyContext struct {
-	Upstream                 *url.URL
-	MountPath                string
-	UpstreamRequestStartTime time.Time
 }
 
 type reverseProxyMiddleware struct {
@@ -108,19 +98,25 @@ func (m *reverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	proxy := m.setupProxy(upstreamUrl)
 
-	r = r.WithContext(context.WithValue(
-		r.Context(),
-		ProxyContextKey,
-		ProxyContext{
-			Upstream:                 upstreamUrl,
-			MountPath:                chainContext.Conf.Path,
-			UpstreamRequestStartTime: time.Now(),
-		}))
+	chainContext.Proxy = &chaincontext.ProxyContext{
+		Upstream:                 upstreamUrl,
+		MountPath:                chainContext.Conf.Path,
+		UpstreamRequestStartTime: time.Now(),
+	}
+	r = chainContext.Update(r, chainContext)
+	// r = r.WithContext(context.WithValue(
+	// 	r.Context(),
+	// 	ProxyContextKey,
+	// 	ProxyContext{
+	// 		Upstream:                 upstreamUrl,
+	// 		MountPath:                chainContext.Conf.Path,
+	// 		UpstreamRequestStartTime: time.Now(),
+	// 	}))
 
-	cacheContext := r.Context().Value(cache.CacheContextKey)
+	cacheContext := chainContext.Cache
 	// if we do not have tha cache middleware enabled or if it is enabled but the requests
 	// doesn't hit the cache, poke the upstream
-	if cacheContext == nil || cacheContext.(cache.CacheContext).Status != cache.CacheStatusHit {
+	if cacheContext == nil || cacheContext.Status != cache.CacheStatusHit {
 		log.Debug().
 			Str("upstream", fmt.Sprintf("%s://%s", upstreamUrl.Scheme, upstreamUrl.Host)).
 			Msg("poke upstream")

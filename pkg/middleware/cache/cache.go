@@ -2,7 +2,6 @@ package cache
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"net/http"
 	"net/textproto"
@@ -10,6 +9,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/ferama/crauti/pkg/chaincontext"
 	"github.com/ferama/crauti/pkg/logger"
 	"github.com/ferama/crauti/pkg/middleware"
 	"github.com/ferama/crauti/pkg/redis"
@@ -41,14 +41,6 @@ var log *zerolog.Logger
 
 func init() {
 	log = logger.GetLogger("cache")
-}
-
-type contextKey string
-
-const CacheContextKey contextKey = "cache-middleware-context"
-
-type CacheContext struct {
-	Status string
 }
 
 func buildRedisKey(keyHead string, key string) string {
@@ -163,8 +155,11 @@ func (m *cacheMiddleware) serveFromCache(key string, w http.ResponseWriter, r *h
 		w.Write(body)
 
 		// set the hit status into the context
-		ctx := context.WithValue(r.Context(), CacheContextKey, CacheContext{Status: CacheStatusHit})
-		r = r.WithContext(ctx)
+		chainContext := m.GetChainContext(r)
+		chainContext.Cache = &chaincontext.CacheContext{
+			Status: CacheStatusHit,
+		}
+		r = chainContext.Update(r, chainContext)
 
 		// we can safely proceed calling the next op here. We set the cache
 		// status into the context, so the next ops can adapt their behaviour using
@@ -184,8 +179,11 @@ func (m *cacheMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !contains(conf.Methods, r.Method) || !conf.IsEnabled() {
 
 		if conf.IsEnabled() {
-			ctx := context.WithValue(r.Context(), CacheContextKey, CacheContext{Status: CacheStatusBypass})
-			r = r.WithContext(ctx)
+			chainContext := m.GetChainContext(r)
+			chainContext.Cache = &chaincontext.CacheContext{
+				Status: CacheStatusBypass,
+			}
+			r = chainContext.Update(r, chainContext)
 
 			log.Debug().
 				Str("status", CacheStatusBypass).
@@ -257,19 +255,22 @@ func (m *cacheMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Str("status", CacheStatusMiss).
 			Str("key", cacheKey).Send()
 
-		r = r.WithContext(context.WithValue(
-			r.Context(),
-			CacheContextKey,
-			CacheContext{Status: CacheStatusMiss}))
+		chainContext := m.GetChainContext(r)
+		chainContext.Cache = &chaincontext.CacheContext{
+			Status: CacheStatusMiss,
+		}
+		r = chainContext.Update(r, chainContext)
 
 	} else {
 		log.Debug().
 			Str("status", CacheStatusIgnored).
 			Str("key", cacheKey).Send()
-		r = r.WithContext(context.WithValue(
-			r.Context(),
-			CacheContextKey,
-			CacheContext{Status: CacheStatusIgnored}))
+
+		chainContext := m.GetChainContext(r)
+		chainContext.Cache = &chaincontext.CacheContext{
+			Status: CacheStatusIgnored,
+		}
+		r = chainContext.Update(r, chainContext)
 	}
 
 	// If I'm here, I need to poke the backend and fill the cache
