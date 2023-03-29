@@ -23,7 +23,7 @@ export const Home = () => {
   },[])
 
   let rows = (<></>)
-  if (config.MountPoints !== undefined) {
+  if ((config.MountPoints !== undefined) && (config.MountPoints != null)) {
     rows = config.MountPoints.map(mp => {
       return (
         <tr key={mp.Path}>
