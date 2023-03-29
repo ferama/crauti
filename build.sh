@@ -17,7 +17,6 @@ mkdir -p pkg/admin/ui/dist && touch pkg/admin/ui/dist/test
 go clean -testcache
 go test ./... -v -cover -race || exit 1
 
-
 ### build ui
 cd $DIR/pkg/admin/ui && npm install && npm run build && cd $DIR
 
