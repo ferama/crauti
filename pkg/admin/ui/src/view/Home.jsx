@@ -8,6 +8,7 @@ export const Home = () => {
   const [config, setConfig] = useState({})
 
   useEffect(() => {
+    // like componentDidMount
     const updateState = () => {
         http.get("config").then(data => {
             setConfig(data.data)
@@ -16,6 +17,7 @@ export const Home = () => {
     updateState()
     let intervalHandler = setInterval(updateState, 5000)
     return () => {
+        // like componentWillUnmount
         clearInterval(intervalHandler)
     }
   },[])

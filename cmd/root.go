@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"path/filepath"
-	"time"
 
 	"github.com/ferama/crauti/pkg/admin"
 	"github.com/ferama/crauti/pkg/conf"
@@ -28,7 +27,6 @@ func init() {
 	}
 
 	rootCmd.Flags().StringP("config", "c", "", "set config file path")
-	rootCmd.Flags().BoolP("debug", "d", false, "debug")
 }
 
 var rootCmd = &cobra.Command{
@@ -43,17 +41,6 @@ var rootCmd = &cobra.Command{
 			log.Print("no config file detected, using default values")
 		}
 		conf.Update()
-
-		debug, _ := cmd.Flags().GetBool("debug")
-		if debug {
-			go func() {
-				for {
-					c, _ := conf.Dump()
-					log.Printf("current conf:\n\n%s\n", c)
-					time.Sleep(3 * time.Second)
-				}
-			}()
-		}
 
 		// the api gateway server
 		log.Info().Msgf("gateway listening on '%s'", conf.ConfInst.Gateway.ListenAddress)

@@ -17,6 +17,7 @@ export const AppBar = () => {
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
             <Nav.Link as={Link} to="/home">Home</Nav.Link>
+            <Nav.Link as={Link} to="/config">Config</Nav.Link>
           </Nav>
         </Navbar.Collapse>
       </Container>
