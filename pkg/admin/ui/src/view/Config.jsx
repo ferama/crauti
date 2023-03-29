@@ -9,7 +9,7 @@ export const Config = () => {
     useEffect(() => {
       // like componentDidMount
       const updateState = () => {
-          http.get("config").then(data => {
+          http.get("config/yaml").then(data => {
               setConfig(data.data)
           })
       }
@@ -20,15 +20,13 @@ export const Config = () => {
           clearInterval(intervalHandler)
       }
     },[])
-    console.log(config)
 
+    // console.log(config)
     let out = (<></>)
-    if (config.Middlewares !== undefined)  {
-        let c = config
-        delete c.MountPoints
-        let d = new YAML.Document()
-        d.contents = c
-        out = d.toString()
+    if (config != "") {
+        let doc = YAML.parse(config)
+        if (doc != null) delete doc.mountPoints
+        out = YAML.stringify(doc)
     }
     return(
         <Container>

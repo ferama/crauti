@@ -13,7 +13,7 @@ export const MountPath = () => {
 
     useEffect(() => {
         const updateState = () => {
-            http.get("config").then(data => {
+            http.get("config/yaml").then(data => {
                 setConfig(data.data)
             })
         }
@@ -26,13 +26,14 @@ export const MountPath = () => {
 
     let middlewares = (<></>)
     let mountPoint = {}
-    if (config.MountPoints !== undefined)  {
-        for (let mp of config.MountPoints) {
-            if (mp.Path === path) {
-                mountPoint = mp
-                let d = new YAML.Document()
-                d.contents = mp.Middlewares
-                middlewares = d.toString()
+    if (config != "") {
+        let doc = YAML.parse(config)
+        if (doc != null) {
+            for (let mp of doc.mountPoints) {
+                if (mp.path === path) {
+                    middlewares = YAML.stringify(mp)
+                    mountPoint = mp
+                }
             }
         }
     }
@@ -41,7 +42,7 @@ export const MountPath = () => {
         <Container>
             <Breadcrumb>
                 <BreadcrumbItem linkAs={Link} linkProps={{ to: "/" }}>Home</BreadcrumbItem>
-                <BreadcrumbItem active>- {mountPoint.Path}</BreadcrumbItem>
+                <BreadcrumbItem active>- {mountPoint.path}</BreadcrumbItem>
             </Breadcrumb>
             <Row>
                 <Col><h3>MountPoint</h3></Col>
@@ -54,11 +55,11 @@ export const MountPath = () => {
                     <tbody>
                         <tr>
                             <th>Path</th>
-                            <td>{mountPoint.Path}</td>
+                            <td>{mountPoint.path}</td>
                         </tr>
                         <tr>
                             <th>Upstream</th>
-                            <td>{mountPoint.Upstream}</td>
+                            <td>{mountPoint.upstream}</td>
                         </tr>
                     </tbody>
                 </Table>
