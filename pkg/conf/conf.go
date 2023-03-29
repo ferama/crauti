@@ -2,6 +2,7 @@ package conf
 
 import (
 	"log"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -79,6 +80,13 @@ func (c *config) reset() {
 }
 
 func setDefaults() {
+	// IMPORTANT:
+	// conf that doesn't have a default actually can't be set with
+	// env vars.
+	// Example:
+	//		CRAUTI_KUBERNETES_WATCHNAMESPACE="test"
+	// will work, becouse it has a default here
+
 	viper.SetDefault("Debug", false)
 
 	// Gateway conf
@@ -87,7 +95,8 @@ func setDefaults() {
 	viper.SetDefault("Gateway.WriteTimeout", "120s")
 	viper.SetDefault("Gateway.IdleTimeout", "360s")
 
-	// viper.SetDefault("Kubernetes.Autodiscover", true)
+	viper.SetDefault("Kubernetes.Autodiscover", false)
+	viper.SetDefault("Kubernetes.WatchNamespace", "")
 	viper.SetDefault("AdminApiListenAddress", ":8181")
 
 	///////////////////////////////////////////////////////
@@ -120,6 +129,8 @@ func init() {
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
 
+	replacer := strings.NewReplacer(".", "_")
+	viper.SetEnvKeyReplacer(replacer)
 	// this two lines enables set config through env vars.
 	// you can use something like
 	//	CRAUTI_YOURCONFVARHERE=YOURVALUE
