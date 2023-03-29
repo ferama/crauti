@@ -20,6 +20,7 @@ RUN set -eux; \
     apt install -y \
         ca-certificates \
         curl \
+        procps \
         psmisc \
         iputils-ping \
         netcat \
