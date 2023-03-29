@@ -14,19 +14,16 @@ RUN go build \
     -o /crauti .
 
 # Final docker image
-FROM ubuntu:latest
+FROM debian:stable-slim
 RUN set -eux; \
     apt update && \
     apt install -y \
         ca-certificates \
         curl \
-        vim \
-        byobu \
         psmisc \
         iputils-ping \
         netcat \
         dnsutils \
-        bash-completion \
     && \
     apt clean
 
