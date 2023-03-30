@@ -18,6 +18,13 @@ import (
 var log *zerolog.Logger
 
 func init() {
+	// this one is here to make some init vars available to other
+	// init functions.
+	// The use case is the CRAUTI_DEBUG that need to be available as
+	// soon as possibile in order to instantiate the logger correctly
+	viper.ReadInConfig()
+	conf.Update()
+
 	log = logger.GetLogger("root")
 
 	if home := homedir.HomeDir(); home != "" {

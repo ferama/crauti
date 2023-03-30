@@ -85,7 +85,7 @@ func setDefaults() {
 	// env vars.
 	// Example:
 	//		CRAUTI_KUBERNETES_WATCHNAMESPACE="test"
-	// will work, becouse it has a default here
+	// will work, because it has a default here
 
 	viper.SetDefault("Debug", false)
 
