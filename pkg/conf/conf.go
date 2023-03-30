@@ -122,6 +122,7 @@ func setDefaults() {
 	viper.SetDefault("Middlewares.Cache.Redis.Port", 6379)
 	viper.SetDefault("Middlewares.Cache.TTL", "5m")
 	viper.SetDefault("Middlewares.Cache.Methods", "GET,HEAD,OPTIONS")
+	viper.SetDefault("Middlewares.Cache.KeyHeaders", "")
 }
 
 func init() {

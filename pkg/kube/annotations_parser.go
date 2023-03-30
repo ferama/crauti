@@ -24,6 +24,8 @@ or you can use yaml instead
 	annotations:
 		crauti/conf: |
 			enabled: true
+			# optional: force upstream port
+			upstreamHttpPort: 8181
 			mountPoints:
 				- source: "/"
 				  path: "/test1-t1"
@@ -33,7 +35,6 @@ or you can use yaml instead
 					  enabled: true
 				- source: "/"
     			  path: "/test2"
-				  upstreamHttpPort: 8181
 
 */
 
