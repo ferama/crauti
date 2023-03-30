@@ -12,15 +12,25 @@ import (
 	"time"
 
 	"github.com/ferama/crauti/pkg/chaincontext"
+	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/logger"
 	"github.com/ferama/crauti/pkg/middleware"
 	"github.com/ferama/crauti/pkg/middleware/cache"
 	"github.com/rs/zerolog"
+	"github.com/spf13/viper"
 )
 
 var log *zerolog.Logger
 
+var bpool *bufferPool
+
 func init() {
+	// this one is here to make some init vars available to other
+	// init functions.
+	// The use case is the CRAUTI_DEBUG that need to be available as
+	// soon as possibile in order to instantiate the logger correctly
+	viper.ReadInConfig()
+	conf.Update()
 	// apparently there is no way to use a custom logger like zerolog
 	// Most cases are handled overriding the ErrorHandler
 	// Disabling golog here, it should only affect the copy buffer failure that is already
@@ -28,6 +38,7 @@ func init() {
 	golog.SetOutput(io.Discard)
 
 	log = logger.GetLogger("reverseproxy")
+	bpool = newPool()
 }
 
 type reverseProxyMiddleware struct {
@@ -72,6 +83,9 @@ func (m *reverseProxyMiddleware) director(proxy *httputil.ReverseProxy) func(r *
 
 func (m *reverseProxyMiddleware) setupProxy(upstreamUrl *url.URL) *httputil.ReverseProxy {
 	proxy := httputil.NewSingleHostReverseProxy(upstreamUrl)
+
+	// install the buffer pool
+	proxy.BufferPool = bpool
 	proxy.Director = m.director(proxy)
 
 	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
