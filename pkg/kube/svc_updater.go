@@ -10,7 +10,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/klog/v2"
 )
 
 type svcUpdater struct {
@@ -60,7 +59,7 @@ func (s *svcUpdater) synch() {
 				if len(svc.Spec.Ports) == 1 {
 					port = svc.Spec.Ports[0].Port
 				} else {
-					klog.Error("missing port configuration")
+					log.Error().Msg("missing port configuration")
 					continue
 				}
 			}

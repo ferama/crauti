@@ -2,9 +2,9 @@ package kube
 
 import (
 	"github.com/ferama/crauti/pkg/conf"
+	"github.com/rs/zerolog/log"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
-	"k8s.io/klog/v2"
 )
 
 const crautiAnnotationConfKey = "crauti/conf"
@@ -33,6 +33,7 @@ or you can use yaml instead
 					  enabled: true
 				- source: "/"
     			  path: "/test2"
+				  upstreamHttpPort: 8181
 
 */
 
@@ -64,7 +65,7 @@ func (a *annotationParser) parse(svc corev1.Service) *crautiAnnotatedConfig {
 		if key == crautiAnnotationConfKey {
 			err := yaml.Unmarshal([]byte(value), config)
 			if err != nil {
-				klog.Error(err)
+				log.Err(err)
 				continue
 			}
 		}
