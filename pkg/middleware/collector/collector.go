@@ -26,7 +26,7 @@ type collectorMiddleware struct {
 	next http.Handler
 }
 
-func NewCollectorMiddleware(next http.Handler) http.Handler {
+func NewCollectorMiddleware(next http.Handler) *collectorMiddleware {
 	m := &collectorMiddleware{
 		next: next,
 	}

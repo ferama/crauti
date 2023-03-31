@@ -13,7 +13,7 @@ type corsMiddleware struct {
 	next http.Handler
 }
 
-func NewCorsMiddleware(next http.Handler) http.Handler {
+func NewCorsMiddleware(next http.Handler) *corsMiddleware {
 	h := &corsMiddleware{
 		next: next,
 	}

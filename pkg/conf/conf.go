@@ -33,14 +33,17 @@ type Middlewares struct {
 	// on timeout expiration, the context will be canceled and request
 	// aborted. Use -1 or any value lesser than 0 to disable timeout
 	Timeout time.Duration `yaml:"timeout,omitempty"`
+	// Use -1 or any value lesser than 0 to disable the limit
+	MaxRequestBodySize int64 `yaml:"maxRequestBodySize,omitempty"`
 }
 
 func (m *Middlewares) clone() Middlewares {
 	c := Middlewares{
-		Cors:    m.Cors.clone(),
-		Cache:   m.Cache.clone(),
-		Proxy:   m.Proxy.clone(),
-		Timeout: m.Timeout,
+		Cors:               m.Cors.clone(),
+		Cache:              m.Cache.clone(),
+		Proxy:              m.Proxy.clone(),
+		Timeout:            m.Timeout,
+		MaxRequestBodySize: m.MaxRequestBodySize,
 	}
 	return c
 }
@@ -112,6 +115,7 @@ func setDefaults() {
 	// this timeout acts like the Gateway.WriteTimeout but it can be set
 	// per mountPoint
 	viper.SetDefault("Middlewares.Timeout", "-1s") // disabled by default
+	viper.SetDefault("Middlewares.MaxRequestBodySize", 1000000)
 
 	// Reverse Proxy defualts
 	viper.SetDefault("Middlewares.Proxy.PreserveHostHeader", true)

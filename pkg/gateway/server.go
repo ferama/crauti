@@ -8,6 +8,7 @@ import (
 	"github.com/ferama/crauti/pkg/chaincontext"
 	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/logger"
+	"github.com/ferama/crauti/pkg/middleware/bodylimit"
 	"github.com/ferama/crauti/pkg/middleware/cache"
 	"github.com/ferama/crauti/pkg/middleware/collector"
 	"github.com/ferama/crauti/pkg/middleware/cors"
@@ -75,6 +76,7 @@ func (s *Server) buildChain(mp conf.MountPoint) http.Handler {
 	// install the cors middleware
 	chain = cors.NewCorsMiddleware(chain)
 
+	chain = bodylimit.NewBodyLimiterMiddleware(chain)
 	chain = timeout.NewTimeoutMiddleware(chain)
 	// should be the first middleware to be able to measure
 	// stuff like time, bytes etc

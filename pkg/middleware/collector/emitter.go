@@ -18,7 +18,7 @@ type emitterMiddleware struct {
 	next http.Handler
 }
 
-func NewEmitterrMiddleware(next http.Handler) http.Handler {
+func NewEmitterrMiddleware(next http.Handler) *emitterMiddleware {
 	m := &emitterMiddleware{
 		next: next,
 	}

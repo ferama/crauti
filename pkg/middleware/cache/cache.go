@@ -65,7 +65,7 @@ type cacheMiddleware struct {
 	lockmap map[string]*sync.Mutex
 }
 
-func NewCacheMiddleware(next http.Handler) http.Handler {
+func NewCacheMiddleware(next http.Handler) *cacheMiddleware {
 
 	cm := &cacheMiddleware{
 		next:    next,

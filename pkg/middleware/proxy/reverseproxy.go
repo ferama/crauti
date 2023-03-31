@@ -47,7 +47,7 @@ type reverseProxyMiddleware struct {
 	next http.Handler
 }
 
-func NewReverseProxyMiddleware(next http.Handler) http.Handler {
+func NewReverseProxyMiddleware(next http.Handler) *reverseProxyMiddleware {
 
 	p := &reverseProxyMiddleware{
 		next: next,

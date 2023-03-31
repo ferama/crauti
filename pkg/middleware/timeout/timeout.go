@@ -13,7 +13,7 @@ type timeoutMiddleware struct {
 	next http.Handler
 }
 
-func NewTimeoutMiddleware(next http.Handler) http.Handler {
+func NewTimeoutMiddleware(next http.Handler) *timeoutMiddleware {
 	m := &timeoutMiddleware{
 		next: next,
 	}
