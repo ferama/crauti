@@ -38,7 +38,7 @@ func (m *bodyLimiter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	maxSize, _ := utils.ConvertToBytes(chainContext.Conf.Middlewares.MaxRequestBodySize)
 
 	// unlimited
-	if maxSize == 0 {
+	if maxSize <= 0 {
 		m.next.ServeHTTP(w, r)
 		return
 	}

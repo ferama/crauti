@@ -10,6 +10,8 @@ func TestConvertToBytes(t *testing.T) {
 		"5mb",
 		"0",
 		"10b",
+		"-10b",
+		"-10Kb",
 	}
 	expected := []int64{
 		1024,
@@ -17,6 +19,8 @@ func TestConvertToBytes(t *testing.T) {
 		5 * 1024 * 1024,
 		0,
 		10,
+		-10,
+		-10 * 1024,
 	}
 
 	for idx, s := range list {
