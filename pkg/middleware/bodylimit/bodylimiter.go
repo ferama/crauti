@@ -4,14 +4,15 @@ import (
 	"net/http"
 	"sync"
 
+	loggerutils "github.com/ferama/crauti/pkg/logger/utils"
 	"github.com/ferama/crauti/pkg/middleware"
 	"github.com/ferama/crauti/pkg/utils"
 )
 
-var lPool sync.Pool
+var limiterPool sync.Pool
 
 func init() {
-	lPool = sync.Pool{
+	limiterPool = sync.Pool{
 		New: func() any {
 			r := &limiterReader{}
 			return r
@@ -34,21 +35,21 @@ func NewBodyLimiterMiddleware(next http.Handler) *bodyLimiter {
 
 func (m *bodyLimiter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	chainContext := m.GetChainContext(r)
-	maxSize := chainContext.Conf.Middlewares.MaxRequestBodySize
+	maxSize, _ := utils.ConvertToBytes(chainContext.Conf.Middlewares.MaxRequestBodySize)
 
 	// unlimited
-	if maxSize < 0 {
+	if maxSize == 0 {
 		m.next.ServeHTTP(w, r)
 		return
 	}
 
 	if r.ContentLength > maxSize {
 		w.WriteHeader(http.StatusBadRequest)
-		utils.EmitAndReturn(w, r)
+		loggerutils.EmitAndReturn(w, r)
 		return
 	}
 
-	reader := lPool.Get().(*limiterReader)
+	reader := limiterPool.Get().(*limiterReader)
 	reader.Reset(r.Body, maxSize)
 	r.Body = reader
 

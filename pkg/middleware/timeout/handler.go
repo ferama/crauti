@@ -3,8 +3,8 @@ package timeout
 import (
 	"net/http"
 
+	loggerutils "github.com/ferama/crauti/pkg/logger/utils"
 	"github.com/ferama/crauti/pkg/middleware"
-	"github.com/ferama/crauti/pkg/utils"
 )
 
 type timeoutHandlerMiddleware struct {
@@ -25,7 +25,7 @@ func (m *timeoutHandlerMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	// a timeout occurred?
 	case <-r.Context().Done():
 		w.Write([]byte("bad gateway: connection timeout\n"))
-		utils.EmitAndReturn(w, r)
+		loggerutils.EmitAndReturn(w, r)
 		return
 	default:
 	}

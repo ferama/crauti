@@ -1,13 +1,18 @@
 package conf
 
 import (
-	"log"
 	"strings"
 	"time"
 
+	"github.com/ferama/crauti/pkg/utils"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
+)
+
+const (
+	DefaultMaxRequestBodySize string = "10mb"
 )
 
 var ConfInst config
@@ -34,7 +39,7 @@ type Middlewares struct {
 	// aborted. Use -1 or any value lesser than 0 to disable timeout
 	Timeout time.Duration `yaml:"timeout,omitempty"`
 	// Use -1 or any value lesser than 0 to disable the limit
-	MaxRequestBodySize int64 `yaml:"maxRequestBodySize,omitempty"`
+	MaxRequestBodySize string `yaml:"maxRequestBodySize,omitempty"`
 }
 
 func (m *Middlewares) clone() Middlewares {
@@ -115,7 +120,7 @@ func setDefaults() {
 	// this timeout acts like the Gateway.WriteTimeout but it can be set
 	// per mountPoint
 	viper.SetDefault("Middlewares.Timeout", "-1s") // disabled by default
-	viper.SetDefault("Middlewares.MaxRequestBodySize", 1000000)
+	viper.SetDefault("Middlewares.MaxRequestBodySize", DefaultMaxRequestBodySize)
 
 	// Reverse Proxy defualts
 	viper.SetDefault("Middlewares.Proxy.PreserveHostHeader", true)
@@ -150,7 +155,7 @@ func Update() {
 
 	err := viper.Unmarshal(&ConfInst)
 	if err != nil {
-		log.Fatalf("unable to decode into struct, %v", err)
+		log.Error().Msgf("unable to decode into struct, %v", err)
 	}
 
 	// merge mountpoints middleware configuration
@@ -169,6 +174,12 @@ func Update() {
 		yaml.Unmarshal(b, &m)
 
 		m.Cache.merge(i.Middlewares.Cache)
+
+		_, err = utils.ConvertToBytes(m.MaxRequestBodySize)
+		if err != nil {
+			m.MaxRequestBodySize = DefaultMaxRequestBodySize
+			log.Error().Msgf("unable to parse MaxRequestBodySize. mountPath: '%s'. reverting to default", i.Path)
+		}
 
 		ConfInst.MountPoints[idx].Middlewares = m
 	}
