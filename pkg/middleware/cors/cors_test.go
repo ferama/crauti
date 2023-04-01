@@ -26,7 +26,7 @@ func TestMustHaveCors(t *testing.T) {
 	enabled = &b
 	chain := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), chaincontext.ChainContextKey, chaincontext.ChainContext{
-			Conf: conf.MountPoint{
+			Conf: &conf.MountPoint{
 				Path:     "/",
 				Upstream: "https://httpbin.org/get",
 				Middlewares: conf.Middlewares{
@@ -101,7 +101,7 @@ func TestMustNotHaveCors(t *testing.T) {
 	enabled = &b
 	chain := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), chaincontext.ChainContextKey, chaincontext.ChainContext{
-			Conf: conf.MountPoint{
+			Conf: &conf.MountPoint{
 				Path:     "/",
 				Upstream: "https://httpbin.org/get",
 				Middlewares: conf.Middlewares{

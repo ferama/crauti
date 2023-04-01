@@ -9,7 +9,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ferama/crauti/pkg/chaincontext"
 	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/logger"
 	"github.com/ferama/crauti/pkg/middleware"
@@ -98,6 +97,7 @@ func (m *cacheMiddleware) encodeKeyHeader(r *http.Request, enc string, k string,
 	chainContext := m.GetChainContext(r)
 	conf := chainContext.Conf.Middlewares.Cache
 
+	// header that will contribute to build tha cache key
 	keyHeaders := []string{}
 	c := cases.Title(language.English)
 	for _, h := range conf.KeyHeaders {
@@ -175,9 +175,7 @@ func (m *cacheMiddleware) serveFromCache(key string, w http.ResponseWriter, r *h
 
 		// set the hit status into the context
 		chainContext := m.GetChainContext(r)
-		chainContext.Cache = &chaincontext.CacheContext{
-			Status: CacheStatusHit,
-		}
+		chainContext.Cache.Status = CacheStatusHit
 		r = chainContext.Update(r, chainContext)
 
 		// we can safely proceed calling the next op here. We set the cache
@@ -198,9 +196,7 @@ func (m *cacheMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !contains(conf.Methods, r.Method) || !conf.IsEnabled() {
 
 		if conf.IsEnabled() {
-			ctx.Cache = &chaincontext.CacheContext{
-				Status: CacheStatusBypass,
-			}
+			ctx.Cache.Status = CacheStatusBypass
 			r = ctx.Update(r, ctx)
 
 			log.Debug().
@@ -273,9 +269,7 @@ func (m *cacheMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Str("status", CacheStatusMiss).
 			Str("key", cacheKey).Send()
 
-		ctx.Cache = &chaincontext.CacheContext{
-			Status: CacheStatusMiss,
-		}
+		ctx.Cache.Status = CacheStatusMiss
 		r = ctx.Update(r, ctx)
 
 	} else {
@@ -283,9 +277,7 @@ func (m *cacheMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Str("status", CacheStatusIgnored).
 			Str("key", cacheKey).Send()
 
-		ctx.Cache = &chaincontext.CacheContext{
-			Status: CacheStatusIgnored,
-		}
+		ctx.Cache.Status = CacheStatusIgnored
 		r = ctx.Update(r, ctx)
 	}
 

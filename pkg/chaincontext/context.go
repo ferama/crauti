@@ -16,9 +16,18 @@ const ChainContextKey contextKey = "chain-context"
 // It is easily accessed from all the middleware without requiring
 // any custom variable passing and stuff
 type ChainContext struct {
-	Conf  conf.MountPoint
+	Conf  *conf.MountPoint
 	Proxy *ProxyContext
 	Cache *CacheContext
+}
+
+func NewChainContext() *ChainContext {
+	c := &ChainContext{
+		Conf:  nil,
+		Proxy: &ProxyContext{},
+		Cache: &CacheContext{},
+	}
+	return c
 }
 
 func (c *ChainContext) Update(r *http.Request, n ChainContext) *http.Request {

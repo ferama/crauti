@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/ferama/crauti/pkg/chaincontext"
 	"github.com/ferama/crauti/pkg/conf"
@@ -17,9 +18,17 @@ import (
 	"github.com/rs/zerolog"
 )
 
-var log *zerolog.Logger
+var (
+	log         *zerolog.Logger
+	contextPool sync.Pool
+)
 
 func init() {
+	contextPool = sync.Pool{
+		New: func() any {
+			return chaincontext.NewChainContext()
+		},
+	}
 	log = logger.GetLogger("gateway")
 }
 
@@ -85,9 +94,13 @@ func (s *Server) buildChain(mp conf.MountPoint) http.Handler {
 	// setup chain context
 	next := chain
 	chain = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), chaincontext.ChainContextKey, chaincontext.ChainContext{
-			Conf: mp,
-		})
+		cc := contextPool.Get().(*chaincontext.ChainContext)
+		defer contextPool.Put(cc)
+
+		rcc := *cc
+		rcc.Conf = &mp
+
+		ctx := context.WithValue(r.Context(), chaincontext.ChainContextKey, rcc)
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})

@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ferama/crauti/pkg/chaincontext"
 	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/logger"
 	"github.com/ferama/crauti/pkg/middleware"
@@ -117,9 +116,8 @@ func (m *reverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	proxy := m.setupProxy(upstreamUrl)
 
-	ctx.Proxy = &chaincontext.ProxyContext{
-		UpstreamRequestStartTime: time.Now(),
-	}
+	ctx.Proxy.UpstreamRequestStartTime = time.Now()
+
 	r = ctx.Update(r, ctx)
 
 	cacheContext := ctx.Cache
