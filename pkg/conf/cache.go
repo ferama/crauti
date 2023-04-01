@@ -13,7 +13,7 @@ type Cache struct {
 	// See the conf.Update() function for more details
 	Enabled    *bool         `yaml:"enabled,omitempty"`
 	Redis      redis         `yaml:"redis,omitempty"`
-	TTL        time.Duration `yaml:"cacheTTL,omitempty"`
+	TTL        time.Duration `yaml:"TTL,omitempty"`
 	Methods    []string      `yaml:"methods,omitempty"`
 	KeyHeaders []string      `yaml:"keyHeaders,omitempty"`
 }
