@@ -50,6 +50,8 @@ func (m *bodyLimiter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	reader := limiterPool.Get().(*limiterReader)
+	defer limiterPool.Put(reader)
+
 	reader.Reset(r.Body, maxSize)
 	r.Body = reader
 
