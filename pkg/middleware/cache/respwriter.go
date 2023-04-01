@@ -21,17 +21,10 @@ type responseWriter struct {
 	cacheKey string
 }
 
-func newResponseWriter(
-	r *http.Request,
-	w http.ResponseWriter,
-	cacheKey string) *responseWriter {
-
-	rw := &responseWriter{
-		r:        r,
-		w:        w,
-		cacheKey: cacheKey,
-	}
-	return rw
+func (rw *responseWriter) Reset(r *http.Request, w http.ResponseWriter, cacheKey string) {
+	rw.r = r
+	rw.w = w
+	rw.cacheKey = cacheKey
 }
 
 func (rw *responseWriter) Header() http.Header {

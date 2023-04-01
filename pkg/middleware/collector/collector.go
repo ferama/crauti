@@ -3,10 +3,22 @@ package collector
 import (
 	"context"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/ferama/crauti/pkg/middleware"
 )
+
+var responseWriterPool sync.Pool
+
+func init() {
+	responseWriterPool = sync.Pool{
+		New: func() any {
+			r := &responseWriter{}
+			return r
+		},
+	}
+}
 
 type contextKey string
 
@@ -37,10 +49,9 @@ func (m *collectorMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	// use a custom response writer to be able to capture stuff
 	// like status and response bytes written...
-	rw := &responseWriter{
-		w: w,
-		r: r,
-	}
+	rw := responseWriterPool.Get().(*responseWriter)
+	defer responseWriterPool.Put(rw)
+	rw.Reset(r, w)
 
 	// ... and put the response writer into the context to be accessed
 	// from emitter

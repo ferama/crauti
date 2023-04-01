@@ -13,6 +13,13 @@ type responseWriter struct {
 	bytesWritten int
 }
 
+func (rw *responseWriter) Reset(r *http.Request, w http.ResponseWriter) {
+	rw.r = r
+	rw.w = w
+	rw.wroteHeader = false
+	rw.bytesWritten = 0
+}
+
 func (rw *responseWriter) Status() int {
 	return rw.statusCode
 }

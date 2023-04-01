@@ -10,10 +10,12 @@ import (
 	"sync"
 
 	"github.com/ferama/crauti/pkg/chaincontext"
+	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/logger"
 	"github.com/ferama/crauti/pkg/middleware"
 	"github.com/ferama/crauti/pkg/redis"
 	"github.com/rs/zerolog"
+	"github.com/spf13/viper"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
@@ -37,10 +39,27 @@ const (
 	statusKeyHead  = "STATUS"
 )
 
-var log *zerolog.Logger
+var (
+	log                *zerolog.Logger
+	responseWriterPool sync.Pool
+)
 
 func init() {
+	// this one is here to make some init vars available to other
+	// init functions.
+	// The use case is the CRAUTI_DEBUG that need to be available as
+	// soon as possibile in order to instantiate the logger correctly
+	viper.ReadInConfig()
+	conf.Update()
+
 	log = logger.GetLogger("cache")
+
+	responseWriterPool = sync.Pool{
+		New: func() any {
+			r := &responseWriter{}
+			return r
+		},
+	}
 }
 
 func buildRedisKey(keyHead string, key string) string {
@@ -271,7 +290,9 @@ func (m *cacheMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// If I'm here, I need to poke the backend and fill the cache
-	rw := newResponseWriter(r, w, cacheKey)
+	rw := responseWriterPool.Get().(*responseWriter)
+	defer responseWriterPool.Put(rw)
+	rw.Reset(r, w, cacheKey)
 
 	rw.Header().Set(GeneratorHeaderKey, UpstreamContentHeaderValue)
 	m.next.ServeHTTP(rw, r)

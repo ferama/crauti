@@ -9,6 +9,11 @@ type responseWriter struct {
 	w http.ResponseWriter
 }
 
+func (rw *responseWriter) Reset(r *http.Request, w http.ResponseWriter) {
+	rw.r = r
+	rw.w = w
+}
+
 func (rw *responseWriter) Header() http.Header {
 	return rw.w.Header()
 }
