@@ -21,7 +21,7 @@ func NewTimeoutMiddleware(next http.Handler) *timeoutMiddleware {
 }
 
 func (m *timeoutMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	chainContext := m.GetChainContext(r)
+	chainContext := m.GetContext(r)
 
 	timeout := chainContext.Conf.Middlewares.Timeout
 

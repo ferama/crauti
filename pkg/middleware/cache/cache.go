@@ -94,7 +94,7 @@ func NewCacheMiddleware(next http.Handler) *cacheMiddleware {
 }
 
 func (m *cacheMiddleware) encodeKeyHeader(r *http.Request, enc string, k string, v string) string {
-	chainContext := m.GetChainContext(r)
+	chainContext := m.GetContext(r)
 	conf := chainContext.Conf.Middlewares.Cache
 
 	// header that will contribute to build tha cache key
@@ -174,7 +174,7 @@ func (m *cacheMiddleware) serveFromCache(key string, w http.ResponseWriter, r *h
 		w.Write(body)
 
 		// set the hit status into the context
-		chainContext := m.GetChainContext(r)
+		chainContext := m.GetContext(r)
 		chainContext.Cache.Status = CacheStatusHit
 		r = chainContext.Update(r, chainContext)
 
@@ -188,7 +188,7 @@ func (m *cacheMiddleware) serveFromCache(key string, w http.ResponseWriter, r *h
 }
 
 func (m *cacheMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := m.GetChainContext(r)
+	ctx := m.GetContext(r)
 	conf := ctx.Conf.Middlewares.Cache
 	// if the request should not be cached because the http
 	// method needs to be ignored or because it is disabled,

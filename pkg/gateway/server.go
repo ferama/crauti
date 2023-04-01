@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"sync"
@@ -99,9 +98,7 @@ func (s *Server) buildChain(mp conf.MountPoint) http.Handler {
 		cc.Reset(&mp, cache.CacheStatusMiss)
 
 		rcc := *cc
-
-		ctx := context.WithValue(r.Context(), chaincontext.ChainContextKey, rcc)
-		r = r.WithContext(ctx)
+		r = rcc.Update(r, rcc)
 		next.ServeHTTP(w, r)
 	})
 	return chain

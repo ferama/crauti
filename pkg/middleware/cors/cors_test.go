@@ -1,7 +1,6 @@
 package cors
 
 import (
-	"context"
 	"io"
 	"log"
 	"net/http"
@@ -25,18 +24,17 @@ func TestMustHaveCors(t *testing.T) {
 	b := true
 	enabled = &b
 	chain := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), chaincontext.ChainContextKey, chaincontext.ChainContext{
-			Conf: &conf.MountPoint{
-				Path:     "/",
-				Upstream: "https://httpbin.org/get",
-				Middlewares: conf.Middlewares{
-					Cors: conf.Cors{
-						Enabled: enabled,
-					},
+		cc := chaincontext.NewChainContext()
+		cc.Reset(&conf.MountPoint{
+			Path:     "/",
+			Upstream: "https://httpbin.org/get",
+			Middlewares: conf.Middlewares{
+				Cors: conf.Cors{
+					Enabled: enabled,
 				},
 			},
-		})
-		r = r.WithContext(ctx)
+		}, "")
+		r = cc.Update(r, *cc)
 		m.ServeHTTP(w, r)
 	})
 	s := httptest.NewServer(chain)
@@ -100,18 +98,17 @@ func TestMustNotHaveCors(t *testing.T) {
 	b := true
 	enabled = &b
 	chain := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), chaincontext.ChainContextKey, chaincontext.ChainContext{
-			Conf: &conf.MountPoint{
-				Path:     "/",
-				Upstream: "https://httpbin.org/get",
-				Middlewares: conf.Middlewares{
-					Cors: conf.Cors{
-						Enabled: enabled,
-					},
+		cc := chaincontext.NewChainContext()
+		cc.Reset(&conf.MountPoint{
+			Path:     "/",
+			Upstream: "https://httpbin.org/get",
+			Middlewares: conf.Middlewares{
+				Cors: conf.Cors{
+					Enabled: enabled,
 				},
 			},
-		})
-		r = r.WithContext(ctx)
+		}, "")
+		r = cc.Update(r, *cc)
 		m.ServeHTTP(w, r)
 	})
 	s := httptest.NewServer(chain)

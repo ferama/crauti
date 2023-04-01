@@ -33,7 +33,7 @@ func NewCorsMiddleware(next http.Handler) *corsMiddleware {
 }
 
 func (m *corsMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	chainContext := m.GetChainContext(r)
+	chainContext := m.GetContext(r)
 
 	if chainContext.Conf.Middlewares.Cors.IsEnabled() {
 

@@ -60,7 +60,7 @@ func (m *reverseProxyMiddleware) director(proxy *httputil.ReverseProxy) func(r *
 	return func(r *http.Request) {
 		director(r)
 
-		chainContext := m.GetChainContext(r)
+		chainContext := m.GetContext(r)
 		upstreamUrl, err := url.Parse(chainContext.Conf.Upstream)
 		if err != nil {
 			log.Fatal().Err(err)
@@ -107,7 +107,7 @@ func (m *reverseProxyMiddleware) setupProxy(upstreamUrl *url.URL) *httputil.Reve
 }
 
 func (m *reverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := m.GetChainContext(r)
+	ctx := m.GetContext(r)
 
 	upstreamUrl, err := url.Parse(ctx.Conf.Upstream)
 	if err != nil {

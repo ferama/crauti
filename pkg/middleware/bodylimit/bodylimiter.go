@@ -34,7 +34,7 @@ func NewBodyLimiterMiddleware(next http.Handler) *bodyLimiter {
 }
 
 func (m *bodyLimiter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	chainContext := m.GetChainContext(r)
+	chainContext := m.GetContext(r)
 	maxSize, _ := utils.ConvertToBytes(chainContext.Conf.Middlewares.MaxRequestBodySize)
 
 	// unlimited

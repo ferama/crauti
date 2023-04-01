@@ -26,7 +26,7 @@ func NewEmitterrMiddleware(next http.Handler) *emitterMiddleware {
 }
 
 func (m *emitterMiddleware) emitLogs(r *http.Request) {
-	chainContext := m.GetChainContext(r)
+	chainContext := m.GetContext(r)
 
 	collectorContext := r.Context().Value(collectorContextKey).(collectorContext)
 
@@ -75,7 +75,7 @@ func (m *emitterMiddleware) emitLogs(r *http.Request) {
 }
 
 func (m *emitterMiddleware) emitMetrics(r *http.Request) {
-	chainContext := m.GetChainContext(r)
+	chainContext := m.GetContext(r)
 	metricPathKey := chainContext.Conf.Path
 
 	collectorContext := r.Context().Value(collectorContextKey).(collectorContext)

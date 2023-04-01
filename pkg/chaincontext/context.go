@@ -10,7 +10,7 @@ import (
 
 type contextKey string
 
-const ChainContextKey contextKey = "chain-context"
+const chainContextKey contextKey = "chain-context"
 
 // The chain context holds all the mountPoints related config
 // It is easily accessed from all the middleware without requiring
@@ -19,6 +19,13 @@ type ChainContext struct {
 	Conf  *conf.MountPoint
 	Proxy *ProxyContext
 	Cache *CacheContext
+}
+
+// extracts and return chaincontext from a request
+func GetChainContext(r *http.Request) ChainContext {
+	chainContext := r.Context().
+		Value(chainContextKey).(ChainContext)
+	return chainContext
 }
 
 func NewChainContext() *ChainContext {
@@ -43,7 +50,7 @@ func (c *ChainContext) Reset(conf *conf.MountPoint, cacheStatus string) {
 func (c *ChainContext) Update(r *http.Request, n ChainContext) *http.Request {
 	r = r.WithContext(context.WithValue(
 		r.Context(),
-		ChainContextKey,
+		chainContextKey,
 		n,
 	))
 	return r
