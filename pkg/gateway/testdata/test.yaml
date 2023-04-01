@@ -1,3 +1,6 @@
 mountPoints:
   - upstream: http://localhost:19999
     path: /
+    middlewares:
+      cors:
+        enabled: true
