@@ -96,9 +96,9 @@ func (s *Server) buildChain(mp conf.MountPoint) http.Handler {
 	chain = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cc := contextPool.Get().(*chaincontext.ChainContext)
 		defer contextPool.Put(cc)
+		cc.Reset(&mp, cache.CacheStatusMiss)
 
 		rcc := *cc
-		rcc.Conf = &mp
 
 		ctx := context.WithValue(r.Context(), chaincontext.ChainContextKey, rcc)
 		r = r.WithContext(ctx)

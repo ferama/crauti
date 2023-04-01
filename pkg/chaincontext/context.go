@@ -23,11 +23,21 @@ type ChainContext struct {
 
 func NewChainContext() *ChainContext {
 	c := &ChainContext{
-		Conf:  nil,
-		Proxy: &ProxyContext{},
+		Conf: nil,
+		Proxy: &ProxyContext{
+			ProxiedRequest: false,
+		},
 		Cache: &CacheContext{},
 	}
 	return c
+}
+
+// Reset the context. The context is managed using a sync.Pool and this
+// method reset the instances
+func (c *ChainContext) Reset(conf *conf.MountPoint, cacheStatus string) {
+	c.Conf = conf
+	c.Proxy.ProxiedRequest = false
+	c.Cache.Status = cacheStatus
 }
 
 func (c *ChainContext) Update(r *http.Request, n ChainContext) *http.Request {
@@ -40,6 +50,9 @@ func (c *ChainContext) Update(r *http.Request, n ChainContext) *http.Request {
 }
 
 type ProxyContext struct {
+	// Is set to true, the request effectively reached the upstream
+	// If not, it probably was served from the cache
+	ProxiedRequest           bool
 	UpstreamRequestStartTime time.Time
 }
 

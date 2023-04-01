@@ -123,7 +123,8 @@ func (m *reverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	cacheContext := ctx.Cache
 	// if we do not have tha cache middleware enabled or if it is enabled but the requests
 	// doesn't hit the cache, poke the upstream
-	if cacheContext == nil || cacheContext.Status != cache.CacheStatusHit {
+	cacheEnabled := ctx.Conf.Middlewares.Cache.IsEnabled()
+	if !cacheEnabled || cacheContext.Status != cache.CacheStatusHit {
 		log.Debug().
 			Str("upstream", fmt.Sprintf("%s://%s", upstreamUrl.Scheme, upstreamUrl.Host)).
 			Msg("poke upstream")
@@ -145,6 +146,7 @@ func (m *reverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reques
 				m.next.ServeHTTP(w, r)
 			}
 		}()
+		ctx.Proxy.ProxiedRequest = true
 		proxy.ServeHTTP(w, r)
 
 	} else {

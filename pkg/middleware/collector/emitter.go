@@ -55,24 +55,21 @@ func (m *emitterMiddleware) emitLogs(r *http.Request) {
 	event := log.Info().
 		Dict("httpRequest", httpRequestDict)
 
-	cacheContext := chainContext.Cache
-	if cacheContext != nil {
+	if chainContext.Conf.Middlewares.Cache.IsEnabled() {
+		cacheContext := chainContext.Cache
 		event.Str("cache", cacheContext.Status)
 	}
 
 	proxyContext := chainContext.Proxy
-	if proxyContext != nil {
-		upstreamLatency := time.Since(proxyContext.UpstreamRequestStartTime)
+	upstreamLatency := time.Since(proxyContext.UpstreamRequestStartTime)
 
-		proxyUpstreamDict := zerolog.Dict().
-			Str("url", chainContext.Conf.Upstream).
-			Str("mountPath", chainContext.Conf.Path).
-			Float64("latency", upstreamLatency.Seconds()).
-			Str("latency_human", upstreamLatency.Round(1*time.Millisecond).String())
+	proxyUpstreamDict := zerolog.Dict().
+		Str("url", chainContext.Conf.Upstream).
+		Str("mountPath", chainContext.Conf.Path).
+		Float64("latency", upstreamLatency.Seconds()).
+		Str("latency_human", upstreamLatency.Round(1*time.Millisecond).String())
 
-		event.Dict("proxyUpstream", proxyUpstreamDict)
-
-	}
+	event.Dict("proxyUpstream", proxyUpstreamDict)
 
 	event.Send()
 }
@@ -101,18 +98,16 @@ func (m *emitterMiddleware) emitMetrics(r *http.Request) {
 
 	proxyContext := chainContext.Proxy
 	// upstream request latency
-	if proxyContext != nil {
-		upstreamLatency := time.Since(proxyContext.UpstreamRequestStartTime).Seconds()
+	upstreamLatency := time.Since(proxyContext.UpstreamRequestStartTime).Seconds()
 
-		key = MetricsInstance().GetUpstreamRequestLatencyMapKey(metricPathKey)
-		c, ok = MetricsInstance().Get(key)
-		if ok {
-			c.(prometheus.Observer).Observe(upstreamLatency)
-		}
+	key = MetricsInstance().GetUpstreamRequestLatencyMapKey(metricPathKey)
+	c, ok = MetricsInstance().Get(key)
+	if ok {
+		c.(prometheus.Observer).Observe(upstreamLatency)
 	}
 
-	cacheContext := chainContext.Cache
-	if cacheContext != nil {
+	if chainContext.Conf.Middlewares.Cache.IsEnabled() {
+		cacheContext := chainContext.Cache
 		key = MetricsInstance().GetCacheTotalMapKey(metricPathKey, cacheContext.Status)
 		c, ok = MetricsInstance().Get(key)
 		if ok {
