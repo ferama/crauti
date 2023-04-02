@@ -25,11 +25,13 @@ export const Home = () => {
   let rows = (<></>)
   if ((config.MountPoints !== undefined) && (config.MountPoints != null)) {
     rows = config.MountPoints.map(mp => {
+      let key = `${mp.Path}-${mp.Middlewares.MatchHost}`
       return (
-        <tr key={mp.Path}>
+        <tr key={key}>
+          <td>{mp.Middlewares.MatchHost}</td>
           <td>{mp.Path}</td>
           <td>{mp.Upstream}</td>
-          <td><Link to={"/mount?path=" + mp.Path}>details</Link></td>
+          <td><Link to={"/mount?path=" + mp.Path + "&host=" + mp.Middlewares.MatchHost}>details</Link></td>
         </tr>
     )})
   }
@@ -46,6 +48,7 @@ export const Home = () => {
           <Table striped bordered hover>
             <thead>
               <tr>
+                <th>Match Host</th>
                 <th>Path</th>
                 <th>Upstream</th>
                 <th>Actions</th>

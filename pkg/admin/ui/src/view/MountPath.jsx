@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 export const MountPath = () => {
     const [searchParams, setSearchParams] = useSearchParams()
     const path = searchParams.get("path")
+    const matchHost = searchParams.get("host")
 
     const [config, setConfig] = useState({})
 
@@ -30,14 +31,21 @@ export const MountPath = () => {
         let doc = YAML.parse(config)
         if (doc != null) {
             for (let mp of doc.mountPoints) {
+                    // host = mp.middlewares.matchHost
                 if (mp.path === path) {
                     middlewares = YAML.stringify(mp)
-                    mountPoint = mp
+                    if (mp.middlewares.matchHost !== undefined) {
+                        if (mp.middlewares.matchHost === matchHost) {
+                            mountPoint = mp        
+                        }
+                    } else {
+                        mountPoint = mp
+                    }
                 }
             }
         }
     }
-
+    
     return (
         <Container>
             <Breadcrumb>
@@ -53,6 +61,10 @@ export const MountPath = () => {
                     <thead>
                     </thead>
                     <tbody>
+                        <tr>
+                            <th>Match Host</th>
+                            <td>{matchHost}</td>
+                        </tr>
                         <tr>
                             <th>Path</th>
                             <td>{mountPoint.path}</td>
