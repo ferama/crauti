@@ -14,6 +14,7 @@ import (
 	"github.com/ferama/crauti/pkg/middleware/cors"
 	"github.com/ferama/crauti/pkg/middleware/proxy"
 	"github.com/ferama/crauti/pkg/middleware/timeout"
+	"github.com/ferama/crauti/pkg/utils"
 	"github.com/rs/zerolog"
 )
 
@@ -59,7 +60,7 @@ func (s *Server) buildRootHandler() http.Handler {
 	next := chain
 	chain = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "crauti: 404 not found\n")
+		fmt.Fprintf(w, utils.BodyResponse404)
 		next.ServeHTTP(w, r)
 	})
 
@@ -124,7 +125,8 @@ func (s *Server) UpdateHandlers() {
 		}()
 	}
 
-	hasRootHandler := false
+	hasRootHandlerDeafault := false
+	hasRootHandler := make(map[string]bool)
 	log.Print("===============================================================")
 	for _, i := range conf.ConfInst.MountPoints {
 		matchHost := i.Middlewares.MatchHost
@@ -134,7 +136,11 @@ func (s *Server) UpdateHandlers() {
 			Msg("registering mount path")
 
 		if i.Path == "/" {
-			hasRootHandler = true
+			if matchHost == "" {
+				hasRootHandlerDeafault = true
+			} else {
+				hasRootHandler[matchHost] = true
+			}
 		}
 		// setup metrics
 		if i.Path != "" {
@@ -149,9 +155,13 @@ func (s *Server) UpdateHandlers() {
 	// define a custom one here. The root handler, will respond to request for
 	// not found resources.
 
-	// TODO: setup a root handler foreach matchHost
-	if !hasRootHandler {
+	if !hasRootHandlerDeafault {
 		multiplexer.defaultMux.Handle("/", s.buildRootHandler())
+	}
+	for matchHost, has := range hasRootHandler {
+		if !has {
+			multiplexer.getOrCreate(matchHost).Handle("/", s.buildRootHandler())
+		}
 	}
 	s.srv.Handler = multiplexer
 

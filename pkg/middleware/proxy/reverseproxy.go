@@ -125,7 +125,7 @@ func (m *reverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	if matchHost != "" {
 		if matchHost != requestHost {
 			w.WriteHeader(http.StatusNotFound)
-			fmt.Fprintf(w, "crauti: 404 not found\n")
+			fmt.Fprintf(w, utils.BodyResponse404)
 			collectorutils.EmitAndReturn(w, r)
 			return
 		}
