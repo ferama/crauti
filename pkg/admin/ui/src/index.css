@@ -67,6 +67,8 @@ nav.bg-dark {
 pre {
   padding: 20px;
   border-radius: 4px;
+  background-color: #111;
+  color: rgb(213, 215, 226);
   border-color: var(--bs-border-color-translucent);
   border-style: solid;
   border-width: "1px";
