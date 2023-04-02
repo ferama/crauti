@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"path/filepath"
@@ -54,6 +55,25 @@ func TestTimeout(t *testing.T) {
 	}
 }
 
+func Test404(t *testing.T) {
+	go startWebServer(0)
+
+	loadConf("test2.yaml")
+	gwListenAddress := "localhost:39142"
+	gwServer := NewServer(gwListenAddress)
+	gwServer.UpdateHandlers()
+
+	go gwServer.Start()
+
+	res, err := http.Get(fmt.Sprintf("http://%s/notexists", gwListenAddress))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.StatusCode != 404 {
+		t.Fatal("expected 404")
+	}
+}
+
 func BenchmarkRequest1(b *testing.B) {
 	go startWebServer(0)
 
@@ -84,5 +104,4 @@ func BenchmarkRequest1(b *testing.B) {
 		}
 
 	}
-
 }

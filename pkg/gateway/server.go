@@ -64,7 +64,23 @@ func (s *Server) buildRootHandler() http.Handler {
 	})
 
 	chain = collector.NewCollectorMiddleware(chain)
+
+	chain = s.addChainContext(conf.MountPoint{
+		Path: "/",
+	}, chain)
 	return chain
+}
+
+func (s *Server) addChainContext(mp conf.MountPoint, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cc := contextPool.Get().(*chaincontext.ChainContext)
+		defer contextPool.Put(cc)
+		cc.Reset(&mp, cache.CacheStatusMiss)
+
+		rcc := *cc
+		r = rcc.Update(r, rcc)
+		next.ServeHTTP(w, r)
+	})
 }
 
 func (s *Server) buildChain(mp conf.MountPoint) http.Handler {
@@ -91,16 +107,7 @@ func (s *Server) buildChain(mp conf.MountPoint) http.Handler {
 	chain = collector.NewCollectorMiddleware(chain)
 
 	// setup chain context
-	next := chain
-	chain = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cc := contextPool.Get().(*chaincontext.ChainContext)
-		defer contextPool.Put(cc)
-		cc.Reset(&mp, cache.CacheStatusMiss)
-
-		rcc := *cc
-		r = rcc.Update(r, rcc)
-		next.ServeHTTP(w, r)
-	})
+	chain = s.addChainContext(mp, chain)
 	return chain
 }
 
@@ -146,6 +153,7 @@ func (s *Server) UpdateHandlers() {
 		multiplexer.defaultMux.Handle("/", s.buildRootHandler())
 	}
 	s.srv.Handler = multiplexer
+
 }
 
 func (s *Server) Start() error {

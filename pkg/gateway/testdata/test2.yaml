@@ -1,3 +1,3 @@
 mountPoints:
   - upstream: http://localhost:19999
-    path: /
+    path: /exists
