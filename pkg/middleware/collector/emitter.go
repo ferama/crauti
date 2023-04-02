@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ferama/crauti/pkg/middleware"
+	"github.com/ferama/crauti/pkg/utils"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -78,11 +79,16 @@ func (m *emitterMiddleware) emitMetrics(r *http.Request) {
 	chainContext := m.GetContext(r)
 	metricPathKey := chainContext.Conf.Path
 
+	requestHost, err := utils.GetRequestHost(r)
+	if err != nil {
+		log.Fatal().Err(err)
+	}
+
 	collectorContext := r.Context().Value(collectorContextKey).(collectorContext)
 
 	// status counter
 	s := collectorContext.ResponseWriter.Status()
-	key := MetricsInstance().GetProcessedTotalMapKey(metricPathKey, s)
+	key := MetricsInstance().GetProcessedTotalMapKey(metricPathKey, s, requestHost)
 	c, ok := MetricsInstance().Get(key)
 	if ok {
 		c.(prometheus.Counter).Inc()
@@ -90,7 +96,7 @@ func (m *emitterMiddleware) emitMetrics(r *http.Request) {
 
 	// request latency
 	totalLatency := time.Since(collectorContext.StartTime).Seconds()
-	key = MetricsInstance().GetRequestLatencyMapKey(metricPathKey)
+	key = MetricsInstance().GetRequestLatencyMapKey(metricPathKey, requestHost)
 	c, ok = MetricsInstance().Get(key)
 	if ok {
 		c.(prometheus.Observer).Observe(totalLatency)
@@ -100,7 +106,7 @@ func (m *emitterMiddleware) emitMetrics(r *http.Request) {
 	// upstream request latency
 	upstreamLatency := time.Since(proxyContext.UpstreamRequestStartTime).Seconds()
 
-	key = MetricsInstance().GetUpstreamRequestLatencyMapKey(metricPathKey)
+	key = MetricsInstance().GetUpstreamRequestLatencyMapKey(metricPathKey, requestHost)
 	c, ok = MetricsInstance().Get(key)
 	if ok {
 		c.(prometheus.Observer).Observe(upstreamLatency)
@@ -108,7 +114,7 @@ func (m *emitterMiddleware) emitMetrics(r *http.Request) {
 
 	if chainContext.Conf.Middlewares.Cache.IsEnabled() {
 		cacheContext := chainContext.Cache
-		key = MetricsInstance().GetCacheTotalMapKey(metricPathKey, cacheContext.Status)
+		key = MetricsInstance().GetCacheTotalMapKey(metricPathKey, cacheContext.Status, requestHost)
 		c, ok = MetricsInstance().Get(key)
 		if ok {
 			c.(prometheus.Counter).Inc()

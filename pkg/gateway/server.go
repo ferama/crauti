@@ -107,36 +107,45 @@ func (s *Server) buildChain(mp conf.MountPoint) http.Handler {
 func (s *Server) UpdateHandlers() {
 	collector.MetricsInstance().UnregisterAll()
 
-	mux := http.NewServeMux()
+	multiplexer := newMultiplexer()
 
-	defer func() {
-		if err := recover(); err != nil {
-			log.Printf("%s", err)
-			s.srv.Handler = mux
-		}
-	}()
+	if !conf.ConfInst.Debug {
+		defer func() {
+			if err := recover(); err != nil {
+				log.Printf("== %s", err)
+				s.srv.Handler = multiplexer.defaultMux
+			}
+		}()
+	}
 
 	hasRootHandler := false
+	log.Print("===============================================================")
 	for _, i := range conf.ConfInst.MountPoints {
+		matchHost := i.Middlewares.Proxy.MatchHost
+		log.Debug().
+			Str("mountPath", i.Path).
+			Str("matchHost", matchHost).
+			Msg("registering mount path")
 
 		if i.Path == "/" {
 			hasRootHandler = true
 		}
 		// setup metrics
 		if i.Path != "" {
-			collector.MetricsInstance().RegisterMountPath(i.Path, i.Upstream)
+			collector.MetricsInstance().RegisterMountPath(i.Path, i.Upstream, matchHost)
 		}
 		chain := s.buildChain(i)
-		mux.Handle(i.Path, chain)
+
+		multiplexer.getOrCreate(matchHost).Handle(i.Path, chain)
 	}
 
 	// if a root path (the / mountPoint) handler was not defined in mountPoints
 	// define a custom one here. The root handler, will respond to request for
 	// not found resources.
 	if !hasRootHandler {
-		mux.Handle("/", s.buildRootHandler())
+		multiplexer.defaultMux.Handle("/", s.buildRootHandler())
 	}
-	s.srv.Handler = mux
+	s.srv.Handler = multiplexer
 }
 
 func (s *Server) Start() error {

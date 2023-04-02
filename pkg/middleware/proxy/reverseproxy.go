@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	golog "log"
-	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -17,6 +16,7 @@ import (
 	"github.com/ferama/crauti/pkg/middleware"
 	"github.com/ferama/crauti/pkg/middleware/cache"
 	collectorutils "github.com/ferama/crauti/pkg/middleware/collector/utils"
+	"github.com/ferama/crauti/pkg/utils"
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 )
@@ -118,7 +118,7 @@ func (m *reverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	matchHost := ctx.Conf.Middlewares.Proxy.MatchHost
 	// TODO: it always work?
-	requestHost, _, err := net.SplitHostPort(r.Host)
+	requestHost, err := utils.GetRequestHost(r)
 
 	if err != nil {
 		log.Fatal().Err(err)

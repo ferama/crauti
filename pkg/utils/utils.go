@@ -2,6 +2,8 @@ package utils
 
 import (
 	"fmt"
+	"net"
+	"net/http"
 	"strconv"
 	"strings"
 )
@@ -51,4 +53,12 @@ func ConvertToBytes(s string) (int64, error) {
 	}
 
 	return bytes, nil
+}
+
+func GetRequestHost(r *http.Request) (string, error) {
+	requestHost, _, err := net.SplitHostPort(r.Host)
+	if err != nil {
+		return "", err
+	}
+	return requestHost, nil
 }
