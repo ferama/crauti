@@ -59,7 +59,7 @@ func Test404(t *testing.T) {
 	go startWebServer(0)
 
 	loadConf("test2.yaml")
-	gwListenAddress := "localhost:39142"
+	gwListenAddress := "localhost:39143"
 	gwServer := NewServer(gwListenAddress)
 	gwServer.UpdateHandlers()
 

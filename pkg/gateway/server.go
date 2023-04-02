@@ -65,9 +65,7 @@ func (s *Server) buildRootHandler() http.Handler {
 
 	chain = collector.NewCollectorMiddleware(chain)
 
-	chain = s.addChainContext(conf.MountPoint{
-		Path: "/",
-	}, chain)
+	chain = s.addChainContext(conf.MountPoint{}, chain)
 	return chain
 }
 
