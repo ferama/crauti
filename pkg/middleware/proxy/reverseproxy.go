@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	golog "log"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -116,8 +117,14 @@ func (m *reverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 
 	matchHost := ctx.Conf.Middlewares.Proxy.MatchHost
+	// TODO: it always work?
+	requestHost, _, err := net.SplitHostPort(r.Host)
+
+	if err != nil {
+		log.Fatal().Err(err)
+	}
 	if matchHost != "" {
-		if matchHost != r.Host {
+		if matchHost != requestHost {
 			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprintf(w, "crauti: 404 not found\n")
 			collectorutils.EmitAndReturn(w, r)
