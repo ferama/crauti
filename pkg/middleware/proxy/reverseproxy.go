@@ -68,7 +68,7 @@ func (m *reverseProxyMiddleware) director(proxy *httputil.ReverseProxy) func(r *
 			log.Fatal().Err(err)
 		}
 		// set the request host to the real upstream host
-		if chainContext.Conf.Middlewares.Proxy.IsHostHeaderPreserved() {
+		if chainContext.Conf.Middlewares.IsHostHeaderPreserved() {
 			r.Host = upstreamUrl.Host
 		}
 
@@ -116,8 +116,7 @@ func (m *reverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		log.Fatal().Err(err)
 	}
 
-	matchHost := ctx.Conf.Middlewares.Proxy.MatchHost
-	// TODO: it always work?
+	matchHost := ctx.Conf.Middlewares.MatchHost
 	requestHost, err := utils.GetRequestHost(r)
 
 	if err != nil {

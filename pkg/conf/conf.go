@@ -34,21 +34,33 @@ type MountPoint struct {
 type Middlewares struct {
 	Cors  Cors  `yaml:"cors"`
 	Cache Cache `yaml:"cache"`
-	Proxy proxy `yaml:"proxy"`
 	// on timeout expiration, the context will be canceled and request
 	// aborted. Use -1 or any value lesser than 0 to disable timeout
 	Timeout time.Duration `yaml:"timeout,omitempty"`
 	// Use -1 or any value lesser than 0 to disable the limit
 	MaxRequestBodySize string `yaml:"maxRequestBodySize,omitempty"`
+	// default false. If true, the ReverseProxy will not set
+	// the Host header to the real upstream host while forwarding the
+	// request to the upstream
+	PreserveHostHeader *bool `yaml:"preserveHostHeader,omitempty"`
+	// VirtualHost like behaviour
+	MatchHost string `yaml:"matchHost,omitempty"`
+}
+
+// Helper function that check for nil value on Enabled field
+func (m *Middlewares) IsHostHeaderPreserved() bool {
+	return m.PreserveHostHeader != nil && *m.PreserveHostHeader
 }
 
 func (m *Middlewares) clone() Middlewares {
+	preserveHostHeader := *m.PreserveHostHeader
 	c := Middlewares{
 		Cors:               m.Cors.clone(),
 		Cache:              m.Cache.clone(),
-		Proxy:              m.Proxy.clone(),
 		Timeout:            m.Timeout,
 		MaxRequestBodySize: m.MaxRequestBodySize,
+		PreserveHostHeader: &preserveHostHeader,
+		MatchHost:          m.MatchHost,
 	}
 	return c
 }
@@ -121,10 +133,8 @@ func setDefaults() {
 	// per mountPoint
 	viper.SetDefault("Middlewares.Timeout", "-1s") // disabled by default
 	viper.SetDefault("Middlewares.MaxRequestBodySize", DefaultMaxRequestBodySize)
-
-	// Reverse Proxy defualts
-	viper.SetDefault("Middlewares.Proxy.PreserveHostHeader", true)
-	viper.SetDefault("Middlewares.Proxy.MatchHost", "")
+	viper.SetDefault("Middlewares.PreserveHostHeader", true)
+	viper.SetDefault("Middlewares.MatchHost", "")
 
 	// Cache defaults
 	viper.SetDefault("Middlewares.Cache.Enabled", false)

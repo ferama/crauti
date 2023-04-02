@@ -69,6 +69,7 @@ func (s *Server) buildRootHandler() http.Handler {
 	return chain
 }
 
+// get and add a ChainContext instance to the request context
 func (s *Server) addChainContext(mp conf.MountPoint, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cc := contextPool.Get().(*chaincontext.ChainContext)
@@ -126,7 +127,7 @@ func (s *Server) UpdateHandlers() {
 	hasRootHandler := false
 	log.Print("===============================================================")
 	for _, i := range conf.ConfInst.MountPoints {
-		matchHost := i.Middlewares.Proxy.MatchHost
+		matchHost := i.Middlewares.MatchHost
 		log.Debug().
 			Str("mountPath", i.Path).
 			Str("matchHost", matchHost).
@@ -147,6 +148,8 @@ func (s *Server) UpdateHandlers() {
 	// if a root path (the / mountPoint) handler was not defined in mountPoints
 	// define a custom one here. The root handler, will respond to request for
 	// not found resources.
+
+	// TODO: setup a root handler foreach matchHost
 	if !hasRootHandler {
 		multiplexer.defaultMux.Handle("/", s.buildRootHandler())
 	}
