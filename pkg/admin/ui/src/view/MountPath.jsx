@@ -31,12 +31,10 @@ export const MountPath = () => {
         let doc = YAML.parse(config)
         if (doc != null) {
             for (let mp of doc.mountPoints) {
-                    // host = mp.middlewares.matchHost
                 if (mp.path === path) {
-                    middlewares = YAML.stringify(mp)
                     if (mp.middlewares.matchHost !== undefined) {
                         if (mp.middlewares.matchHost === matchHost) {
-                            mountPoint = mp        
+                            mountPoint = mp
                         }
                     } else {
                         mountPoint = mp
@@ -45,6 +43,7 @@ export const MountPath = () => {
             }
         }
     }
+    middlewares = YAML.stringify(mountPoint)
     
     return (
         <Container>
