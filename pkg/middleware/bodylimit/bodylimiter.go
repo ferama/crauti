@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"sync"
 
-	loggerutils "github.com/ferama/crauti/pkg/logger/utils"
 	"github.com/ferama/crauti/pkg/middleware"
+	collectorutils "github.com/ferama/crauti/pkg/middleware/collector/utils"
 	"github.com/ferama/crauti/pkg/utils"
 )
 
@@ -45,7 +45,7 @@ func (m *bodyLimiter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if r.ContentLength > maxSize {
 		w.WriteHeader(http.StatusBadRequest)
-		loggerutils.EmitAndReturn(w, r)
+		collectorutils.EmitAndReturn(w, r)
 		return
 	}
 

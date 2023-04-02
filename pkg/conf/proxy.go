@@ -5,6 +5,8 @@ type proxy struct {
 	// the Host header to the real upstream host while forwarding the
 	// request to the upstream
 	PreserveHostHeader *bool `yaml:"preserveHostHeader,omitempty"`
+	// VirtualHost like behaviour
+	MatchHost string `yaml:"matchHost,omitempty"`
 }
 
 // Helper function that check for nil value on Enabled field
@@ -16,6 +18,7 @@ func (p *proxy) clone() proxy {
 	preserveHostHeader := *p.PreserveHostHeader
 	out := proxy{
 		PreserveHostHeader: &preserveHostHeader,
+		MatchHost:          p.MatchHost,
 	}
 	return out
 }

@@ -13,7 +13,7 @@ func newPool() *bufferPool {
 		pool: sync.Pool{
 			New: func() any {
 				bp := make([]byte, 32*1024)
-				log.Print("== pool new allocation: len ", len(bp))
+				// log.Print("== pool new allocation: len ", len(bp))
 				return &bp
 			},
 		},

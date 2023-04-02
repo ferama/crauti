@@ -15,6 +15,7 @@ import (
 	"github.com/ferama/crauti/pkg/logger"
 	"github.com/ferama/crauti/pkg/middleware"
 	"github.com/ferama/crauti/pkg/middleware/cache"
+	collectorutils "github.com/ferama/crauti/pkg/middleware/collector/utils"
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 )
@@ -112,6 +113,16 @@ func (m *reverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	upstreamUrl, err := url.Parse(ctx.Conf.Upstream)
 	if err != nil {
 		log.Fatal().Err(err)
+	}
+
+	matchHost := ctx.Conf.Middlewares.Proxy.MatchHost
+	if matchHost != "" {
+		if matchHost != r.Host {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprintf(w, "crauti: 404 not found\n")
+			collectorutils.EmitAndReturn(w, r)
+			return
+		}
 	}
 
 	proxy := m.setupProxy(upstreamUrl)

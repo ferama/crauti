@@ -124,6 +124,7 @@ func setDefaults() {
 
 	// Reverse Proxy defualts
 	viper.SetDefault("Middlewares.Proxy.PreserveHostHeader", true)
+	viper.SetDefault("Middlewares.Proxy.MatchHost", "")
 
 	// Cache defaults
 	viper.SetDefault("Middlewares.Cache.Enabled", false)

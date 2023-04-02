@@ -1,4 +1,4 @@
-package loggerutils
+package utils
 
 import (
 	"net/http"
