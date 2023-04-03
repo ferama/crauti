@@ -4,24 +4,22 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/ferama/crauti/pkg/chaincontext"
 	"github.com/ferama/crauti/pkg/middleware"
 )
 
-type timeoutMiddleware struct {
+type TimeoutMiddleware struct {
 	middleware.Middleware
 
 	next http.Handler
 }
 
-func NewTimeoutMiddleware(next http.Handler) *timeoutMiddleware {
-	m := &timeoutMiddleware{
-		next: next,
-	}
+func (m *TimeoutMiddleware) Init(next http.Handler) middleware.Middleware {
+	m.next = next
 	return m
 }
-
-func (m *timeoutMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	chainContext := m.GetContext(r)
+func (m *TimeoutMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	chainContext := chaincontext.GetChainContext(r)
 
 	timeout := chainContext.Conf.Middlewares.Timeout
 

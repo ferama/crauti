@@ -8,6 +8,7 @@ import (
 	"github.com/ferama/crauti/pkg/chaincontext"
 	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/logger"
+	"github.com/ferama/crauti/pkg/middleware"
 	"github.com/ferama/crauti/pkg/middleware/bodylimit"
 	"github.com/ferama/crauti/pkg/middleware/cache"
 	"github.com/ferama/crauti/pkg/middleware/collector"
@@ -55,7 +56,7 @@ func (s *Server) buildRootHandler() http.Handler {
 	var chain http.Handler
 
 	chain = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-	chain = collector.NewEmitterrMiddleware(chain)
+	chain = (&collector.EmitterMiddleware{}).Init(chain)
 
 	next := chain
 	chain = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -64,7 +65,7 @@ func (s *Server) buildRootHandler() http.Handler {
 		next.ServeHTTP(w, r)
 	})
 
-	chain = collector.NewCollectorMiddleware(chain)
+	chain = (&collector.CollectorMiddleware{}).Init(chain)
 
 	chain = s.addChainContext(conf.MountPoint{}, chain)
 	return chain
@@ -84,29 +85,40 @@ func (s *Server) addChainContext(mp conf.MountPoint, next http.Handler) http.Han
 }
 
 func (s *Server) buildChain(mp conf.MountPoint) http.Handler {
+	mwares := make([]middleware.Middleware, 0)
+
+	mwares = append(mwares,
+		// collect metrics and logs
+		&collector.CollectorMiddleware{},
+		// add timetout to context
+		&timeout.TimeoutMiddleware{},
+		// checks for unwanted large bodies
+		&bodylimit.BodyLimiter{},
+		// add cors headers
+		&cors.CorsMiddleware{},
+		// respond with cache if we can
+		&cache.CacheMiddleware{},
+		// poke the backend if needed
+		&proxy.ReverseProxyMiddleware{},
+		// respond with a bad gateway message on timeout
+		&timeout.TimeoutHandlerMiddleware{},
+		// emits collected logs and metrics
+		&collector.EmitterMiddleware{},
+	)
+
+	// middelwares are executed in reverse order. the root here is the latest
+	// I'm using the for to reverse loop through the mwares slice in order to
+	// better read the flow
 	root := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-
 	var chain http.Handler
-	chain = root
-
-	chain = collector.NewEmitterrMiddleware(chain)
-	// this need to run just before the logEmitter one (remember the reverse order of run)
-	chain = timeout.NewTimeoutHandlerMiddleware(chain)
-	// Middlewares are executed in reverse order: the last one
-	// is exectuted first
-	chain = proxy.NewReverseProxyMiddleware(chain)
-	// install the cache middleware
-	chain = cache.NewCacheMiddleware(chain)
-	// install the cors middleware
-	chain = cors.NewCorsMiddleware(chain)
-
-	chain = bodylimit.NewBodyLimiterMiddleware(chain)
-	chain = timeout.NewTimeoutMiddleware(chain)
-	// should be the first middleware to be able to measure
-	// stuff like time, bytes etc
-	chain = collector.NewCollectorMiddleware(chain)
-
-	// setup chain context
+	for i := len(mwares) - 1; i >= 0; i-- {
+		if i == len(mwares)-1 {
+			chain = root
+		}
+		chain = mwares[i].Init(chain)
+	}
+	// setup chain context. This is the first executed
+	// middleware (remember the reverse order rule)
 	chain = s.addChainContext(mp, chain)
 	return chain
 }

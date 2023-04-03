@@ -18,7 +18,7 @@ func EmitAndReturn(w http.ResponseWriter, r *http.Request) {
 	var chain http.Handler
 	chain = root
 
-	chain = collector.NewEmitterrMiddleware(chain)
+	chain = (&collector.EmitterMiddleware{}).Init(chain)
 
 	chain.ServeHTTP(w, r)
 }

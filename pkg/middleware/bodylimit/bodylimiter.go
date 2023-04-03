@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/ferama/crauti/pkg/chaincontext"
 	"github.com/ferama/crauti/pkg/middleware"
 	collectorutils "github.com/ferama/crauti/pkg/middleware/collector/utils"
 	"github.com/ferama/crauti/pkg/utils"
@@ -20,21 +21,19 @@ func init() {
 	}
 }
 
-type bodyLimiter struct {
+type BodyLimiter struct {
 	middleware.Middleware
 
 	next http.Handler
 }
 
-func NewBodyLimiterMiddleware(next http.Handler) *bodyLimiter {
-	m := &bodyLimiter{
-		next: next,
-	}
+func (m *BodyLimiter) Init(next http.Handler) middleware.Middleware {
+	m.next = next
 	return m
 }
 
-func (m *bodyLimiter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	chainContext := m.GetContext(r)
+func (m *BodyLimiter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	chainContext := chaincontext.GetChainContext(r)
 	maxSize, _ := utils.ConvertToBytes(chainContext.Conf.Middlewares.MaxRequestBodySize)
 
 	// unlimited

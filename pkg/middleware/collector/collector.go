@@ -32,20 +32,18 @@ type collectorContext struct {
 // The collector middleare, lives for the entire request duration. It needs
 // to be the first middleware executed. It will collect all sort of metrics
 // and request related stuff like response status and stuff.
-type collectorMiddleware struct {
+type CollectorMiddleware struct {
 	middleware.Middleware
 
 	next http.Handler
 }
 
-func NewCollectorMiddleware(next http.Handler) *collectorMiddleware {
-	m := &collectorMiddleware{
-		next: next,
-	}
+func (m *CollectorMiddleware) Init(next http.Handler) middleware.Middleware {
+	m.next = next
 	return m
 }
 
-func (m *collectorMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (m *CollectorMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// use a custom response writer to be able to capture stuff
 	// like status and response bytes written...

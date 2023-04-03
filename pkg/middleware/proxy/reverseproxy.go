@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ferama/crauti/pkg/chaincontext"
 	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/logger"
 	"github.com/ferama/crauti/pkg/middleware"
@@ -42,27 +43,24 @@ func init() {
 	bpool = newPool()
 }
 
-type reverseProxyMiddleware struct {
+type ReverseProxyMiddleware struct {
 	middleware.Middleware
 
 	next http.Handler
 }
 
-func NewReverseProxyMiddleware(next http.Handler) *reverseProxyMiddleware {
-
-	p := &reverseProxyMiddleware{
-		next: next,
-	}
-	return p
+func (m *ReverseProxyMiddleware) Init(next http.Handler) middleware.Middleware {
+	m.next = next
+	return m
 }
 
-func (m *reverseProxyMiddleware) director(proxy *httputil.ReverseProxy) func(r *http.Request) {
+func (m *ReverseProxyMiddleware) director(proxy *httputil.ReverseProxy) func(r *http.Request) {
 	director := proxy.Director
 
 	return func(r *http.Request) {
 		director(r)
 
-		chainContext := m.GetContext(r)
+		chainContext := chaincontext.GetChainContext(r)
 		upstreamUrl, err := url.Parse(chainContext.Conf.Upstream)
 		if err != nil {
 			log.Fatal().Err(err)
@@ -82,7 +80,7 @@ func (m *reverseProxyMiddleware) director(proxy *httputil.ReverseProxy) func(r *
 	}
 }
 
-func (m *reverseProxyMiddleware) setupProxy(upstreamUrl *url.URL) *httputil.ReverseProxy {
+func (m *ReverseProxyMiddleware) setupProxy(upstreamUrl *url.URL) *httputil.ReverseProxy {
 	proxy := httputil.NewSingleHostReverseProxy(upstreamUrl)
 
 	// install the buffer pool
@@ -108,8 +106,8 @@ func (m *reverseProxyMiddleware) setupProxy(upstreamUrl *url.URL) *httputil.Reve
 	return proxy
 }
 
-func (m *reverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := m.GetContext(r)
+func (m *ReverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := chaincontext.GetChainContext(r)
 
 	upstreamUrl, err := url.Parse(ctx.Conf.Upstream)
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ferama/crauti/pkg/chaincontext"
 	"github.com/ferama/crauti/pkg/middleware"
 	"github.com/ferama/crauti/pkg/utils"
 	"github.com/prometheus/client_golang/prometheus"
@@ -13,21 +14,19 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type emitterMiddleware struct {
+type EmitterMiddleware struct {
 	middleware.Middleware
 
 	next http.Handler
 }
 
-func NewEmitterrMiddleware(next http.Handler) *emitterMiddleware {
-	m := &emitterMiddleware{
-		next: next,
-	}
+func (m *EmitterMiddleware) Init(next http.Handler) middleware.Middleware {
+	m.next = next
 	return m
 }
 
-func (m *emitterMiddleware) emitLogs(r *http.Request) {
-	chainContext := m.GetContext(r)
+func (m *EmitterMiddleware) emitLogs(r *http.Request) {
+	chainContext := chaincontext.GetChainContext(r)
 
 	collectorContext := r.Context().Value(collectorContextKey).(collectorContext)
 
@@ -75,8 +74,8 @@ func (m *emitterMiddleware) emitLogs(r *http.Request) {
 	event.Send()
 }
 
-func (m *emitterMiddleware) emitMetrics(r *http.Request) {
-	chainContext := m.GetContext(r)
+func (m *EmitterMiddleware) emitMetrics(r *http.Request) {
+	chainContext := chaincontext.GetChainContext(r)
 	metricPathKey := chainContext.Conf.Path
 
 	requestHost, err := utils.GetRequestHost(r)
@@ -122,7 +121,7 @@ func (m *emitterMiddleware) emitMetrics(r *http.Request) {
 	}
 }
 
-func (m *emitterMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (m *EmitterMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	m.emitLogs(r)
 	m.emitMetrics(r)

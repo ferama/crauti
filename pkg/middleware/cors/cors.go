@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/ferama/crauti/pkg/chaincontext"
 	"github.com/ferama/crauti/pkg/middleware"
 )
 
@@ -19,21 +20,19 @@ func init() {
 }
 
 // this is a simple middleware sample
-type corsMiddleware struct {
+type CorsMiddleware struct {
 	middleware.Middleware
 
 	next http.Handler
 }
 
-func NewCorsMiddleware(next http.Handler) *corsMiddleware {
-	h := &corsMiddleware{
-		next: next,
-	}
-	return h
+func (m *CorsMiddleware) Init(next http.Handler) middleware.Middleware {
+	m.next = next
+	return m
 }
 
-func (m *corsMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	chainContext := m.GetContext(r)
+func (m *CorsMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	chainContext := chaincontext.GetChainContext(r)
 
 	if chainContext.Conf.Middlewares.Cors.IsEnabled() {
 

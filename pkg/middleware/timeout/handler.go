@@ -7,20 +7,18 @@ import (
 	collectorutils "github.com/ferama/crauti/pkg/middleware/collector/utils"
 )
 
-type timeoutHandlerMiddleware struct {
+type TimeoutHandlerMiddleware struct {
 	middleware.Middleware
 
 	next http.Handler
 }
 
-func NewTimeoutHandlerMiddleware(next http.Handler) *timeoutHandlerMiddleware {
-	m := &timeoutHandlerMiddleware{
-		next: next,
-	}
+func (m *TimeoutHandlerMiddleware) Init(next http.Handler) middleware.Middleware {
+	m.next = next
 	return m
 }
 
-func (m *timeoutHandlerMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (m *TimeoutHandlerMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	select {
 	// a timeout occurred?
 	case <-r.Context().Done():

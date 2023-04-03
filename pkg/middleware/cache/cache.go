@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/ferama/crauti/pkg/chaincontext"
 	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/logger"
 	"github.com/ferama/crauti/pkg/middleware"
@@ -74,7 +75,7 @@ func contains(slice []string, val string) bool {
 	return false
 }
 
-type cacheMiddleware struct {
+type CacheMiddleware struct {
 	middleware.Middleware
 
 	next http.Handler
@@ -83,18 +84,14 @@ type cacheMiddleware struct {
 	lockmap map[string]*sync.Mutex
 }
 
-func NewCacheMiddleware(next http.Handler) *cacheMiddleware {
-
-	cm := &cacheMiddleware{
-		next:    next,
-		lockmap: make(map[string]*sync.Mutex),
-	}
-
-	return cm
+func (m *CacheMiddleware) Init(next http.Handler) middleware.Middleware {
+	m.next = next
+	m.lockmap = make(map[string]*sync.Mutex)
+	return m
 }
 
-func (m *cacheMiddleware) encodeKeyHeader(r *http.Request, enc string, k string, v string) string {
-	chainContext := m.GetContext(r)
+func (m *CacheMiddleware) encodeKeyHeader(r *http.Request, enc string, k string, v string) string {
+	chainContext := chaincontext.GetChainContext(r)
 	conf := chainContext.Conf.Middlewares.Cache
 
 	// header that will contribute to build tha cache key
@@ -110,7 +107,7 @@ func (m *cacheMiddleware) encodeKeyHeader(r *http.Request, enc string, k string,
 	return enc
 }
 
-func (m *cacheMiddleware) buildCacheKey(r *http.Request) string {
+func (m *CacheMiddleware) buildCacheKey(r *http.Request) string {
 	// ensure sorted headers (to target the right cache key)
 	keys := make([]string, 0, len(r.Header))
 	for k := range r.Header {
@@ -144,7 +141,7 @@ func (m *cacheMiddleware) buildCacheKey(r *http.Request) string {
 	return enc
 }
 
-func (m *cacheMiddleware) serveFromCache(key string, w http.ResponseWriter, r *http.Request) bool {
+func (m *CacheMiddleware) serveFromCache(key string, w http.ResponseWriter, r *http.Request) bool {
 	body, _ := redis.CacheInstance().Get(buildRedisKey(bodyKeyHead, key))
 	if body != nil {
 		log.Debug().
@@ -174,7 +171,7 @@ func (m *cacheMiddleware) serveFromCache(key string, w http.ResponseWriter, r *h
 		w.Write(body)
 
 		// set the hit status into the context
-		chainContext := m.GetContext(r)
+		chainContext := chaincontext.GetChainContext(r)
 		chainContext.Cache.Status = CacheStatusHit
 		r = chainContext.Update(r, chainContext)
 
@@ -187,8 +184,8 @@ func (m *cacheMiddleware) serveFromCache(key string, w http.ResponseWriter, r *h
 	return false
 }
 
-func (m *cacheMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := m.GetContext(r)
+func (m *CacheMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := chaincontext.GetChainContext(r)
 	conf := ctx.Conf.Middlewares.Cache
 	// if the request should not be cached because the http
 	// method needs to be ignored or because it is disabled,
