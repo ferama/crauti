@@ -42,21 +42,15 @@ type Server struct {
 	http  *http.Server
 
 	updateChan chan *multiplexer
+	updateMU   sync.Mutex
 
 	hosts map[string]bool
 }
 
 func NewServer(listenAddr string) *Server {
 	s := &Server{
-		https: &http.Server{},
-		http:  &http.Server{},
-		// srv: &http.Server{
-		// 	// ReadHeaderTimeout: 5 * time.Second,
-		// 	ReadTimeout:  conf.ConfInst.Gateway.ReadTimeout,
-		// 	WriteTimeout: conf.ConfInst.Gateway.WriteTimeout,
-		// 	IdleTimeout:  conf.ConfInst.Gateway.IdleTimeout,
-		// 	Addr:         listenAddr,
-		// },
+		https:      &http.Server{},
+		http:       &http.Server{},
 		updateChan: make(chan *multiplexer),
 		hosts:      make(map[string]bool),
 	}
@@ -137,18 +131,20 @@ func (s *Server) buildChain(mp conf.MountPoint) http.Handler {
 }
 
 func (s *Server) UpdateHandlers() {
+	s.updateMU.Lock()
+
 	collector.MetricsInstance().UnregisterAll()
 
-	multiplexer := newMultiplexer()
+	mux := newMultiplexer()
 
-	if !conf.ConfInst.Debug {
-		defer func() {
-			if err := recover(); err != nil {
-				log.Printf("== %s", err)
-				s.https.Handler = multiplexer
-			}
-		}()
-	}
+	// if !conf.ConfInst.Debug {
+	// 	defer func() {
+	// 		if err := recover(); err != nil {
+	// 			log.Printf("== %s", err)
+	// 			s.https.Handler = multiplexer
+	// 		}
+	// 	}()
+	// }
 
 	hasRootHandlerDeafault := false
 	hasRootHandler := make(map[string]bool)
@@ -185,7 +181,7 @@ func (s *Server) UpdateHandlers() {
 		}
 		chain := s.buildChain(i)
 
-		multiplexer.getOrCreate(matchHost).Handle(i.Path, chain)
+		mux.getOrCreate(matchHost).Handle(i.Path, chain)
 	}
 
 	// if a root path (the / mountPoint) handler was not defined in mountPoints
@@ -193,11 +189,11 @@ func (s *Server) UpdateHandlers() {
 	// not found resources.
 
 	if !hasRootHandlerDeafault {
-		multiplexer.defaultMux.Handle("/", s.buildRootHandler())
+		mux.defaultMux.Handle("/", s.buildRootHandler())
 	}
 	for matchHost, has := range hasRootHandler {
 		if !has {
-			multiplexer.getOrCreate(matchHost).Handle("/", s.buildRootHandler())
+			mux.getOrCreate(matchHost).Handle("/", s.buildRootHandler())
 		}
 	}
 
@@ -207,12 +203,18 @@ func (s *Server) UpdateHandlers() {
 		s.https.Shutdown(context.Background())
 		s.http.Shutdown(context.Background())
 
-		s.updateChan <- multiplexer
+		s.updateChan <- mux
+
+		s.updateMU.Unlock()
 	}()
 }
 
 func (s *Server) Start() error {
+	var wg sync.WaitGroup
+
 	for {
+		wg.Wait()
+
 		mux := <-s.updateChan
 
 		s.https = &http.Server{
@@ -246,9 +248,15 @@ func (s *Server) Start() error {
 			Addr:    ":80",
 			Handler: certManager.HTTPHandler(fallback),
 		}
-		go s.http.ListenAndServe()
+		wg.Add(1)
+		go func() {
+			log.Printf("http - %s", s.http.ListenAndServe())
+			wg.Done()
+		}()
 
+		wg.Add(1)
 		log.Print("starting new server...")
-		log.Print(s.https.ListenAndServeTLS("", ""))
+		log.Printf("https - %s", s.https.ListenAndServeTLS("", ""))
+		wg.Done()
 	}
 }
