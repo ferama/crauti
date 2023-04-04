@@ -112,6 +112,39 @@ func Test404MatchHost(t *testing.T) {
 	}
 }
 
+func TestPort80(t *testing.T) {
+	go startWebServer(0)
+	loadConf("test4.yaml")
+	gwListenAddress := ":39143"
+	gwServer := NewServer(gwListenAddress)
+	gwServer.UpdateHandlers()
+
+	go gwServer.Start()
+
+	time.Sleep(1 * time.Second)
+
+	req, _ := http.NewRequest("GET", "http://localhost:39143/", nil)
+	req.Host = "test4.loc"
+
+	client := &http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if res.StatusCode != 200 {
+		t.Fatal("expected 200")
+	}
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		t.Error(err)
+	}
+	if string(body) != "done" {
+		t.Fatal("expected 'done'")
+	}
+}
+
 func BenchmarkRequest1(b *testing.B) {
 	go startWebServer(0)
 

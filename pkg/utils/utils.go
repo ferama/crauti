@@ -56,6 +56,9 @@ func ConvertToBytes(s string) (int64, error) {
 }
 
 func GetRequestHost(r *http.Request) (string, error) {
+	if !strings.Contains(r.Host, ":") {
+		return r.Host, nil
+	}
 	requestHost, _, err := net.SplitHostPort(r.Host)
 	if err != nil {
 		return "", err

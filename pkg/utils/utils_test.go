@@ -1,6 +1,33 @@
 package utils
 
-import "testing"
+import (
+	"net/http"
+	"testing"
+)
+
+func TestExtractHost(t *testing.T) {
+	list := []string{
+		"host.dom:8080",
+		"host.dom",
+	}
+	expected := []string{
+		"host.dom",
+		"host.dom",
+	}
+
+	for idx, s := range list {
+		req := &http.Request{
+			Host: s,
+		}
+		host, err := GetRequestHost(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if host != expected[idx] {
+			t.Fatalf("expected %s, got %s", expected[idx], host)
+		}
+	}
+}
 
 func TestConvertToBytes(t *testing.T) {
 

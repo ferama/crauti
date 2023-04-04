@@ -1,0 +1,6 @@
+debug: true
+mountPoints:
+  - upstream: http://localhost:19999
+    path: /
+    middlewares:
+      matchHost: test4.loc
