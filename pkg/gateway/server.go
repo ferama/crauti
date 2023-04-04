@@ -38,6 +38,8 @@ func init() {
 }
 
 type Server struct {
+	autoHttpsEnabled bool
+
 	https *http.Server
 	http  *http.Server
 
@@ -52,12 +54,13 @@ type Server struct {
 
 func NewServer(httpListenAddr string, httpsListenAddress string) *Server {
 	s := &Server{
-		https:           &http.Server{},
-		http:            &http.Server{},
-		httpListenAddr:  httpListenAddr,
-		httpsListenAddr: httpsListenAddress,
-		updateChan:      make(chan *multiplexer),
-		hosts:           make(map[string]bool),
+		autoHttpsEnabled: false,
+		https:            &http.Server{},
+		http:             &http.Server{},
+		httpListenAddr:   httpListenAddr,
+		httpsListenAddr:  httpsListenAddress,
+		updateChan:       make(chan *multiplexer),
+		hosts:            make(map[string]bool),
 	}
 
 	return s
@@ -141,15 +144,6 @@ func (s *Server) UpdateHandlers() {
 
 	mux := newMultiplexer()
 
-	// if !conf.ConfInst.Debug {
-	// 	defer func() {
-	// 		if err := recover(); err != nil {
-	// 			log.Printf("== %s", err)
-	// 			s.https.Handler = multiplexer
-	// 		}
-	// 	}()
-	// }
-
 	hasRootHandlerDeafault := false
 	hasRootHandler := make(map[string]bool)
 
@@ -203,11 +197,7 @@ func (s *Server) UpdateHandlers() {
 
 	go func() {
 		s.Stop()
-		// s.https.Shutdown(context.Background())
-		// s.http.Shutdown(context.Background())
-
 		s.updateChan <- mux
-
 		s.updateMU.Unlock()
 	}()
 }
@@ -221,7 +211,6 @@ func (s *Server) Start() error {
 		mux := <-s.updateChan
 
 		s.https = &http.Server{
-			// ReadHeaderTimeout: 5 * time.Second,
 			ReadTimeout:  conf.ConfInst.Gateway.ReadTimeout,
 			WriteTimeout: conf.ConfInst.Gateway.WriteTimeout,
 			IdleTimeout:  conf.ConfInst.Gateway.IdleTimeout,
@@ -246,25 +235,38 @@ func (s *Server) Start() error {
 
 		// TODO: needs a custom fallback handler that redirect to https
 		// mountPoints with matchHost only and fallback to http the rest
-		fallback := mux
-		s.http = &http.Server{
-			Addr:    s.httpListenAddr,
-			Handler: certManager.HTTPHandler(fallback),
+		var handler http.Handler
+		handler = mux
+		if s.autoHttpsEnabled {
+			handler = certManager.HTTPHandler(handler)
 		}
+		s.http = &http.Server{
+			ReadTimeout:  conf.ConfInst.Gateway.ReadTimeout,
+			WriteTimeout: conf.ConfInst.Gateway.WriteTimeout,
+			IdleTimeout:  conf.ConfInst.Gateway.IdleTimeout,
+			Addr:         s.httpListenAddr,
+			Handler:      handler,
+		}
+
+		log.Print("starting new server...")
+
 		wg.Add(1)
 		go func() {
 			log.Printf("http - %s", s.http.ListenAndServe())
 			wg.Done()
 		}()
 
-		wg.Add(1)
-		log.Print("starting new server...")
-		log.Printf("https - %s", s.https.ListenAndServeTLS("", ""))
-		wg.Done()
+		if s.autoHttpsEnabled {
+			wg.Add(1)
+			log.Printf("https - %s", s.https.ListenAndServeTLS("", ""))
+			wg.Done()
+		}
 	}
 }
 
 func (s *Server) Stop() {
-	s.https.Shutdown(context.Background())
+	if s.autoHttpsEnabled {
+		s.https.Shutdown(context.Background())
+	}
 	s.http.Shutdown(context.Background())
 }
