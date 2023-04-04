@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ferama/crauti/pkg/conf"
+	"github.com/ferama/crauti/pkg/utils"
 	"github.com/spf13/viper"
 )
 
@@ -71,6 +72,43 @@ func Test404(t *testing.T) {
 	}
 	if res.StatusCode != 404 {
 		t.Fatal("expected 404")
+	}
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		t.Error(err)
+	}
+	if string(body) != utils.BodyResponse404 {
+		t.Fatalf("expected '%s'", utils.BodyResponse404)
+	}
+}
+
+func Test404MatchHost(t *testing.T) {
+	go startWebServer(0)
+
+	loadConf("test2.yaml")
+	gwListenAddress := "localhost:39143"
+	gwServer := NewServer(gwListenAddress)
+	gwServer.UpdateHandlers()
+
+	go gwServer.Start()
+
+	req, _ := http.NewRequest("GET", fmt.Sprintf("http://%s/notexists", gwListenAddress), nil)
+	req.Host = "test3.loc"
+
+	client := &http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.StatusCode != 404 {
+		t.Fatal("expected 404")
+	}
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		t.Error(err)
+	}
+	if string(body) != utils.BodyResponse404 {
+		t.Fatalf("expected '%s'", utils.BodyResponse404)
 	}
 }
 

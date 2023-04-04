@@ -1,0 +1,5 @@
+mountPoints:
+  - upstream: http://localhost:19999
+    path: /exists
+    middlewares:
+      matchHost: test3.loc

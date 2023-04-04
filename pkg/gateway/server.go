@@ -3,6 +3,7 @@ package gateway
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/ferama/crauti/pkg/chaincontext"
@@ -139,9 +140,15 @@ func (s *Server) UpdateHandlers() {
 
 	hasRootHandlerDeafault := false
 	hasRootHandler := make(map[string]bool)
-	log.Print("===============================================================")
+
+	log.Print(strings.Repeat("=", 80))
+
 	for _, i := range conf.ConfInst.MountPoints {
 		matchHost := i.Middlewares.MatchHost
+		if _, exists := hasRootHandler[matchHost]; !exists {
+			hasRootHandler[matchHost] = false
+		}
+
 		log.Debug().
 			Str("mountPath", i.Path).
 			Str("matchHost", matchHost).
