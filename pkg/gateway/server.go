@@ -145,8 +145,10 @@ func (s *Server) UpdateHandlers() {
 
 	for _, i := range conf.ConfInst.MountPoints {
 		matchHost := i.Middlewares.MatchHost
-		if _, exists := hasRootHandler[matchHost]; !exists {
-			hasRootHandler[matchHost] = false
+		if matchHost != "" {
+			if _, exists := hasRootHandler[matchHost]; !exists {
+				hasRootHandler[matchHost] = false
+			}
 		}
 
 		log.Debug().
