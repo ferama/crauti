@@ -41,20 +41,24 @@ type Server struct {
 	https *http.Server
 	http  *http.Server
 
+	httpListenAddr  string
+	httpsListenAddr string
+
 	updateChan chan *multiplexer
 	updateMU   sync.Mutex
 
 	hosts map[string]bool
 }
 
-func NewServer(listenAddr string) *Server {
+func NewServer(httpListenAddr string, httpsListenAddress string) *Server {
 	s := &Server{
-		https:      &http.Server{},
-		http:       &http.Server{},
-		updateChan: make(chan *multiplexer),
-		hosts:      make(map[string]bool),
+		https:           &http.Server{},
+		http:            &http.Server{},
+		httpListenAddr:  httpListenAddr,
+		httpsListenAddr: httpsListenAddress,
+		updateChan:      make(chan *multiplexer),
+		hosts:           make(map[string]bool),
 	}
-	// s.UpdateHandlers()
 
 	return s
 }
@@ -197,11 +201,10 @@ func (s *Server) UpdateHandlers() {
 		}
 	}
 
-	// s.srv.Handler = multiplexer
-
 	go func() {
-		s.https.Shutdown(context.Background())
-		s.http.Shutdown(context.Background())
+		s.Stop()
+		// s.https.Shutdown(context.Background())
+		// s.http.Shutdown(context.Background())
 
 		s.updateChan <- mux
 
@@ -223,7 +226,7 @@ func (s *Server) Start() error {
 			WriteTimeout: conf.ConfInst.Gateway.WriteTimeout,
 			IdleTimeout:  conf.ConfInst.Gateway.IdleTimeout,
 			Handler:      mux,
-			Addr:         ":443",
+			Addr:         s.httpsListenAddr,
 		}
 
 		domains := make([]string, len(s.hosts))
@@ -245,7 +248,7 @@ func (s *Server) Start() error {
 		// mountPoints with matchHost only and fallback to http the rest
 		fallback := mux
 		s.http = &http.Server{
-			Addr:    ":80",
+			Addr:    s.httpListenAddr,
 			Handler: certManager.HTTPHandler(fallback),
 		}
 		wg.Add(1)
@@ -259,4 +262,9 @@ func (s *Server) Start() error {
 		log.Printf("https - %s", s.https.ListenAndServeTLS("", ""))
 		wg.Done()
 	}
+}
+
+func (s *Server) Stop() {
+	s.https.Shutdown(context.Background())
+	s.http.Shutdown(context.Background())
 }

@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"path/filepath"
@@ -20,19 +19,32 @@ func loadConf(file string) {
 	conf.Update()
 }
 
-func startWebServer(sleepTime int) {
-	http.ListenAndServe(":19999", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		time.Sleep(time.Duration(sleepTime) * time.Second)
-		w.Write([]byte("done"))
-	}))
+func startWebServer(sleepTime int) http.Server {
+	s := http.Server{
+		Addr: ":19999",
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			time.Sleep(time.Duration(sleepTime) * time.Second)
+			w.Write([]byte("done"))
+		}),
+	}
+	return s
+
+	// http.ListenAndServe(":19999", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	// 	time.Sleep(time.Duration(sleepTime) * time.Second)
+	// 	w.Write([]byte("done"))
+	// }))
 }
 
 func TestTimeout(t *testing.T) {
-	go startWebServer(2)
+	s := startWebServer(2)
+	go s.ListenAndServe()
 
 	loadConf("test.yaml")
-	gwListenAddress := "localhost:39142"
-	gwServer := NewServer(gwListenAddress)
+	gwServer := NewServer(":8080", ":8443")
+	defer func() {
+		gwServer.Stop()
+		s.Close()
+	}()
 	gwServer.UpdateHandlers()
 
 	go gwServer.Start()
@@ -40,7 +52,7 @@ func TestTimeout(t *testing.T) {
 	// give time to gateway to raise
 	time.Sleep(1 * time.Second)
 
-	res, err := http.Get("http://" + gwListenAddress)
+	res, err := http.Get("http://127.0.0.1:8080")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,16 +69,20 @@ func TestTimeout(t *testing.T) {
 }
 
 func Test404(t *testing.T) {
-	go startWebServer(0)
+	s := startWebServer(0)
+	go s.ListenAndServe()
 
 	loadConf("test2.yaml")
-	gwListenAddress := "localhost:39143"
-	gwServer := NewServer(gwListenAddress)
+	gwServer := NewServer(":8080", ":8443")
+	defer func() {
+		gwServer.Stop()
+		s.Close()
+	}()
 	gwServer.UpdateHandlers()
 
 	go gwServer.Start()
 
-	res, err := http.Get(fmt.Sprintf("http://%s/notexists", gwListenAddress))
+	res, err := http.Get("http://127.0.0.1:8080/notexists")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -83,16 +99,20 @@ func Test404(t *testing.T) {
 }
 
 func Test404MatchHost(t *testing.T) {
-	go startWebServer(0)
+	s := startWebServer(0)
+	go s.ListenAndServe()
 
 	loadConf("test2.yaml")
-	gwListenAddress := "localhost:39143"
-	gwServer := NewServer(gwListenAddress)
+	gwServer := NewServer(":8080", ":8443")
+	defer func() {
+		gwServer.Stop()
+		s.Close()
+	}()
 	gwServer.UpdateHandlers()
 
 	go gwServer.Start()
 
-	req, _ := http.NewRequest("GET", fmt.Sprintf("http://%s/notexists", gwListenAddress), nil)
+	req, _ := http.NewRequest("GET", "http://127.0.0.1:8080", nil)
 	req.Host = "test3.loc"
 
 	client := &http.Client{}
@@ -113,17 +133,21 @@ func Test404MatchHost(t *testing.T) {
 }
 
 func TestPort80(t *testing.T) {
-	go startWebServer(0)
+	s := startWebServer(0)
+	go s.ListenAndServe()
 	loadConf("test4.yaml")
-	gwListenAddress := ":39143"
-	gwServer := NewServer(gwListenAddress)
+	gwServer := NewServer(":8080", ":8443")
+	defer func() {
+		gwServer.Stop()
+		s.Close()
+	}()
 	gwServer.UpdateHandlers()
 
 	go gwServer.Start()
 
 	time.Sleep(1 * time.Second)
 
-	req, _ := http.NewRequest("GET", "http://localhost:39143/", nil)
+	req, _ := http.NewRequest("GET", "http://localhost:8080/", nil)
 	req.Host = "test4.loc"
 
 	client := &http.Client{}
@@ -146,11 +170,15 @@ func TestPort80(t *testing.T) {
 }
 
 func BenchmarkRequest1(b *testing.B) {
-	go startWebServer(0)
+	s := startWebServer(0)
+	go s.ListenAndServe()
 
 	loadConf("test.yaml")
-	gwListenAddress := "localhost:39142"
-	gwServer := NewServer(gwListenAddress)
+	gwServer := NewServer(":8080", ":8443")
+	defer func() {
+		gwServer.Stop()
+		s.Close()
+	}()
 	gwServer.UpdateHandlers()
 
 	go gwServer.Start()
@@ -159,7 +187,7 @@ func BenchmarkRequest1(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		res, err := http.Get("http://" + gwListenAddress)
+		res, err := http.Get("http://127.0.0.1:8080")
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -173,6 +201,5 @@ func BenchmarkRequest1(b *testing.B) {
 		if string(body) != "done" {
 			b.Fatal("expected 'done'")
 		}
-
 	}
 }
