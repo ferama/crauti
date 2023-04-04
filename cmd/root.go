@@ -76,7 +76,7 @@ var rootCmd = &cobra.Command{
 		go adminServer.Start()
 
 		// start the gateway server
-		log.Fatal().Err(gwServer.Start()).Send()
+		gwServer.Start()
 	},
 }
 

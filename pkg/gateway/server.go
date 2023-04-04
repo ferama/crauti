@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -37,26 +38,29 @@ func init() {
 }
 
 type Server struct {
-	srv *http.Server
+	https *http.Server
+	http  *http.Server
 
-	updateChan chan bool
+	updateChan chan *multiplexer
 
 	hosts map[string]bool
 }
 
 func NewServer(listenAddr string) *Server {
 	s := &Server{
-		srv: &http.Server{
-			// ReadHeaderTimeout: 5 * time.Second,
-			ReadTimeout:  conf.ConfInst.Gateway.ReadTimeout,
-			WriteTimeout: conf.ConfInst.Gateway.WriteTimeout,
-			IdleTimeout:  conf.ConfInst.Gateway.IdleTimeout,
-			Addr:         listenAddr,
-		},
-		updateChan: make(chan bool),
+		https: &http.Server{},
+		http:  &http.Server{},
+		// srv: &http.Server{
+		// 	// ReadHeaderTimeout: 5 * time.Second,
+		// 	ReadTimeout:  conf.ConfInst.Gateway.ReadTimeout,
+		// 	WriteTimeout: conf.ConfInst.Gateway.WriteTimeout,
+		// 	IdleTimeout:  conf.ConfInst.Gateway.IdleTimeout,
+		// 	Addr:         listenAddr,
+		// },
+		updateChan: make(chan *multiplexer),
 		hosts:      make(map[string]bool),
 	}
-	s.UpdateHandlers()
+	// s.UpdateHandlers()
 
 	return s
 }
@@ -141,7 +145,7 @@ func (s *Server) UpdateHandlers() {
 		defer func() {
 			if err := recover(); err != nil {
 				log.Printf("== %s", err)
-				s.srv.Handler = multiplexer.defaultMux
+				s.https.Handler = multiplexer
 			}
 		}()
 	}
@@ -196,50 +200,55 @@ func (s *Server) UpdateHandlers() {
 			multiplexer.getOrCreate(matchHost).Handle("/", s.buildRootHandler())
 		}
 	}
-	s.srv.Handler = multiplexer
 
-	go func() { s.updateChan <- true }()
-	go func() { s.updateChan <- true }()
+	// s.srv.Handler = multiplexer
+
+	go func() {
+		s.https.Shutdown(context.Background())
+		s.http.Shutdown(context.Background())
+
+		s.updateChan <- multiplexer
+	}()
 }
 
 func (s *Server) Start() error {
-	certManager := autocert.Manager{
-		Client: &acme.Client{
-			// DirectoryURL: "https://acme-staging-v02.api.letsencrypt.org/directory",
-			DirectoryURL: "https://acme-v02.api.letsencrypt.org/directory",
-		},
-		Cache:  autocert.DirCache("./certs-cache"),
-		Prompt: autocert.AcceptTOS,
-	}
-	s.srv.TLSConfig = certManager.TLSConfig()
-	// s.srv.TLSConfig = &tls.Config{
-	// 	GetCertificate: certManager.GetCertificate,
-	// }
+	for {
+		mux := <-s.updateChan
 
-	// TODO: needs a custom fallback handler that redirect to https
-	// mountPoints with matchHost only and fallback to http the rest
-	fallback := s.srv.Handler
-	httpSrv := &http.Server{
-		Addr:    ":80",
-		Handler: certManager.HTTPHandler(fallback),
-	}
-	go httpSrv.ListenAndServe()
-
-	go func() {
-		for {
-			<-s.updateChan
-
-			domains := make([]string, len(s.hosts))
-			for k := range s.hosts {
-				domains = append(domains, k)
-			}
-
-			certManager.HostPolicy = autocert.HostWhitelist(domains...)
-			log.Printf("hosts: %s", domains)
+		s.https = &http.Server{
+			// ReadHeaderTimeout: 5 * time.Second,
+			ReadTimeout:  conf.ConfInst.Gateway.ReadTimeout,
+			WriteTimeout: conf.ConfInst.Gateway.WriteTimeout,
+			IdleTimeout:  conf.ConfInst.Gateway.IdleTimeout,
+			Handler:      mux,
+			Addr:         ":443",
 		}
-	}()
-	// return
-	//s.srv.ListenAndServe()
-	s.srv.Addr = ":443"
-	return s.srv.ListenAndServeTLS("", "")
+
+		domains := make([]string, len(s.hosts))
+		for k := range s.hosts {
+			domains = append(domains, k)
+		}
+		certManager := autocert.Manager{
+			Client: &acme.Client{
+				DirectoryURL: "https://acme-staging-v02.api.letsencrypt.org/directory",
+				// DirectoryURL: "https://acme-v02.api.letsencrypt.org/directory",
+			},
+			Cache:      autocert.DirCache("./certs-cache"),
+			Prompt:     autocert.AcceptTOS,
+			HostPolicy: autocert.HostWhitelist(domains...),
+		}
+		s.https.TLSConfig = certManager.TLSConfig()
+
+		// TODO: needs a custom fallback handler that redirect to https
+		// mountPoints with matchHost only and fallback to http the rest
+		fallback := mux
+		s.http = &http.Server{
+			Addr:    ":80",
+			Handler: certManager.HTTPHandler(fallback),
+		}
+		go s.http.ListenAndServe()
+
+		log.Print("starting new server...")
+		log.Print(s.https.ListenAndServeTLS("", ""))
+	}
 }
