@@ -204,7 +204,8 @@ func (s *Server) UpdateHandlers() {
 func (s *Server) Start() error {
 	certManager := autocert.Manager{
 		Client: &acme.Client{
-			DirectoryURL: "https://acme-staging-v02.api.letsencrypt.org/directory",
+			// DirectoryURL: "https://acme-staging-v02.api.letsencrypt.org/directory",
+			DirectoryURL: "https://acme-v02.api.letsencrypt.org/directory",
 		},
 		Cache:  autocert.DirCache("./certs-cache"),
 		Prompt: autocert.AcceptTOS,
