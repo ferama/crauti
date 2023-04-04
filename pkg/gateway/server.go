@@ -199,6 +199,7 @@ func (s *Server) UpdateHandlers() {
 	s.srv.Handler = multiplexer
 
 	go func() { s.updateChan <- true }()
+	go func() { s.updateChan <- true }()
 }
 
 func (s *Server) Start() error {
