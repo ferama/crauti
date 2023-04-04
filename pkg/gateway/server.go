@@ -18,6 +18,8 @@ import (
 	"github.com/ferama/crauti/pkg/middleware/timeout"
 	"github.com/ferama/crauti/pkg/utils"
 	"github.com/rs/zerolog"
+	"golang.org/x/crypto/acme"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 var (
@@ -36,6 +38,10 @@ func init() {
 
 type Server struct {
 	srv *http.Server
+
+	updateChan chan bool
+
+	hosts map[string]bool
 }
 
 func NewServer(listenAddr string) *Server {
@@ -47,6 +53,8 @@ func NewServer(listenAddr string) *Server {
 			IdleTimeout:  conf.ConfInst.Gateway.IdleTimeout,
 			Addr:         listenAddr,
 		},
+		updateChan: make(chan bool),
+		hosts:      make(map[string]bool),
 	}
 	s.UpdateHandlers()
 
@@ -156,6 +164,10 @@ func (s *Server) UpdateHandlers() {
 			Str("matchHost", matchHost).
 			Msg("registering mount path")
 
+		if matchHost != "" {
+			s.hosts[matchHost] = true
+		}
+
 		if i.Path == "/" {
 			if matchHost == "" {
 				hasRootHandlerDeafault = true
@@ -186,8 +198,46 @@ func (s *Server) UpdateHandlers() {
 	}
 	s.srv.Handler = multiplexer
 
+	go func() { s.updateChan <- true }()
 }
 
 func (s *Server) Start() error {
-	return s.srv.ListenAndServe()
+	certManager := autocert.Manager{
+		Client: &acme.Client{
+			DirectoryURL: "https://acme-staging-v02.api.letsencrypt.org/directory",
+		},
+		Cache:  autocert.DirCache("./certs-cache"),
+		Prompt: autocert.AcceptTOS,
+	}
+	s.srv.TLSConfig = certManager.TLSConfig()
+	// s.srv.TLSConfig = &tls.Config{
+	// 	GetCertificate: certManager.GetCertificate,
+	// }
+
+	// TODO: needs a custom fallback handler that redirect to https
+	// mountPoints with matchHost only and fallback to http the rest
+	fallback := s.srv.Handler
+	httpSrv := &http.Server{
+		Addr:    ":80",
+		Handler: certManager.HTTPHandler(fallback),
+	}
+	go httpSrv.ListenAndServe()
+
+	go func() {
+		for {
+			<-s.updateChan
+
+			domains := make([]string, len(s.hosts))
+			for k := range s.hosts {
+				domains = append(domains, k)
+			}
+
+			certManager.HostPolicy = autocert.HostWhitelist(domains...)
+			log.Printf("hosts: %s", domains)
+		}
+	}()
+	// return
+	//s.srv.ListenAndServe()
+	s.srv.Addr = ":443"
+	return s.srv.ListenAndServeTLS("", "")
 }
