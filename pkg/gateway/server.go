@@ -40,7 +40,43 @@ func newServer(httpListenAddr string, httpsListenAddress string, update chan *ru
 	return s
 }
 
-func (s *server) Start() error {
+func (s *server) setupServers(updates *runtimeUpdates) {
+	s.https = &http.Server{
+		ReadTimeout:  conf.ConfInst.Gateway.ReadTimeout,
+		WriteTimeout: conf.ConfInst.Gateway.WriteTimeout,
+		IdleTimeout:  conf.ConfInst.Gateway.IdleTimeout,
+		Handler:      updates.mux,
+		Addr:         s.httpsListenAddr,
+	}
+
+	certManager := autocert.Manager{
+		Client: &acme.Client{
+			DirectoryURL: "https://acme-staging-v02.api.letsencrypt.org/directory",
+			// DirectoryURL: "https://acme-v02.api.letsencrypt.org/directory",
+		},
+		Cache:      autocert.DirCache("./certs-cache"),
+		Prompt:     autocert.AcceptTOS,
+		HostPolicy: autocert.HostWhitelist(updates.domains...),
+	}
+	s.https.TLSConfig = certManager.TLSConfig()
+
+	// TODO: needs a custom fallback handler that redirect to https
+	// mountPoints with matchHost only and fallback to http the rest
+	var handler http.Handler
+	handler = updates.mux
+	if s.autoHttpsEnabled {
+		handler = certManager.HTTPHandler(handler)
+	}
+	s.http = &http.Server{
+		ReadTimeout:  conf.ConfInst.Gateway.ReadTimeout,
+		WriteTimeout: conf.ConfInst.Gateway.WriteTimeout,
+		IdleTimeout:  conf.ConfInst.Gateway.IdleTimeout,
+		Addr:         s.httpListenAddr,
+		Handler:      handler,
+	}
+}
+
+func (s *server) run() error {
 	var wg sync.WaitGroup
 
 	for {
@@ -48,39 +84,7 @@ func (s *server) Start() error {
 
 		updates := <-s.updateChan
 
-		s.https = &http.Server{
-			ReadTimeout:  conf.ConfInst.Gateway.ReadTimeout,
-			WriteTimeout: conf.ConfInst.Gateway.WriteTimeout,
-			IdleTimeout:  conf.ConfInst.Gateway.IdleTimeout,
-			Handler:      updates.mux,
-			Addr:         s.httpsListenAddr,
-		}
-
-		certManager := autocert.Manager{
-			Client: &acme.Client{
-				DirectoryURL: "https://acme-staging-v02.api.letsencrypt.org/directory",
-				// DirectoryURL: "https://acme-v02.api.letsencrypt.org/directory",
-			},
-			Cache:      autocert.DirCache("./certs-cache"),
-			Prompt:     autocert.AcceptTOS,
-			HostPolicy: autocert.HostWhitelist(updates.domains...),
-		}
-		s.https.TLSConfig = certManager.TLSConfig()
-
-		// TODO: needs a custom fallback handler that redirect to https
-		// mountPoints with matchHost only and fallback to http the rest
-		var handler http.Handler
-		handler = updates.mux
-		if s.autoHttpsEnabled {
-			handler = certManager.HTTPHandler(handler)
-		}
-		s.http = &http.Server{
-			ReadTimeout:  conf.ConfInst.Gateway.ReadTimeout,
-			WriteTimeout: conf.ConfInst.Gateway.WriteTimeout,
-			IdleTimeout:  conf.ConfInst.Gateway.IdleTimeout,
-			Addr:         s.httpListenAddr,
-			Handler:      handler,
-		}
+		s.setupServers(updates)
 
 		log.Print("starting new server...")
 
@@ -98,7 +102,7 @@ func (s *server) Start() error {
 	}
 }
 
-func (s *server) Stop() {
+func (s *server) stop() {
 	if s.autoHttpsEnabled {
 		s.https.Shutdown(context.Background())
 	}

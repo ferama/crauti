@@ -28,11 +28,6 @@ func startWebServer(sleepTime int) http.Server {
 		}),
 	}
 	return s
-
-	// http.ListenAndServe(":19999", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	// 	time.Sleep(time.Duration(sleepTime) * time.Second)
-	// 	w.Write([]byte("done"))
-	// }))
 }
 
 func TestTimeout(t *testing.T) {

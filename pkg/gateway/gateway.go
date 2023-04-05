@@ -39,6 +39,7 @@ type Gateway struct {
 
 	updateChan chan *runtimeUpdates
 	updateMU   sync.Mutex
+	serverMU   sync.Mutex
 }
 
 func NewGateway(httpListenAddr string, httpsListenAddress string) *Gateway {
@@ -181,7 +182,7 @@ func (s *Gateway) UpdateHandlers() {
 	}
 
 	go func() {
-		s.server.Stop()
+		s.server.stop()
 		domains := make([]string, len(hosts))
 		for k := range hosts {
 			domains = append(domains, k)
@@ -196,9 +197,12 @@ func (s *Gateway) UpdateHandlers() {
 }
 
 func (s *Gateway) Start() error {
-	return s.server.Start()
+	return s.server.run()
 }
 
 func (s *Gateway) Stop() {
-	s.server.Stop()
+	s.serverMU.Lock()
+	defer s.serverMU.Unlock()
+
+	s.server.stop()
 }
