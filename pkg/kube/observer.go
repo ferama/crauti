@@ -19,22 +19,22 @@ import (
 
 const resyncTime = 10 * time.Second
 
-type SvcHandler struct {
-	server *gateway.Gateway
+type Observer struct {
+	gateway *gateway.Gateway
 
 	svcUpdater *svcUpdater
 }
 
-func NewSvcHandler(
-	server *gateway.Gateway,
+func NewObserver(
+	gateway *gateway.Gateway,
 	kubeconfig string,
-	stopper chan struct{}) *SvcHandler {
+	stopper chan struct{}) *Observer {
 
-	svc := &SvcHandler{
-		server:     server,
-		svcUpdater: newSvcUpdater(server),
+	o := &Observer{
+		gateway:    gateway,
+		svcUpdater: newSvcUpdater(gateway),
 	}
-	config := svc.getRestConfig(kubeconfig)
+	config := o.getRestConfig(kubeconfig)
 
 	// create the clientset
 	clientSet, err := kubernetes.NewForConfig(config)
@@ -69,15 +69,15 @@ func NewSvcHandler(
 	}
 
 	serviceInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc:    svc.onAdd, // register add eventhandler
-		UpdateFunc: svc.onUpdate,
-		DeleteFunc: svc.onDelete,
+		AddFunc:    o.svcUpdater.onAdd, // register add eventhandler
+		UpdateFunc: o.svcUpdater.onUpdate,
+		DeleteFunc: o.svcUpdater.onDelete,
 	})
 
-	return svc
+	return o
 }
 
-func (s *SvcHandler) getRestConfig(kubeconfig string) *rest.Config {
+func (s *Observer) getRestConfig(kubeconfig string) *rest.Config {
 	config, err := rest.InClusterConfig()
 	if err == nil {
 		return config
@@ -88,20 +88,4 @@ func (s *SvcHandler) getRestConfig(kubeconfig string) *rest.Config {
 		panic(err.Error())
 	}
 	return config
-}
-
-func (s *SvcHandler) onAdd(obj interface{}) {
-	svc := obj.(*corev1.Service)
-	s.svcUpdater.add(fmt.Sprintf("%s/%s", svc.Namespace, svc.Name), *svc.DeepCopy())
-}
-
-func (s *SvcHandler) onUpdate(oldObj interface{}, newObj interface{}) {
-	// oldSvc := oldObj.(*corev1.Service)
-	newSvc := newObj.(*corev1.Service)
-	s.svcUpdater.add(fmt.Sprintf("%s/%s", newSvc.Namespace, newSvc.Name), *newSvc.DeepCopy())
-}
-
-func (s *SvcHandler) onDelete(obj interface{}) {
-	svc := obj.(*corev1.Service)
-	s.svcUpdater.delete(fmt.Sprintf("%s/%s", svc.Namespace, svc.Name))
 }

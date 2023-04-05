@@ -89,9 +89,13 @@ func (s *svcUpdater) synch() {
 	}
 }
 
-func (s *svcUpdater) add(key string, service corev1.Service) {
+func (s *svcUpdater) onAdd(obj interface{}) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	svc := obj.(*corev1.Service)
+	key := fmt.Sprintf("%s/%s", svc.Namespace, svc.Name)
+	service := *svc.DeepCopy()
 
 	parser := new(annotationParser)
 	s.shouldResync = true
@@ -105,9 +109,16 @@ func (s *svcUpdater) add(key string, service corev1.Service) {
 	s.services[key] = service
 }
 
-func (s *svcUpdater) delete(key string) {
+func (s *svcUpdater) onUpdate(oldObj interface{}, newObj interface{}) {
+	s.onAdd(newObj)
+}
+
+func (s *svcUpdater) onDelete(obj interface{}) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	svc := obj.(*corev1.Service)
+	key := fmt.Sprintf("%s/%s", svc.Namespace, svc.Name)
 
 	s.shouldResync = true
 	delete(s.services, key)

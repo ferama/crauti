@@ -59,7 +59,7 @@ var rootCmd = &cobra.Command{
 			stopper := make(chan struct{})
 			defer close(stopper)
 			// the kubernetes services informer
-			kube.NewSvcHandler(gwServer, kubeconfig, stopper)
+			kube.NewObserver(gwServer, kubeconfig, stopper)
 			log.Info().Msgf("k8s service informer started")
 		} else {
 			gwServer.UpdateHandlers()
