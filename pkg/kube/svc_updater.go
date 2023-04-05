@@ -13,7 +13,7 @@ import (
 )
 
 type svcUpdater struct {
-	server *gateway.Server
+	server *gateway.Gateway
 
 	// this field contains
 	services map[string]corev1.Service
@@ -23,7 +23,7 @@ type svcUpdater struct {
 	mu sync.Mutex
 }
 
-func newSvcUpdater(server *gateway.Server) *svcUpdater {
+func newSvcUpdater(server *gateway.Gateway) *svcUpdater {
 	s := &svcUpdater{
 		server:       server,
 		services:     make(map[string]corev1.Service),

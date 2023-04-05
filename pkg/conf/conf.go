@@ -73,10 +73,9 @@ type kubernetes struct {
 }
 
 type gateway struct {
-	ListenAddress string        `yaml:"listenAddress"`
-	WriteTimeout  time.Duration `yaml:"writeTimeout"`
-	ReadTimeout   time.Duration `yaml:"readTimeout"`
-	IdleTimeout   time.Duration `yaml:"idleTimeout"`
+	WriteTimeout time.Duration `yaml:"writeTimeout"`
+	ReadTimeout  time.Duration `yaml:"readTimeout"`
+	IdleTimeout  time.Duration `yaml:"idleTimeout"`
 }
 
 // config holds all the config values

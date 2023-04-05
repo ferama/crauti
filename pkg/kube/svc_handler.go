@@ -20,13 +20,13 @@ import (
 const resyncTime = 10 * time.Second
 
 type SvcHandler struct {
-	server *gateway.Server
+	server *gateway.Gateway
 
 	svcUpdater *svcUpdater
 }
 
 func NewSvcHandler(
-	server *gateway.Server,
+	server *gateway.Gateway,
 	kubeconfig string,
 	stopper chan struct{}) *SvcHandler {
 
