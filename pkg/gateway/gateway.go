@@ -86,6 +86,8 @@ func (s *Gateway) buildChain(mp conf.MountPoint) http.Handler {
 	mwares := make([]middleware.Middleware, 0)
 
 	mwares = append(mwares,
+		// http -> https
+		// &redirect.RedirectMiddleware{},
 		// collect metrics and logs
 		&collector.CollectorMiddleware{},
 		// add timetout to context

@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"context"
+	"crypto/tls"
 	"net/http"
 	"sync"
 
@@ -116,13 +117,18 @@ func (s *server) run() error {
 		}()
 
 		if s.HTTPSEnabled {
-			if s.autoHTTPSEnabled {
-				wg.Add(1)
-				log.Printf("https - %s", s.https.ListenAndServeTLS("", ""))
-				wg.Done()
-			} else {
+			if !s.autoHTTPSEnabled {
 				//TODO: manage custom certs
+				crt1, _ := tls.LoadX509KeyPair("fullchain.pem", "privkey.pem")
+				s.https.TLSConfig = &tls.Config{
+					Certificates: []tls.Certificate{
+						crt1,
+					},
+				}
 			}
+			wg.Add(1)
+			log.Printf("https - %s", s.https.ListenAndServeTLS("", ""))
+			wg.Done()
 		}
 	}
 }
