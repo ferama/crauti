@@ -40,7 +40,7 @@ func TestTimeout(t *testing.T) {
 	go s.ListenAndServe()
 
 	loadConf("test.yaml")
-	gwServer := NewServer(":8080", ":8443")
+	gwServer := NewGateway(":8080", ":8443")
 	defer func() {
 		gwServer.Stop()
 		s.Close()
@@ -73,7 +73,7 @@ func Test404(t *testing.T) {
 	go s.ListenAndServe()
 
 	loadConf("test2.yaml")
-	gwServer := NewServer(":8080", ":8443")
+	gwServer := NewGateway(":8080", ":8443")
 	defer func() {
 		gwServer.Stop()
 		s.Close()
@@ -103,7 +103,7 @@ func Test404MatchHost(t *testing.T) {
 	go s.ListenAndServe()
 
 	loadConf("test2.yaml")
-	gwServer := NewServer(":8080", ":8443")
+	gwServer := NewGateway(":8080", ":8443")
 	defer func() {
 		gwServer.Stop()
 		s.Close()
@@ -136,7 +136,7 @@ func TestPort80(t *testing.T) {
 	s := startWebServer(0)
 	go s.ListenAndServe()
 	loadConf("test4.yaml")
-	gwServer := NewServer(":8080", ":8443")
+	gwServer := NewGateway(":8080", ":8443")
 	defer func() {
 		gwServer.Stop()
 		s.Close()
@@ -174,7 +174,7 @@ func BenchmarkRequest1(b *testing.B) {
 	go s.ListenAndServe()
 
 	loadConf("test.yaml")
-	gwServer := NewServer(":8080", ":8443")
+	gwServer := NewGateway(":8080", ":8443")
 	defer func() {
 		gwServer.Stop()
 		s.Close()
