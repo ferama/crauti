@@ -2,6 +2,7 @@ package certcache
 
 import (
 	"context"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,6 +39,7 @@ func NewSecretCache(kubeconfig string) *SecretCache {
 }
 
 func (s *SecretCache) Get(ctx context.Context, key string) ([]byte, error) {
+
 	var (
 		data   []byte
 		err    error
@@ -48,7 +50,7 @@ func (s *SecretCache) Get(ctx context.Context, key string) ([]byte, error) {
 	go func() {
 		secret, err = s.clientSet.CoreV1().
 			Secrets(namespace).
-			Get(context.TODO(), key, metav1.GetOptions{})
+			Get(context.TODO(), s.keyToName(key), metav1.GetOptions{})
 
 		data = secret.Data[secretMapKey]
 		close(done)
@@ -69,7 +71,7 @@ func (s *SecretCache) Put(ctx context.Context, key string, data []byte) error {
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      key,
+			Name:      s.keyToName(key),
 			Namespace: namespace,
 		},
 		Data: map[string][]byte{
@@ -105,7 +107,7 @@ func (s *SecretCache) Delete(ctx context.Context, key string) error {
 
 		err = s.clientSet.CoreV1().
 			Secrets(namespace).
-			Delete(context.TODO(), key, metav1.DeleteOptions{})
+			Delete(context.TODO(), s.keyToName(key), metav1.DeleteOptions{})
 
 	}()
 
@@ -115,6 +117,10 @@ func (s *SecretCache) Delete(ctx context.Context, key string) error {
 	case <-done:
 	}
 	return err
+}
+
+func (s *SecretCache) keyToName(key string) string {
+	return strings.ReplaceAll(key, ".", "-")
 }
 
 func (s *SecretCache) getRestConfig(kubeconfig string) *rest.Config {
