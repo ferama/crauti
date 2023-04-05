@@ -56,6 +56,7 @@ func NewObserver(
 		)
 	}
 	serviceInformer := factory.Core().V1().Services().Informer()
+	secretInformer := factory.Core().V1().Secrets().Informer()
 
 	defer runtime.HandleCrash()
 
@@ -67,11 +68,24 @@ func NewObserver(
 		runtime.HandleError(fmt.Errorf("timed out waiting for caches to sync"))
 		return nil
 	}
+	if !cache.WaitForCacheSync(stopper, secretInformer.HasSynced) {
+		runtime.HandleError(fmt.Errorf("timed out waiting for caches to sync"))
+		return nil
+	}
 
 	serviceInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    o.svcUpdater.onAdd, // register add eventhandler
 		UpdateFunc: o.svcUpdater.onUpdate,
 		DeleteFunc: o.svcUpdater.onDelete,
+	})
+
+	secretInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			// sec := obj.(*corev1.Secret)
+			// log.Printf("namespace: %s, name: %s", sec.Namespace, sec.Name)
+		},
+		UpdateFunc: func(oldObj, newObj interface{}) {},
+		DeleteFunc: func(obj interface{}) {},
 	})
 
 	return o
