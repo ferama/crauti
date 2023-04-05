@@ -81,8 +81,6 @@ func (s *server) setupServers(updates *runtimeUpdates) {
 			HostPolicy: autocert.HostWhitelist(updates.domains...),
 		}
 		s.https.TLSConfig = certManager.TLSConfig()
-		// TODO: needs a custom fallback handler that redirect to https
-		// mountPoints with matchHost only and fallback to http the rest
 		handler = certManager.HTTPHandler(handler)
 	}
 
