@@ -39,7 +39,6 @@ type Gateway struct {
 
 	updateChan chan *runtimeUpdates
 	updateMU   sync.Mutex
-	serverMU   sync.Mutex
 }
 
 func NewGateway(httpListenAddr string, httpsListenAddress string) *Gateway {
@@ -201,8 +200,5 @@ func (s *Gateway) Start() error {
 }
 
 func (s *Gateway) Stop() {
-	s.serverMU.Lock()
-	defer s.serverMU.Unlock()
-
 	s.server.stop()
 }

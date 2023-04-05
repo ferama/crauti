@@ -25,6 +25,8 @@ type server struct {
 	httpsListenAddr string
 
 	updateChan chan *runtimeUpdates
+
+	mu sync.Mutex
 }
 
 func newServer(httpListenAddr string, httpsListenAddress string, update chan *runtimeUpdates) *server {
@@ -84,7 +86,9 @@ func (s *server) run() error {
 
 		updates := <-s.updateChan
 
+		s.mu.Lock()
 		s.setupServers(updates)
+		s.mu.Unlock()
 
 		log.Print("starting new server...")
 
@@ -103,6 +107,9 @@ func (s *server) run() error {
 }
 
 func (s *server) stop() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if s.autoHttpsEnabled {
 		s.https.Shutdown(context.Background())
 	}
