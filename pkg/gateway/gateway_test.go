@@ -76,6 +76,8 @@ func Test404(t *testing.T) {
 	gwServer.UpdateHandlers()
 
 	go gwServer.Start()
+	// give time to gateway to raise
+	time.Sleep(1 * time.Second)
 
 	res, err := http.Get("http://127.0.0.1:8080/notexists")
 	if err != nil {
@@ -106,6 +108,8 @@ func Test404MatchHost(t *testing.T) {
 	gwServer.UpdateHandlers()
 
 	go gwServer.Start()
+	// give time to gateway to raise
+	time.Sleep(1 * time.Second)
 
 	req, _ := http.NewRequest("GET", "http://127.0.0.1:8080", nil)
 	req.Host = "test3.loc"
