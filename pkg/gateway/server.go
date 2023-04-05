@@ -21,7 +21,14 @@ type runtimeUpdates struct {
 }
 
 type server struct {
-	autoHttpsEnabled bool
+	// if true, server will listen on https port too
+	// either using provided certs or using the Let's Encrypt
+	// ones if autoHTTPEnabled
+	HTTPSEnabled bool
+	// if true, generates certificates using the Let's Encrypt
+	// You also need to set HTTPSEnabled = true
+	// If you don't do it, autoHTTPSEnabled will have no effect
+	autoHTTPSEnabled bool
 
 	https *http.Server
 	http  *http.Server
@@ -36,7 +43,8 @@ type server struct {
 
 func newServer(httpListenAddr string, httpsListenAddress string, update chan *runtimeUpdates) *server {
 	s := &server{
-		autoHttpsEnabled: false,
+		HTTPSEnabled:     false,
+		autoHTTPSEnabled: false,
 		https:            &http.Server{},
 		http:             &http.Server{},
 		httpListenAddr:   httpListenAddr,
@@ -48,32 +56,35 @@ func newServer(httpListenAddr string, httpsListenAddress string, update chan *ru
 }
 
 func (s *server) setupServers(updates *runtimeUpdates) {
-	s.https = &http.Server{
-		ReadTimeout:  conf.ConfInst.Gateway.ReadTimeout,
-		WriteTimeout: conf.ConfInst.Gateway.WriteTimeout,
-		IdleTimeout:  conf.ConfInst.Gateway.IdleTimeout,
-		Handler:      updates.mux,
-		Addr:         s.httpsListenAddr,
-	}
-
-	certManager := autocert.Manager{
-		Client: &acme.Client{
-			DirectoryURL: "https://acme-staging-v02.api.letsencrypt.org/directory",
-			// DirectoryURL: "https://acme-v02.api.letsencrypt.org/directory",
-		},
-		Cache:      autocert.DirCache("./certs-cache"),
-		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist(updates.domains...),
-	}
-	s.https.TLSConfig = certManager.TLSConfig()
-
-	// TODO: needs a custom fallback handler that redirect to https
-	// mountPoints with matchHost only and fallback to http the rest
 	var handler http.Handler
 	handler = updates.mux
-	if s.autoHttpsEnabled {
+
+	if s.HTTPSEnabled {
+		s.https = &http.Server{
+			ReadTimeout:  conf.ConfInst.Gateway.ReadTimeout,
+			WriteTimeout: conf.ConfInst.Gateway.WriteTimeout,
+			IdleTimeout:  conf.ConfInst.Gateway.IdleTimeout,
+			Handler:      handler,
+			Addr:         s.httpsListenAddr,
+		}
+	}
+
+	if s.HTTPSEnabled && s.autoHTTPSEnabled {
+		certManager := autocert.Manager{
+			Client: &acme.Client{
+				DirectoryURL: "https://acme-staging-v02.api.letsencrypt.org/directory",
+				// DirectoryURL: "https://acme-v02.api.letsencrypt.org/directory",
+			},
+			Cache:      autocert.DirCache("./certs-cache"),
+			Prompt:     autocert.AcceptTOS,
+			HostPolicy: autocert.HostWhitelist(updates.domains...),
+		}
+		s.https.TLSConfig = certManager.TLSConfig()
+		// TODO: needs a custom fallback handler that redirect to https
+		// mountPoints with matchHost only and fallback to http the rest
 		handler = certManager.HTTPHandler(handler)
 	}
+
 	s.http = &http.Server{
 		ReadTimeout:  conf.ConfInst.Gateway.ReadTimeout,
 		WriteTimeout: conf.ConfInst.Gateway.WriteTimeout,
@@ -104,10 +115,14 @@ func (s *server) run() error {
 			wg.Done()
 		}()
 
-		if s.autoHttpsEnabled {
-			wg.Add(1)
-			log.Printf("https - %s", s.https.ListenAndServeTLS("", ""))
-			wg.Done()
+		if s.HTTPSEnabled {
+			if s.autoHTTPSEnabled {
+				wg.Add(1)
+				log.Printf("https - %s", s.https.ListenAndServeTLS("", ""))
+				wg.Done()
+			} else {
+				//TODO: manage custom certs
+			}
 		}
 	}
 }
@@ -116,7 +131,7 @@ func (s *server) stop() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.autoHttpsEnabled {
+	if s.HTTPSEnabled {
 		s.https.Shutdown(context.Background())
 	}
 	s.http.Shutdown(context.Background())
