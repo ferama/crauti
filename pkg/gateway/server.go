@@ -10,8 +10,13 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 )
 
+// brings updates from the gateway when config
+// change at runtime
 type runtimeUpdates struct {
-	mux     *multiplexer
+	// the new multiplexer with updated mountPoints
+	mux *multiplexer
+
+	// a list of served domains
 	domains []string
 }
 
@@ -82,6 +87,7 @@ func (s *server) run() error {
 	var wg sync.WaitGroup
 
 	for {
+		// ensures that both http and https servers are down
 		wg.Wait()
 
 		updates := <-s.updateChan
