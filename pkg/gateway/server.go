@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/ferama/crauti/pkg/conf"
+	"github.com/ferama/crauti/pkg/kube/certcache"
 	"golang.org/x/crypto/acme"
 	"golang.org/x/crypto/acme/autocert"
 )
@@ -76,7 +77,9 @@ func (s *server) setupServers(updates *runtimeUpdates) {
 				DirectoryURL: "https://acme-staging-v02.api.letsencrypt.org/directory",
 				// DirectoryURL: "https://acme-v02.api.letsencrypt.org/directory",
 			},
-			Cache:      autocert.DirCache("./certs-cache"),
+			// Cache: autocert.DirCache("./certs-cache"),
+			Cache: certcache.NewSecretCache(""),
+			// Cache:      certcache.DirCache("./certs-cache"),
 			Prompt:     autocert.AcceptTOS,
 			HostPolicy: autocert.HostWhitelist(updates.domains...),
 		}

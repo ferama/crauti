@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"golang.org/x/crypto/acme/autocert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -11,8 +12,15 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+// This kubernetes secrets based certifacte store backend
+// BE VERY CAREFULL: do not use zerlog logging here. I don't actually
+// know the reason, but a single call to the logger will break
+// the functionlity of this object. Very Very Weird!
+// The issue seems to affect zerlog only. If you need to put out
+// some text for debugging purposes, please use go logger
 type SecretCache struct {
 	clientSet *kubernetes.Clientset
+	namespace string
 }
 
 const (
@@ -24,7 +32,9 @@ const (
 )
 
 func NewSecretCache(kubeconfig string) *SecretCache {
-	s := &SecretCache{}
+	s := &SecretCache{
+		namespace: namespace,
+	}
 
 	config := s.getRestConfig(kubeconfig)
 
@@ -39,7 +49,7 @@ func NewSecretCache(kubeconfig string) *SecretCache {
 }
 
 func (s *SecretCache) Get(ctx context.Context, key string) ([]byte, error) {
-
+	// log.Printf("get for %s", key)
 	var (
 		data   []byte
 		err    error
@@ -50,7 +60,7 @@ func (s *SecretCache) Get(ctx context.Context, key string) ([]byte, error) {
 	go func() {
 		secret, err = s.clientSet.CoreV1().
 			Secrets(namespace).
-			Get(context.TODO(), s.keyToName(key), metav1.GetOptions{})
+			Get(ctx, s.keyToName(key), metav1.GetOptions{})
 
 		data = secret.Data[secretMapKey]
 		close(done)
@@ -60,34 +70,39 @@ func (s *SecretCache) Get(ctx context.Context, key string) ([]byte, error) {
 		return nil, ctx.Err()
 	case <-done:
 	}
-
+	if err != nil {
+		return nil, autocert.ErrCacheMiss
+	}
 	return data, err
 }
 
 func (s *SecretCache) Put(ctx context.Context, key string, data []byte) error {
-	secret := corev1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Secret",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      s.keyToName(key),
-			Namespace: namespace,
-		},
-		Data: map[string][]byte{
-			secretMapKey: data,
-		},
-		Type: corev1.SecretTypeOpaque,
-	}
-
 	var err error
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
 
-		_, err = s.clientSet.CoreV1().
-			Secrets(namespace).
-			Create(context.TODO(), &secret, metav1.CreateOptions{})
+		select {
+		case <-ctx.Done():
+		default:
+			secret := corev1.Secret{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Secret",
+					APIVersion: "v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      s.keyToName(key),
+					Namespace: s.namespace,
+				},
+				Data: map[string][]byte{
+					secretMapKey: data,
+				},
+				Type: corev1.SecretTypeOpaque,
+			}
+			_, err = s.clientSet.CoreV1().
+				Secrets(s.namespace).
+				Create(ctx, &secret, metav1.CreateOptions{})
+		}
 
 	}()
 
@@ -96,6 +111,7 @@ func (s *SecretCache) Put(ctx context.Context, key string, data []byte) error {
 		return ctx.Err()
 	case <-done:
 	}
+
 	return err
 }
 
@@ -106,8 +122,8 @@ func (s *SecretCache) Delete(ctx context.Context, key string) error {
 		defer close(done)
 
 		err = s.clientSet.CoreV1().
-			Secrets(namespace).
-			Delete(context.TODO(), s.keyToName(key), metav1.DeleteOptions{})
+			Secrets(s.namespace).
+			Delete(ctx, s.keyToName(key), metav1.DeleteOptions{})
 
 	}()
 
@@ -116,11 +132,18 @@ func (s *SecretCache) Delete(ctx context.Context, key string) error {
 		return ctx.Err()
 	case <-done:
 	}
-	return err
+
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *SecretCache) keyToName(key string) string {
-	return strings.ReplaceAll(key, ".", "-")
+	key = strings.ReplaceAll(key, ".", "-")
+	key = strings.ReplaceAll(key, "+", "-")
+	key = strings.ReplaceAll(key, "_", "-")
+	return key
 }
 
 func (s *SecretCache) getRestConfig(kubeconfig string) *rest.Config {

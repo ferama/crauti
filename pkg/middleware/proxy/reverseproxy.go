@@ -3,8 +3,6 @@ package proxy
 import (
 	"crypto/tls"
 	"fmt"
-	"io"
-	golog "log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -35,7 +33,7 @@ func init() {
 	// Most cases are handled overriding the ErrorHandler
 	// Disabling golog here, it should only affect the copy buffer failure that is already
 	// handled recovering from panic in the ServeHTTP method below
-	golog.SetOutput(io.Discard)
+	// golog.SetOutput(io.Discard)
 
 	log = logger.GetLogger("reverseproxy")
 	bpool = newPool()
