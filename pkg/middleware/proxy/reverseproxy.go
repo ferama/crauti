@@ -70,7 +70,8 @@ func (m *ReverseProxyMiddleware) director(proxy *httputil.ReverseProxy) func(r *
 		// - upstream: https://api.myurl.cloud/config/v1/apps
 		//	 path: /api/config/v1/apps
 		// This allow to fine tune proxy config for each upstream endpoint
-		if !strings.HasSuffix(chainContext.Conf.Path, "/") {
+		mountPath := chainContext.Conf.Path
+		if !strings.HasSuffix(mountPath, "/") || mountPath == "/" {
 			r.URL.Path = strings.TrimSuffix(r.URL.Path, "/")
 		}
 	}
