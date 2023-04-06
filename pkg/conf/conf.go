@@ -72,10 +72,28 @@ type kubernetes struct {
 	WatchNamespace string `yaml:"watchNamespace"`
 }
 
+type keyPair struct {
+	FullChain  string `yaml:"fullChain"`
+	PrivateKey string `yaml:"key"`
+}
 type gateway struct {
 	WriteTimeout time.Duration `yaml:"writeTimeout"`
 	ReadTimeout  time.Duration `yaml:"readTimeout"`
 	IdleTimeout  time.Duration `yaml:"idleTimeout"`
+	// if true enable the HTTPS server. You need to provide
+	// at least a keypair
+	HTTPSEnabled bool `yaml:"httpsEnabled"`
+	// keyPairs paths to load certificates from if autoHTTPS is disabled
+	KeyPairs []keyPair `yaml:"keyPairs"`
+	// if true enable autoCert. Implies HTTPSEnabled = true
+	AutoHTTPSEnabled bool `yaml:"autoHTTPSEnabled"`
+	// by default AutoHTTPS uses the kubernetes secret backend to store
+	// certificate cache. If you enable this flag, a local dir will be
+	// used instead
+	AutoHTTPSUseLocalDir bool `yaml:"autoHTTPSUseLocalDir"`
+	// set a local dir to use to cache certificates
+	// default to: ./certs-cache
+	AutoHTTPSLocalDir string `yaml:"autoHTTPSLocalDir"`
 }
 
 // config holds all the config values
@@ -113,6 +131,10 @@ func setDefaults() {
 	viper.SetDefault("Gateway.ReadTimeout", "120s")
 	viper.SetDefault("Gateway.WriteTimeout", "120s")
 	viper.SetDefault("Gateway.IdleTimeout", "360s")
+	viper.SetDefault("Gateway.HTTPSEnabled", false)
+	viper.SetDefault("Gateway.AutoHTTPSEnabled", false)
+	viper.SetDefault("Gateway.AutoHTTPSUseLocalDir", false)
+	viper.SetDefault("Gateway.AutoHTTPSLocalDir", "./certs-cache")
 
 	viper.SetDefault("Kubernetes.Autodiscover", false)
 	viper.SetDefault("Kubernetes.WatchNamespace", "")

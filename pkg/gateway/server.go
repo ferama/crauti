@@ -44,9 +44,17 @@ type server struct {
 }
 
 func newServer(httpListenAddr string, httpsListenAddress string, update chan *runtimeUpdates) *server {
+
+	HTTPEnabled := conf.ConfInst.Gateway.HTTPSEnabled
+	autoHTTPSEnabled := conf.ConfInst.Gateway.AutoHTTPSEnabled
+	if autoHTTPSEnabled {
+		HTTPEnabled = true
+		autoHTTPSEnabled = true
+	}
+
 	s := &server{
-		HTTPSEnabled:     false,
-		autoHTTPSEnabled: false,
+		HTTPSEnabled:     HTTPEnabled,
+		autoHTTPSEnabled: autoHTTPSEnabled,
 		https:            &http.Server{},
 		http:             &http.Server{},
 		httpListenAddr:   httpListenAddr,
@@ -72,17 +80,22 @@ func (s *server) setupServers(updates *runtimeUpdates) {
 	}
 
 	if s.HTTPSEnabled && s.autoHTTPSEnabled {
+
 		certManager := autocert.Manager{
 			Client: &acme.Client{
 				DirectoryURL: "https://acme-staging-v02.api.letsencrypt.org/directory",
 				// DirectoryURL: "https://acme-v02.api.letsencrypt.org/directory",
 			},
-			// Cache: autocert.DirCache("./certs-cache"),
-			Cache: certcache.NewSecretCache(""),
-			// Cache:      certcache.DirCache("./certs-cache"),
 			Prompt:     autocert.AcceptTOS,
 			HostPolicy: autocert.HostWhitelist(updates.domains...),
 		}
+		if conf.ConfInst.Gateway.AutoHTTPSUseLocalDir {
+			dir := conf.ConfInst.Gateway.AutoHTTPSLocalDir
+			certManager.Cache = autocert.DirCache(dir)
+		} else {
+			certManager.Cache = certcache.NewSecretCache("")
+		}
+
 		s.https.TLSConfig = certManager.TLSConfig()
 		handler = certManager.HTTPHandler(handler)
 	}
@@ -94,6 +107,19 @@ func (s *server) setupServers(updates *runtimeUpdates) {
 		Addr:         s.httpListenAddr,
 		Handler:      handler,
 	}
+}
+
+func (s *server) buildTLSConfig() *tls.Config {
+	cfg := &tls.Config{}
+
+	for _, v := range conf.ConfInst.Gateway.KeyPairs {
+		crt, err := tls.LoadX509KeyPair(v.FullChain, v.PrivateKey)
+		if err == nil {
+			cfg.Certificates = append(cfg.Certificates, crt)
+		}
+	}
+
+	return cfg
 }
 
 func (s *server) run() error {
@@ -119,13 +145,7 @@ func (s *server) run() error {
 
 		if s.HTTPSEnabled {
 			if !s.autoHTTPSEnabled {
-				//TODO: manage custom certs
-				crt1, _ := tls.LoadX509KeyPair("fullchain.pem", "privkey.pem")
-				s.https.TLSConfig = &tls.Config{
-					Certificates: []tls.Certificate{
-						crt1,
-					},
-				}
+				s.https.TLSConfig = s.buildTLSConfig()
 			}
 			wg.Add(1)
 			log.Printf("https - %s", s.https.ListenAndServeTLS("", ""))

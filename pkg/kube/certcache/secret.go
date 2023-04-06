@@ -2,6 +2,7 @@ package certcache
 
 import (
 	"context"
+	"os"
 	"strings"
 
 	"golang.org/x/crypto/acme/autocert"
@@ -24,16 +25,19 @@ type SecretCache struct {
 }
 
 const (
-	// TODO: read from
-	// /var/run/secrets/kubernetes.io/serviceaccount/namespace
-	// ?
-	namespace    = "test"
-	secretMapKey = "cert"
+	secretNamePrefix = "crauti-"
+	secretMapKey     = "cert"
 )
 
 func NewSecretCache(kubeconfig string) *SecretCache {
+
+	data, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+	if err != nil {
+		panic(err)
+	}
+
 	s := &SecretCache{
-		namespace: namespace,
+		namespace: string(data),
 	}
 
 	config := s.getRestConfig(kubeconfig)
@@ -59,7 +63,7 @@ func (s *SecretCache) Get(ctx context.Context, key string) ([]byte, error) {
 
 	go func() {
 		secret, err = s.clientSet.CoreV1().
-			Secrets(namespace).
+			Secrets(s.namespace).
 			Get(ctx, s.keyToName(key), metav1.GetOptions{})
 
 		data = secret.Data[secretMapKey]
@@ -143,6 +147,7 @@ func (s *SecretCache) keyToName(key string) string {
 	key = strings.ReplaceAll(key, ".", "-")
 	key = strings.ReplaceAll(key, "+", "-")
 	key = strings.ReplaceAll(key, "_", "-")
+	key = secretNamePrefix + key
 	return key
 }
 
