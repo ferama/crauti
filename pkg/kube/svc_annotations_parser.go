@@ -7,7 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
-const crautiAnnotationConfKey = "crauti/conf"
+const crautiAnnotationConfKey = "ferama.github.io/crauti"
 
 /*
 Annotations example:

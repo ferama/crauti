@@ -47,9 +47,10 @@ func newServer(httpListenAddr string, httpsListenAddress string, update chan *ru
 
 	HTTPEnabled := conf.ConfInst.Gateway.HTTPSEnabled
 	autoHTTPSEnabled := conf.ConfInst.Gateway.AutoHTTPSEnabled
+
 	if autoHTTPSEnabled {
+		// implicit enable HTTPS too
 		HTTPEnabled = true
-		autoHTTPSEnabled = true
 	}
 
 	s := &server{
