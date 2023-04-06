@@ -43,11 +43,11 @@ func NewObserver(
 	}
 
 	var factory informers.SharedInformerFactory
-	if conf.ConfInst.Kubernetes.WatchNamespace != "" {
+	if conf.ConfInst.Gateway.Kubernetes.WatchNamespace != "" {
 		factory = informers.NewSharedInformerFactoryWithOptions(
 			clientSet,
 			resyncTime,
-			informers.WithNamespace(conf.ConfInst.Kubernetes.WatchNamespace),
+			informers.WithNamespace(conf.ConfInst.Gateway.Kubernetes.WatchNamespace),
 		)
 	} else {
 		factory = informers.NewSharedInformerFactoryWithOptions(

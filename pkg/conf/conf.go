@@ -94,6 +94,8 @@ type gateway struct {
 	// set a local dir to use to cache certificates
 	// default to: ./certs-cache
 	AutoHTTPSLocalDir string `yaml:"autoHTTPSLocalDir"`
+	// kubernetes related conf
+	Kubernetes kubernetes `yaml:"kubernetes"`
 }
 
 // config holds all the config values
@@ -103,8 +105,6 @@ type config struct {
 	// Listeners conf
 	Gateway               gateway `yaml:"gateway"`
 	AdminApiListenAddress string  `yaml:"adminApiListenAddress"`
-	// kubernetes relatech conf
-	Kubernetes kubernetes `yaml:"kubernetes"`
 	// global middlewares configuration
 	Middlewares Middlewares `yaml:"middlewares"`
 	// define mount points
@@ -135,9 +135,9 @@ func setDefaults() {
 	viper.SetDefault("Gateway.AutoHTTPSEnabled", false)
 	viper.SetDefault("Gateway.AutoHTTPSUseLocalDir", false)
 	viper.SetDefault("Gateway.AutoHTTPSLocalDir", "./certs-cache")
+	viper.SetDefault("Gateway.Kubernetes.Autodiscover", false)
+	viper.SetDefault("Gateway.Kubernetes.WatchNamespace", "")
 
-	viper.SetDefault("Kubernetes.Autodiscover", false)
-	viper.SetDefault("Kubernetes.WatchNamespace", "")
 	viper.SetDefault("AdminApiListenAddress", ":8181")
 
 	///////////////////////////////////////////////////////

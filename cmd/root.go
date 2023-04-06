@@ -53,7 +53,7 @@ var rootCmd = &cobra.Command{
 		// log.Info().Msgf("gateway listening on '%s'", conf.ConfInst.Gateway.ListenAddress)
 		gwServer := gateway.NewGateway(":80", ":443")
 
-		if conf.ConfInst.Kubernetes.Autodiscover {
+		if conf.ConfInst.Gateway.Kubernetes.Autodiscover {
 			kubeconfig, _ := cmd.Flags().GetString("kubeconfig")
 			// stop signal for the informer
 			stopper := make(chan struct{})
