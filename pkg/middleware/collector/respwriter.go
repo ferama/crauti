@@ -23,6 +23,8 @@ func (rw *responseWriter) Reset(r *http.Request, w http.ResponseWriter) {
 	rw.bytesWritten = 0
 }
 
+// this implement the Hijack interface and allow connection upgrade for
+// websocket support
 func (rw *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	h, ok := rw.w.(http.Hijacker)
 	if !ok {
