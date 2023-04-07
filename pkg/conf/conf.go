@@ -46,7 +46,7 @@ type Middlewares struct {
 	// VirtualHost like behaviour
 	MatchHost string `yaml:"matchHost,omitempty"`
 	// if true, all requeste will be redirected to https
-	RedirectToHTTPS *bool `yaml:"rediretctToHTTPS"`
+	RedirectToHTTPS *bool `yaml:"redirectToHTTPS,omitempty"`
 }
 
 // Helper function that check for nil value on Enabled field
