@@ -15,6 +15,7 @@ import (
 	"github.com/ferama/crauti/pkg/middleware/collector"
 	"github.com/ferama/crauti/pkg/middleware/cors"
 	"github.com/ferama/crauti/pkg/middleware/proxy"
+	"github.com/ferama/crauti/pkg/middleware/redirect"
 	"github.com/ferama/crauti/pkg/middleware/timeout"
 	"github.com/ferama/crauti/pkg/utils"
 	"github.com/rs/zerolog"
@@ -87,13 +88,13 @@ func (s *Gateway) buildChain(mp conf.MountPoint) http.Handler {
 
 	mwares = append(mwares,
 		// http -> https
-		// &redirect.RedirectMiddleware{},
+		&redirect.RedirectMiddleware{},
 		// collect metrics and logs
 		&collector.CollectorMiddleware{},
 		// add timetout to context
 		&timeout.TimeoutMiddleware{},
 		// checks for unwanted large bodies
-		&bodylimit.BodyLimiter{},
+		&bodylimit.BodyLimiterMiddleware{},
 		// add cors headers
 		&cors.CorsMiddleware{},
 		// respond with cache if we can

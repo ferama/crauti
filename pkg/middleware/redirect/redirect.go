@@ -2,7 +2,9 @@ package redirect
 
 import (
 	"net/http"
+	"strings"
 
+	"github.com/ferama/crauti/pkg/chaincontext"
 	"github.com/ferama/crauti/pkg/middleware"
 	"github.com/rs/zerolog/log"
 )
@@ -19,6 +21,12 @@ func (m *RedirectMiddleware) Init(next http.Handler) middleware.Middleware {
 }
 
 func (m *RedirectMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := chaincontext.GetChainContext(r)
+	if !ctx.Conf.Middlewares.IsRedirectToHTTPS() {
+		m.next.ServeHTTP(w, r)
+		return
+	}
+
 	scheme := "http"
 	if r.TLS != nil {
 		scheme = "https"
@@ -28,10 +36,13 @@ func (m *RedirectMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("s: %s, h: %s, u: %s", scheme, host, uri)
 	if scheme != "https" {
-		url := "https://" + host + uri
-		w.Header().Set("Location", url)
-		w.WriteHeader(http.StatusPermanentRedirect)
-		return
+		// allow acme-challenge on http
+		if !strings.HasPrefix(r.URL.Path, "/.well-known/acme-challenge/") {
+			url := "https://" + host + uri
+			w.Header().Set("Location", url)
+			w.WriteHeader(http.StatusPermanentRedirect)
+			return
+		}
 	}
 	m.next.ServeHTTP(w, r)
 }

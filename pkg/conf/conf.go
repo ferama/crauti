@@ -45,21 +45,31 @@ type Middlewares struct {
 	PreserveHostHeader *bool `yaml:"preserveHostHeader,omitempty"`
 	// VirtualHost like behaviour
 	MatchHost string `yaml:"matchHost,omitempty"`
+	// if true, all requeste will be redirected to https
+	RedirectToHTTPS *bool `yaml:"rediretctToHTTPS"`
 }
 
 // Helper function that check for nil value on Enabled field
-func (m *Middlewares) IsHostHeaderPreserved() bool {
+func (m *Middlewares) IsPreserveHostHeader() bool {
 	return m.PreserveHostHeader != nil && *m.PreserveHostHeader
+}
+
+// Helper function that check for nil value on Enabled field
+func (m *Middlewares) IsRedirectToHTTPS() bool {
+	return m.RedirectToHTTPS != nil && *m.RedirectToHTTPS
 }
 
 func (m *Middlewares) clone() Middlewares {
 	preserveHostHeader := *m.PreserveHostHeader
+	redirectToHTTPS := *m.RedirectToHTTPS
+
 	c := Middlewares{
 		Cors:               m.Cors.clone(),
 		Cache:              m.Cache.clone(),
 		Timeout:            m.Timeout,
 		MaxRequestBodySize: m.MaxRequestBodySize,
 		PreserveHostHeader: &preserveHostHeader,
+		RedirectToHTTPS:    &redirectToHTTPS,
 		MatchHost:          m.MatchHost,
 	}
 	return c
@@ -155,6 +165,7 @@ func setDefaults() {
 	viper.SetDefault("Middlewares.Timeout", "-1s") // disabled by default
 	viper.SetDefault("Middlewares.MaxRequestBodySize", DefaultMaxRequestBodySize)
 	viper.SetDefault("Middlewares.PreserveHostHeader", true)
+	viper.SetDefault("Middlewares.RedirectToHTTPS", false)
 	viper.SetDefault("Middlewares.MatchHost", "")
 
 	// Cache defaults

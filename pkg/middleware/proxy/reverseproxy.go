@@ -62,7 +62,7 @@ func (m *ReverseProxyMiddleware) director(proxy *httputil.ReverseProxy) func(r *
 			log.Fatal().Err(err)
 		}
 		// set the request host to the real upstream host
-		if chainContext.Conf.Middlewares.IsHostHeaderPreserved() {
+		if chainContext.Conf.Middlewares.IsPreserveHostHeader() {
 			r.Host = upstreamUrl.Host
 		}
 

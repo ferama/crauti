@@ -21,18 +21,18 @@ func init() {
 	}
 }
 
-type BodyLimiter struct {
+type BodyLimiterMiddleware struct {
 	middleware.Middleware
 
 	next http.Handler
 }
 
-func (m *BodyLimiter) Init(next http.Handler) middleware.Middleware {
+func (m *BodyLimiterMiddleware) Init(next http.Handler) middleware.Middleware {
 	m.next = next
 	return m
 }
 
-func (m *BodyLimiter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (m *BodyLimiterMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	chainContext := chaincontext.GetChainContext(r)
 	maxSize, _ := utils.ConvertToBytes(chainContext.Conf.Middlewares.MaxRequestBodySize)
 
