@@ -1,6 +1,9 @@
 package collector
 
 import (
+	"bufio"
+	"errors"
+	"net"
 	"net/http"
 )
 
@@ -18,6 +21,14 @@ func (rw *responseWriter) Reset(r *http.Request, w http.ResponseWriter) {
 	rw.w = w
 	rw.wroteHeader = false
 	rw.bytesWritten = 0
+}
+
+func (rw *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	h, ok := rw.w.(http.Hijacker)
+	if !ok {
+		return nil, nil, errors.New("hijack not supported")
+	}
+	return h.Hijack()
 }
 
 func (rw *responseWriter) Status() int {

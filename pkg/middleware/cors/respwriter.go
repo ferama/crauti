@@ -1,6 +1,9 @@
 package cors
 
 import (
+	"bufio"
+	"errors"
+	"net"
 	"net/http"
 )
 
@@ -12,6 +15,14 @@ type responseWriter struct {
 func (rw *responseWriter) Reset(r *http.Request, w http.ResponseWriter) {
 	rw.r = r
 	rw.w = w
+}
+
+func (rw *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	h, ok := rw.w.(http.Hijacker)
+	if !ok {
+		return nil, nil, errors.New("hijack not supported")
+	}
+	return h.Hijack()
 }
 
 func (rw *responseWriter) Header() http.Header {
