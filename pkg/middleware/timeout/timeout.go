@@ -19,6 +19,16 @@ func (m *TimeoutMiddleware) Init(next http.Handler) middleware.Middleware {
 	return m
 }
 func (m *TimeoutMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	defer func() {
+		select {
+		// a timeout occurred?
+		case <-r.Context().Done():
+			w.Write([]byte("bad gateway: connection timeout\n"))
+			return
+		default:
+		}
+	}()
+
 	chainContext := chaincontext.GetChainContext(r)
 
 	timeout := chainContext.Conf.Middlewares.Timeout

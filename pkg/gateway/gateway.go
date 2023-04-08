@@ -101,8 +101,6 @@ func (s *Gateway) buildChain(mp conf.MountPoint) http.Handler {
 		&cache.CacheMiddleware{},
 		// poke the backend if needed
 		&proxy.ReverseProxyMiddleware{},
-		// respond with a bad gateway message on timeout
-		&timeout.TimeoutHandlerMiddleware{},
 	)
 
 	// middelwares are executed in reverse order. the root here is the latest
