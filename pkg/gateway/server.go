@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/ferama/crauti/pkg/conf"
-	"github.com/ferama/crauti/pkg/kube/certcache"
+	"github.com/ferama/crauti/pkg/gateway/kube/certcache"
 	"golang.org/x/crypto/acme"
 	"golang.org/x/crypto/acme/autocert"
 )

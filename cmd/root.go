@@ -6,7 +6,7 @@ import (
 	"github.com/ferama/crauti/pkg/admin"
 	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/gateway"
-	"github.com/ferama/crauti/pkg/kube"
+	"github.com/ferama/crauti/pkg/gateway/kube"
 	"github.com/ferama/crauti/pkg/logger"
 	"github.com/fsnotify/fsnotify"
 	"github.com/rs/zerolog"
