@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -165,6 +166,44 @@ func (s *Gateway) UpdateHandlers() {
 
 		mux.getOrCreate(matchHost).Handle(i.Path, chain)
 	}
+
+	mux.defaultMux.Handle("/agg", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		mw := &responseWriter{}
+		mw.Reset(r, w)
+
+		var wg sync.WaitGroup
+		wg.Add(1)
+		go func() {
+			req := r.Clone(r.Context())
+			req.Host = "test1.loc"
+			req.URL.Path = "/get1"
+			mux.ServeHTTP(mw, req)
+			wg.Done()
+		}()
+
+		wg.Add(1)
+		go func() {
+			req := r.Clone(r.Context())
+			req.URL.Path = "/get2"
+			mux.ServeHTTP(mw, req)
+			wg.Done()
+		}()
+
+		// wg.Add(1)
+		// go func() {
+		// 	req := r.Clone(r.Context())
+		// 	req.URL.Path = "/get3"
+		// 	mux.ServeHTTP(mw, req)
+		// 	wg.Done()
+		// }()
+
+		wg.Wait()
+
+		data := mw.Data()
+		encoded, _ := json.Marshal(data)
+		w.Write(encoded)
+	}))
 
 	// if a root path (the / mountPoint) handler was not defined in mountPoints
 	// define a custom one here. The root handler, will respond to request for
