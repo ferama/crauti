@@ -6,7 +6,6 @@ import (
 
 	"github.com/ferama/crauti/pkg/chaincontext"
 	"github.com/ferama/crauti/pkg/middleware"
-	collectorutils "github.com/ferama/crauti/pkg/middleware/collector/utils"
 	"github.com/ferama/crauti/pkg/utils"
 )
 
@@ -44,7 +43,6 @@ func (m *BodyLimiterMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	if r.ContentLength > maxSize {
 		w.WriteHeader(http.StatusBadRequest)
-		collectorutils.EmitAndReturn(w, r)
 		return
 	}
 
