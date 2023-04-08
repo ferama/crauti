@@ -190,18 +190,15 @@ func (s *Gateway) UpdateHandlers() {
 			wg.Done()
 		}()
 
-		// wg.Add(1)
-		// go func() {
-		// 	req := r.Clone(r.Context())
-		// 	req.URL.Path = "/get3"
-		// 	mux.ServeHTTP(mw, req)
-		// 	wg.Done()
-		// }()
-
 		wg.Wait()
 
 		data := mw.Data()
 		encoded, _ := json.Marshal(data)
+		for k, values := range mw.Header() {
+			for _, v := range values {
+				w.Header().Set(k, v)
+			}
+		}
 		w.Write(encoded)
 	}))
 

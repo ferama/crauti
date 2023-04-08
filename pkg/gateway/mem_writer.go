@@ -20,13 +20,19 @@ func (rw *responseWriter) Reset(r *http.Request, w http.ResponseWriter) {
 	rw.r = r
 	rw.header = make(http.Header)
 	rw.bodyBuf = make([]*bytes.Buffer, 0)
+	rw.header = make(http.Header)
 }
 
 func (rw *responseWriter) Header() http.Header {
+	rw.mu.Lock()
+	defer rw.mu.Unlock()
+
 	return rw.header
 }
 
 func (rw *responseWriter) WriteHeader(statusCode int) {
+	rw.mu.Lock()
+	defer rw.mu.Unlock()
 }
 
 func (rw *responseWriter) Write(data []byte) (int, error) {
@@ -38,14 +44,14 @@ func (rw *responseWriter) Write(data []byte) (int, error) {
 	return buf.Write(data)
 }
 
-func (rw *responseWriter) Data() map[string]interface{} {
-	data := make(map[string]interface{})
+func (rw *responseWriter) Data() map[string]any {
+	data := make(map[string]any)
 
 	for _, buf := range rw.bodyBuf {
-		override := make(map[string]interface{})
+		override := make(map[string]any)
 		err := json.Unmarshal(buf.Bytes(), &override)
 		if err != nil {
-			// panic(err)
+			log.Error().Err(err).Send()
 		} else {
 			data = mergeMaps(data, override)
 		}
@@ -53,15 +59,15 @@ func (rw *responseWriter) Data() map[string]interface{} {
 	return data
 }
 
-func mergeMaps(a, b map[string]interface{}) map[string]interface{} {
-	out := make(map[string]interface{}, len(a))
+func mergeMaps(a, b map[string]any) map[string]any {
+	out := make(map[string]any, len(a))
 	for k, v := range a {
 		out[k] = v
 	}
 	for k, v := range b {
-		if v, ok := v.(map[string]interface{}); ok {
+		if v, ok := v.(map[string]any); ok {
 			if bv, ok := out[k]; ok {
-				if bv, ok := bv.(map[string]interface{}); ok {
+				if bv, ok := bv.(map[string]any); ok {
 					out[k] = mergeMaps(bv, v)
 					continue
 				}
