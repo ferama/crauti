@@ -77,7 +77,8 @@ func (m *ReverseProxyMiddleware) director(proxy *httputil.ReverseProxy) func(r *
 	}
 }
 
-func (m *ReverseProxyMiddleware) setupProxy(upstreamUrl *url.URL) *httputil.ReverseProxy {
+// Creates a new SingleHostReverseProxy object and configures it as needed
+func (m *ReverseProxyMiddleware) buildProxy(upstreamUrl *url.URL) *httputil.ReverseProxy {
 	proxy := httputil.NewSingleHostReverseProxy(upstreamUrl)
 
 	// install the buffer pool
@@ -111,7 +112,7 @@ func (m *ReverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		log.Fatal().Err(err)
 	}
 
-	proxy := m.setupProxy(upstreamUrl)
+	proxy := m.buildProxy(upstreamUrl)
 
 	ctx.Proxy.UpstreamRequestStartTime = time.Now()
 
@@ -143,6 +144,9 @@ func (m *ReverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reques
 				m.next.ServeHTTP(w, r)
 			}
 		}()
+
+		// set to true. This means that the request effectively
+		// reached the upstream
 		ctx.Proxy.ProxiedRequest = true
 		proxy.ServeHTTP(w, r)
 
