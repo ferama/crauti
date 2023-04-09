@@ -55,7 +55,6 @@ func (s *Gateway) buildRootHandler() http.Handler {
 	var chain http.Handler
 
 	chain = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-	chain = (&collector.EmitterMiddleware{}).Init(chain)
 
 	next := chain
 	chain = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
