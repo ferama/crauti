@@ -43,6 +43,8 @@ type ReverseProxyMiddleware struct {
 	middleware.Middleware
 
 	next http.Handler
+
+	patternMatcher *rewriter
 }
 
 func (m *ReverseProxyMiddleware) Init(next http.Handler) middleware.Middleware {
@@ -56,13 +58,13 @@ func (m *ReverseProxyMiddleware) director(proxy *httputil.ReverseProxy) func(r *
 	return func(r *http.Request) {
 		director(r)
 
-		chainContext := chaincontext.GetChainContext(r)
-		upstreamUrl, err := url.Parse(chainContext.Conf.Upstream)
+		ctx := chaincontext.GetChainContext(r)
+		upstreamUrl, err := url.Parse(ctx.Conf.Upstream)
 		if err != nil {
 			log.Fatal().Err(err)
 		}
 		// set the request host to the real upstream host
-		if chainContext.Conf.Middlewares.IsPreserveHostHeader() {
+		if ctx.Conf.Middlewares.IsPreserveHostHeader() {
 			r.Host = upstreamUrl.Host
 		}
 
@@ -70,9 +72,29 @@ func (m *ReverseProxyMiddleware) director(proxy *httputil.ReverseProxy) func(r *
 		// - upstream: https://api.myurl.cloud/config/v1/apps
 		//	 path: /api/config/v1/apps
 		// This allow to fine tune proxy config for each upstream endpoint
-		mountPath := chainContext.Conf.Path
+		mountPath := ctx.Conf.Path
 		if !strings.HasSuffix(mountPath, "/") || mountPath == "/" {
 			r.URL.Path = strings.TrimSuffix(r.URL.Path, "/")
+		}
+
+		// apply rewrites if enabled
+		rewrite := ctx.Conf.Middlewares.Rewrite
+		if rewrite.Pattern != "" && rewrite.Target != "" && m.patternMatcher == nil {
+			m.patternMatcher = newRewriter(rewrite.Pattern, rewrite.Target)
+		}
+
+		if m.patternMatcher != nil {
+			uri := r.URL.Path
+			if r.URL.RawQuery != "" {
+				uri = fmt.Sprintf("%s?%s", uri, r.URL.RawQuery)
+			}
+			uri = m.patternMatcher.rewrite(uri)
+			u, err := url.Parse(uri)
+			if err != nil {
+				log.Error().Err(err)
+			}
+			r.URL.Path = u.Path
+			r.URL.RawQuery = u.RawQuery
 		}
 	}
 }

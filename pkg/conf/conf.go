@@ -30,6 +30,11 @@ type MountPoint struct {
 	Middlewares Middlewares `yaml:"middlewares"`
 }
 
+type rewrite struct {
+	Pattern string `yaml:"pattern"`
+	Target  string `yaml:"target"`
+}
+
 // middelewares configuration struct
 type Middlewares struct {
 	Cors  Cors  `yaml:"cors"`
@@ -47,6 +52,8 @@ type Middlewares struct {
 	MatchHost string `yaml:"matchHost,omitempty"`
 	// if true, all requeste will be redirected to https
 	RedirectToHTTPS *bool `yaml:"redirectToHTTPS,omitempty"`
+	//
+	Rewrite rewrite `yaml:"rewrite"`
 }
 
 // Helper function that check for nil value on Enabled field
@@ -71,6 +78,7 @@ func (m *Middlewares) clone() Middlewares {
 		PreserveHostHeader: &preserveHostHeader,
 		RedirectToHTTPS:    &redirectToHTTPS,
 		MatchHost:          m.MatchHost,
+		Rewrite:            rewrite{Pattern: m.Rewrite.Pattern, Target: m.Rewrite.Target},
 	}
 	return c
 }
