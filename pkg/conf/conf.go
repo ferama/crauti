@@ -52,7 +52,7 @@ type Middlewares struct {
 	MatchHost string `yaml:"matchHost,omitempty"`
 	// if true, all requeste will be redirected to https
 	RedirectToHTTPS *bool `yaml:"redirectToHTTPS,omitempty"`
-	//
+	// set rewrite parameters
 	Rewrite rewrite `yaml:"rewrite"`
 }
 
