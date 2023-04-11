@@ -2,7 +2,6 @@ package cache
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/textproto"
@@ -126,8 +125,6 @@ func (m *CacheMiddleware) buildCacheKey(r *http.Request) string {
 		return enc
 	}
 	claims := ctx.Auth.JwtClaims
-	j, _ := json.Marshal(claims)
-	log.Printf("%s", j)
 
 	ckeys := make([]string, 0, len(claims))
 	for k := range claims {
