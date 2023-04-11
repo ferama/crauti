@@ -49,6 +49,8 @@ type Middlewares struct {
 	RedirectToHTTPS *bool `yaml:"redirectToHTTPS,omitempty"`
 	// set rewrite parameters
 	Rewrite rewrite `yaml:"rewrite"`
+	// if not empty, enables the jwt auth middleware
+	JwksURL string `yaml:"jwksURL,omitempty"`
 }
 
 // Helper function that check for nil value on Enabled field
@@ -74,6 +76,7 @@ func (m *Middlewares) clone() Middlewares {
 		RedirectToHTTPS:    &redirectToHTTPS,
 		MatchHost:          m.MatchHost,
 		Rewrite:            m.Rewrite.clone(),
+		JwksURL:            m.JwksURL,
 	}
 	return c
 }
@@ -169,7 +172,8 @@ func setDefaults() {
 	viper.SetDefault("Middlewares.MaxRequestBodySize", DefaultMaxRequestBodySize)
 	viper.SetDefault("Middlewares.PreserveHostHeader", true)
 	viper.SetDefault("Middlewares.RedirectToHTTPS", false)
-	viper.SetDefault("Middlewares.MatchHost", "")
+	viper.SetDefault("Middlewares.MatchHost", "") // disabled by default
+	viper.SetDefault("Middlewares.JwksURL", "")   // disabled by default
 
 	// Cache defaults
 	viper.SetDefault("Middlewares.Cache.Enabled", false)

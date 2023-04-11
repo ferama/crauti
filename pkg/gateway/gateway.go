@@ -10,6 +10,7 @@ import (
 	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/logger"
 	"github.com/ferama/crauti/pkg/middleware"
+	"github.com/ferama/crauti/pkg/middleware/auth"
 	"github.com/ferama/crauti/pkg/middleware/bodylimit"
 	"github.com/ferama/crauti/pkg/middleware/cache"
 	"github.com/ferama/crauti/pkg/middleware/collector"
@@ -90,6 +91,8 @@ func (s *Gateway) buildChain(mp conf.MountPoint) http.Handler {
 		&redirect.RedirectMiddleware{},
 		// collect metrics and logs
 		&collector.CollectorMiddleware{},
+		// jwks based authentication middleware
+		&auth.JWTAuthMiddleware{},
 		// add timetout to context
 		&timeout.TimeoutMiddleware{},
 		// checks for unwanted large bodies

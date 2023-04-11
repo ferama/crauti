@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ferama/crauti/pkg/conf"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 type contextKey string
@@ -19,6 +20,7 @@ type ChainContext struct {
 	Conf  *conf.MountPoint
 	Proxy *ProxyContext
 	Cache *CacheContext
+	Auth  *AuthContext
 }
 
 // extracts and return chaincontext from a request
@@ -35,6 +37,9 @@ func NewChainContext() *ChainContext {
 			ProxiedRequest: false,
 		},
 		Cache: &CacheContext{},
+		Auth: &AuthContext{
+			Authorized: false,
+		},
 	}
 	return c
 }
@@ -45,6 +50,7 @@ func (c *ChainContext) Reset(conf *conf.MountPoint, cacheStatus string) {
 	c.Conf = conf
 	c.Proxy.ProxiedRequest = false
 	c.Cache.Status = cacheStatus
+	c.Auth.Authorized = false
 }
 
 func (c *ChainContext) Update(r *http.Request, n ChainContext) *http.Request {
@@ -67,4 +73,9 @@ type ProxyContext struct {
 
 type CacheContext struct {
 	Status string
+}
+
+type AuthContext struct {
+	JwtClaims  jwt.MapClaims
+	Authorized bool
 }
