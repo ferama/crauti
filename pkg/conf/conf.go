@@ -30,11 +30,6 @@ type MountPoint struct {
 	Middlewares Middlewares `yaml:"middlewares"`
 }
 
-type rewrite struct {
-	Pattern string `yaml:"pattern"`
-	Target  string `yaml:"target"`
-}
-
 // middelewares configuration struct
 type Middlewares struct {
 	Cors  Cors  `yaml:"cors"`
@@ -78,7 +73,7 @@ func (m *Middlewares) clone() Middlewares {
 		PreserveHostHeader: &preserveHostHeader,
 		RedirectToHTTPS:    &redirectToHTTPS,
 		MatchHost:          m.MatchHost,
-		Rewrite:            rewrite{Pattern: m.Rewrite.Pattern, Target: m.Rewrite.Target},
+		Rewrite:            m.Rewrite.clone(),
 	}
 	return c
 }

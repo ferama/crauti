@@ -2,7 +2,6 @@ package collector
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"net/http"
 	"sync"
@@ -52,16 +51,14 @@ func (m *CollectorMiddleware) Init(next http.Handler) middleware.Middleware {
 }
 
 func (m *CollectorMiddleware) emitLogs(r *http.Request) {
-	chainContext := chaincontext.GetChainContext(r)
+	ctx := chaincontext.GetChainContext(r)
 
 	collectorContext := r.Context().Value(collectorContextKey).(collectorContext)
 
 	totalLatency := time.Since(collectorContext.StartTime)
 
-	uri := r.URL.Path
-	if r.URL.RawQuery != "" {
-		uri = fmt.Sprintf("%s?%s", uri, r.URL.RawQuery)
-	}
+	uri := utils.GetURI(r.URL)
+
 	remoteAddr, _, _ := net.SplitHostPort(r.RemoteAddr)
 
 	httpRequestDict := zerolog.Dict().
@@ -75,25 +72,26 @@ func (m *CollectorMiddleware) emitLogs(r *http.Request) {
 		Str("remoteIp", remoteAddr).
 		Str("referer", r.Referer()).
 		Float64("latency", totalLatency.Seconds()).
-		Str("latency_human", totalLatency.Round(1*time.Millisecond).String()).
+		Str("latencyHuman", totalLatency.Round(1*time.Millisecond).String()).
 		Str("protocol", r.Proto)
 
 	event := log.Info().
 		Dict("httpRequest", httpRequestDict)
 
-	if chainContext.Conf.Middlewares.Cache.IsEnabled() {
-		cacheContext := chainContext.Cache
+	if ctx.Conf.Middlewares.Cache.IsEnabled() {
+		cacheContext := ctx.Cache
 		event.Str("cache", cacheContext.Status)
 	}
 
-	proxyContext := chainContext.Proxy
+	proxyContext := ctx.Proxy
 	upstreamLatency := time.Since(proxyContext.UpstreamRequestStartTime)
 
 	proxyUpstreamDict := zerolog.Dict().
-		Str("url", chainContext.Conf.Upstream).
-		Str("mountPath", chainContext.Conf.Path).
+		Str("url", ctx.Conf.Upstream).
+		Str("mountPath", ctx.Conf.Path).
+		Str("uri", ctx.Proxy.URI).
 		Float64("latency", upstreamLatency.Seconds()).
-		Str("latency_human", upstreamLatency.Round(1*time.Millisecond).String())
+		Str("latencyHuman", upstreamLatency.Round(1*time.Millisecond).String())
 
 	event.Dict("proxyUpstream", proxyUpstreamDict)
 

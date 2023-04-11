@@ -14,6 +14,7 @@ import (
 	"github.com/ferama/crauti/pkg/logger"
 	"github.com/ferama/crauti/pkg/middleware"
 	"github.com/ferama/crauti/pkg/middleware/cache"
+	"github.com/ferama/crauti/pkg/utils"
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 )
@@ -77,12 +78,12 @@ func (m *ReverseProxyMiddleware) director(proxy *httputil.ReverseProxy) func(r *
 			r.URL.Path = strings.TrimSuffix(r.URL.Path, "/")
 		}
 
-		// apply rewrites if enabled
 		rewrite := ctx.Conf.Middlewares.Rewrite
 		if rewrite.Pattern != "" && rewrite.Target != "" && m.patternMatcher == nil {
 			m.patternMatcher = newRewriter(rewrite.Pattern, rewrite.Target)
 		}
 
+		// apply rewrites if enabled
 		if m.patternMatcher != nil {
 			uri := r.URL.Path
 			if r.URL.RawQuery != "" {
@@ -96,6 +97,7 @@ func (m *ReverseProxyMiddleware) director(proxy *httputil.ReverseProxy) func(r *
 			r.URL.Path = u.Path
 			r.URL.RawQuery = u.RawQuery
 		}
+		ctx.Proxy.URI = utils.GetURI(r.URL)
 	}
 }
 

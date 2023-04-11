@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 )
@@ -53,6 +54,14 @@ func ConvertToBytes(s string) (int64, error) {
 	}
 
 	return bytes, nil
+}
+
+func GetURI(u *url.URL) string {
+	uri := u.Path
+	if u.RawQuery != "" {
+		uri = fmt.Sprintf("%s?%s", uri, u.RawQuery)
+	}
+	return uri
 }
 
 func GetRequestHost(r *http.Request) (string, error) {
