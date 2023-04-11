@@ -2,6 +2,7 @@ package cache
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/textproto"
@@ -120,23 +121,26 @@ func (m *CacheMiddleware) buildCacheKey(r *http.Request) string {
 		v := r.Header.Get(k)
 		enc = m.encodeKeyHeader(r, enc, k, v)
 	}
-	// claimsContext := r.Context().Value(auth.AuthContextKey)
-	// if claimsContext != nil {
-	// 	claims := claimsContext.(jwt.MapClaims)
+	ctx := chaincontext.GetChainContext(r)
+	if !ctx.Auth.Authorized {
+		return enc
+	}
+	claims := ctx.Auth.JwtClaims
+	j, _ := json.Marshal(claims)
+	log.Printf("%s", j)
 
-	// 	keys := make([]string, 0, len(claims))
-	// 	for k := range claims {
-	// 		keys = append(keys, k)
-	// 	}
-	// 	sort.Strings(keys)
-	// 	// if claim should be used to build cache key, do it!
-	// 	for _, key := range keys {
-	// 		val := claims[key]
-	// 		if contains(p.keyClaims, key) {
-	// 			enc = fmt.Sprintf("%s/%s", enc, val)
-	// 		}
-	// 	}
-	// }
+	ckeys := make([]string, 0, len(claims))
+	for k := range claims {
+		ckeys = append(ckeys, k)
+	}
+	sort.Strings(ckeys)
+	// if claim should be used to build cache key, do it!
+	for _, key := range ckeys {
+		val := claims[key]
+		if contains(ctx.Conf.Middlewares.Cache.KeyClaims, key) {
+			enc = fmt.Sprintf("%s/%s", enc, val)
+		}
+	}
 
 	return enc
 }

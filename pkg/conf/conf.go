@@ -48,7 +48,7 @@ type Middlewares struct {
 	// if true, all requeste will be redirected to https
 	RedirectToHTTPS *bool `yaml:"redirectToHTTPS,omitempty"`
 	// set rewrite parameters
-	Rewrite rewrite `yaml:"rewrite"`
+	Rewrite rewrite `yaml:"rewrite,omitempty"`
 	// if not empty, enables the jwt auth middleware
 	JwksURL string `yaml:"jwksURL,omitempty"`
 }

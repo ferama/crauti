@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/MicahParks/keyfunc"
 	"github.com/ferama/crauti/pkg/chaincontext"
 	"github.com/ferama/crauti/pkg/middleware"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/rs/zerolog/log"
 )
 
 // Checks for JWT token validity and puts claims into context
@@ -62,7 +64,16 @@ func (m *JWTAuthMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	jwksURL := ctx.Conf.Middlewares.JwksURL
 	// Create the JWKS from the resource at the given URL.
-	jwks, err := keyfunc.Get(jwksURL, keyfunc.Options{}) // See recommended options in the examples directory.
+	jwks, err := keyfunc.Get(jwksURL, keyfunc.Options{
+		Ctx: r.Context(),
+		RefreshErrorHandler: func(err error) {
+			log.Err(err).Send()
+		},
+		RefreshInterval:   time.Hour,
+		RefreshRateLimit:  time.Minute * 5,
+		RefreshTimeout:    time.Second * 10,
+		RefreshUnknownKID: true,
+	})
 	if err != nil {
 		m.serverErrorResponse(fmt.Sprintf("Failed to get the JWKS from the given URL.\nError: %s", err), w)
 		return

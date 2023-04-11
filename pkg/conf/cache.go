@@ -16,6 +16,7 @@ type Cache struct {
 	TTL        time.Duration `yaml:"TTL,omitempty"`
 	Methods    []string      `yaml:"methods,omitempty"`
 	KeyHeaders []string      `yaml:"keyHeaders,omitempty"`
+	KeyClaims  []string      `yaml:"keyClaims,omitempty"`
 }
 
 func (c *Cache) clone() Cache {
@@ -31,6 +32,7 @@ func (c *Cache) clone() Cache {
 	}
 	out.Methods = append(out.Methods, c.Methods...)
 	out.KeyHeaders = append(out.KeyHeaders, c.KeyHeaders...)
+	out.KeyClaims = append(out.KeyClaims, c.KeyClaims...)
 	return out
 }
 
@@ -53,5 +55,11 @@ func (c *Cache) merge(target Cache) {
 		c.KeyHeaders = ConfInst.Middlewares.Cache.KeyHeaders
 	} else if len(target.KeyHeaders) == 0 {
 		c.KeyHeaders = nil
+	}
+
+	if target.KeyClaims == nil {
+		c.KeyClaims = ConfInst.Middlewares.Cache.KeyClaims
+	} else if len(target.KeyClaims) == 0 {
+		c.KeyClaims = nil
 	}
 }
