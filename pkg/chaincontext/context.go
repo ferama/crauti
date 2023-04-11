@@ -61,7 +61,8 @@ type ProxyContext struct {
 	// If not, it probably was served from the cache
 	ProxiedRequest           bool
 	UpstreamRequestStartTime time.Time
-	URI                      string
+	// upstream request URI including rewrites
+	URI string
 }
 
 type CacheContext struct {

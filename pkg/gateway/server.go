@@ -84,8 +84,8 @@ func (s *server) setupServers(updates *runtimeUpdates) {
 
 		certManager := autocert.Manager{
 			Client: &acme.Client{
-				DirectoryURL: "https://acme-staging-v02.api.letsencrypt.org/directory",
-				// DirectoryURL: "https://acme-v02.api.letsencrypt.org/directory",
+				// DirectoryURL: "https://acme-staging-v02.api.letsencrypt.org/directory",
+				DirectoryURL: "https://acme-v02.api.letsencrypt.org/directory",
 			},
 			Prompt:     autocert.AcceptTOS,
 			HostPolicy: autocert.HostWhitelist(updates.domains...),

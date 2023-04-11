@@ -56,6 +56,7 @@ func ConvertToBytes(s string) (int64, error) {
 	return bytes, nil
 }
 
+// extracts full uri from url including query params
 func GetURI(u *url.URL) string {
 	uri := u.Path
 	if u.RawQuery != "" {
