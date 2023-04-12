@@ -31,8 +31,8 @@ type cache struct {
 func newCache(host string, port int, password string) *cache {
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%d", host, port),
-		Password: password, // no password set
-		DB:       0,        // use default DB
+		Password: password,
+		DB:       0, // use default DB
 	})
 	c := &cache{
 		rdb: rdb,

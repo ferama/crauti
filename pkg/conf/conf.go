@@ -33,7 +33,7 @@ type MountPoint struct {
 // middelewares configuration struct
 type Middlewares struct {
 	Cors Cors `yaml:"cors"`
-
+	// cache middleware
 	Cache Cache `yaml:"cache"`
 	// on timeout expiration, the context will be canceled and request
 	// aborted. Use -1 or any value lesser than 0 to disable timeout
@@ -154,7 +154,6 @@ func setDefaults() {
 	viper.SetDefault("Redis.Port", 6379)
 
 	// Gateway conf
-	viper.SetDefault("Gateway.ListenAddress", ":8080")
 	viper.SetDefault("Gateway.ReadTimeout", "120s")
 	viper.SetDefault("Gateway.WriteTimeout", "120s")
 	viper.SetDefault("Gateway.IdleTimeout", "360s")
@@ -178,7 +177,7 @@ func setDefaults() {
 	// this timeout acts like the Gateway.WriteTimeout but it can be set
 	// per mountPoint
 	viper.SetDefault("Middlewares.Timeout", "-1s") // disabled by default
-	viper.SetDefault("Middlewares.MaxRequestBodySize", DefaultMaxRequestBodySize)
+	viper.SetDefault("Middlewares.MaxRequestBodySize", "10mb")
 	viper.SetDefault("Middlewares.PreserveHostHeader", true)
 	viper.SetDefault("Middlewares.RedirectToHTTPS", false)
 	viper.SetDefault("Middlewares.MatchHost", "") // disabled by default
@@ -189,6 +188,7 @@ func setDefaults() {
 	viper.SetDefault("Middlewares.Cache.TTL", "5m")
 	viper.SetDefault("Middlewares.Cache.Methods", "GET,HEAD,OPTIONS")
 	viper.SetDefault("Middlewares.Cache.KeyHeaders", "")
+	viper.SetDefault("Middlewares.Cache.KeyClaims", "")
 }
 
 func init() {
