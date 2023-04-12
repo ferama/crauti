@@ -17,7 +17,7 @@ var (
 
 func CacheInstance() *cache {
 	once.Do(func() {
-		var red = conf.ConfInst.Middlewares.Cache.Redis
+		var red = conf.ConfInst.Redis
 		instance = newCache(red.Host, red.Port, red.Password)
 	})
 

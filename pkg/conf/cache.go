@@ -2,17 +2,10 @@ package conf
 
 import "time"
 
-type redis struct {
-	Host     string `yaml:"host,omitempty"`
-	Port     int    `yaml:"port,omitempty"`
-	Password string `yaml:"password,omitempty"`
-}
-
 type Cache struct {
 	// Do not use this directly. Use the IsEnabled function instead
 	// See the conf.Update() function for more details
 	Enabled    *bool         `yaml:"enabled,omitempty"`
-	Redis      redis         `yaml:"redis,omitempty"`
 	TTL        time.Duration `yaml:"TTL,omitempty"`
 	Methods    []string      `yaml:"methods,omitempty"`
 	KeyHeaders []string      `yaml:"keyHeaders,omitempty"`
@@ -23,12 +16,7 @@ func (c *Cache) clone() Cache {
 	enabled := *c.Enabled
 	out := Cache{
 		Enabled: &enabled,
-		Redis: redis{
-			Host:     c.Redis.Host,
-			Port:     c.Redis.Port,
-			Password: c.Redis.Password,
-		},
-		TTL: c.TTL,
+		TTL:     c.TTL,
 	}
 	out.Methods = append(out.Methods, c.Methods...)
 	out.KeyHeaders = append(out.KeyHeaders, c.KeyHeaders...)

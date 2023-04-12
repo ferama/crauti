@@ -7,12 +7,13 @@ import (
 
 	"github.com/ferama/crauti/pkg/admin/api"
 	"github.com/ferama/crauti/pkg/admin/ui"
-	"github.com/ferama/crauti/pkg/conf"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
 )
+
+const adminApiListenAddress = ":8181"
 
 type adminServer struct {
 	router *gin.Engine
@@ -51,7 +52,7 @@ func NewAdminServer() *adminServer {
 		c.Abort()
 	})
 
-	log.Info().Msgf("admin listening on '%s'", conf.ConfInst.AdminApiListenAddress)
+	log.Info().Msgf("admin listening on '%s'", adminApiListenAddress)
 	return s
 }
 
@@ -70,5 +71,5 @@ func (s *adminServer) setupRoutes() {
 }
 
 func (s *adminServer) Start() {
-	s.router.Run(conf.ConfInst.AdminApiListenAddress)
+	s.router.Run(adminApiListenAddress)
 }

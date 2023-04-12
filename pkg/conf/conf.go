@@ -32,7 +32,8 @@ type MountPoint struct {
 
 // middelewares configuration struct
 type Middlewares struct {
-	Cors  Cors  `yaml:"cors"`
+	Cors Cors `yaml:"cors"`
+
 	Cache Cache `yaml:"cache"`
 	// on timeout expiration, the context will be canceled and request
 	// aborted. Use -1 or any value lesser than 0 to disable timeout
@@ -92,6 +93,7 @@ type keyPair struct {
 	FullChain  string `yaml:"fullChain"`
 	PrivateKey string `yaml:"key"`
 }
+
 type gateway struct {
 	WriteTimeout time.Duration `yaml:"writeTimeout"`
 	ReadTimeout  time.Duration `yaml:"readTimeout"`
@@ -114,13 +116,20 @@ type gateway struct {
 	Kubernetes kubernetes `yaml:"kubernetes"`
 }
 
+type redis struct {
+	Host     string `yaml:"host,omitempty"`
+	Port     int    `yaml:"port,omitempty"`
+	Password string `yaml:"password,omitempty"`
+}
+
 // config holds all the config values
 type config struct {
 	// debug log level
 	Debug bool `yaml:"debug"`
 	// Listeners conf
-	Gateway               gateway `yaml:"gateway"`
-	AdminApiListenAddress string  `yaml:"adminApiListenAddress"`
+	Gateway gateway `yaml:"gateway"`
+	// redis server connection
+	Redis redis `yaml:"redis"`
 	// global middlewares configuration
 	Middlewares Middlewares `yaml:"middlewares"`
 	// define mount points
@@ -141,6 +150,8 @@ func setDefaults() {
 	// will work, because it has a default here
 
 	viper.SetDefault("Debug", false)
+	viper.SetDefault("Redis.Host", "localhost")
+	viper.SetDefault("Redis.Port", 6379)
 
 	// Gateway conf
 	viper.SetDefault("Gateway.ListenAddress", ":8080")
@@ -153,8 +164,6 @@ func setDefaults() {
 	viper.SetDefault("Gateway.AutoHTTPSLocalDir", "./certs-cache")
 	viper.SetDefault("Gateway.Kubernetes.Autodiscover", false)
 	viper.SetDefault("Gateway.Kubernetes.WatchNamespace", "")
-
-	viper.SetDefault("AdminApiListenAddress", ":8181")
 
 	///////////////////////////////////////////////////////
 	//
@@ -177,8 +186,6 @@ func setDefaults() {
 
 	// Cache defaults
 	viper.SetDefault("Middlewares.Cache.Enabled", false)
-	viper.SetDefault("Middlewares.Cache.Redis.Host", "localhost")
-	viper.SetDefault("Middlewares.Cache.Redis.Port", 6379)
 	viper.SetDefault("Middlewares.Cache.TTL", "5m")
 	viper.SetDefault("Middlewares.Cache.Methods", "GET,HEAD,OPTIONS")
 	viper.SetDefault("Middlewares.Cache.KeyHeaders", "")
