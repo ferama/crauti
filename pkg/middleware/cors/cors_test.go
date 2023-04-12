@@ -33,8 +33,8 @@ func TestMustHaveCors(t *testing.T) {
 					Enabled: enabled,
 				},
 			},
-		}, "")
-		r = cc.Update(r, *cc)
+		}, r)
+		r = cc.Update()
 		m.ServeHTTP(w, r)
 	})
 	s := httptest.NewServer(chain)
@@ -107,8 +107,8 @@ func TestMustNotHaveCors(t *testing.T) {
 					Enabled: enabled,
 				},
 			},
-		}, "")
-		r = cc.Update(r, *cc)
+		}, r)
+		r = cc.Update()
 		m.ServeHTTP(w, r)
 	})
 	s := httptest.NewServer(chain)

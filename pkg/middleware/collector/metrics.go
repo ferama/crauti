@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/ferama/crauti/pkg/middleware/cache"
+	"github.com/ferama/crauti/pkg/utils"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
@@ -137,33 +137,33 @@ func (m *metrics) RegisterMountPath(mountPath string, upstream string, matchHost
 	// cache
 	// Query example:
 	//   1 - (sum(crauti_cache_total{status!="HIT"}) / sum(crauti_cache_total{status="HIT"}))
-	mapKey = m.GetCacheTotalMapKey(mountPath, cache.CacheStatusBypass, matchHost)
+	mapKey = m.GetCacheTotalMapKey(mountPath, utils.CacheStatusBypass, matchHost)
 	m.collectors[mapKey] = promauto.NewCounter(prometheus.CounterOpts{
 		Name: CrautiCacheTotal,
 		Help: "Total cache",
 		ConstLabels: prometheus.Labels{
-			"status": cache.CacheStatusBypass, "mountPath": mountPath, "upstream": upstream, "host": matchHost},
+			"status": utils.CacheStatusBypass, "mountPath": mountPath, "upstream": upstream, "host": matchHost},
 	})
-	mapKey = m.GetCacheTotalMapKey(mountPath, cache.CacheStatusHit, matchHost)
+	mapKey = m.GetCacheTotalMapKey(mountPath, utils.CacheStatusHit, matchHost)
 	m.collectors[mapKey] = promauto.NewCounter(prometheus.CounterOpts{
 		Name: CrautiCacheTotal,
 		Help: "Total cache",
 		ConstLabels: prometheus.Labels{
-			"status": cache.CacheStatusHit, "mountPath": mountPath, "upstream": upstream, "host": matchHost},
+			"status": utils.CacheStatusHit, "mountPath": mountPath, "upstream": upstream, "host": matchHost},
 	})
-	mapKey = m.GetCacheTotalMapKey(mountPath, cache.CacheStatusIgnored, matchHost)
+	mapKey = m.GetCacheTotalMapKey(mountPath, utils.CacheStatusIgnored, matchHost)
 	m.collectors[mapKey] = promauto.NewCounter(prometheus.CounterOpts{
 		Name: CrautiCacheTotal,
 		Help: "Total cache",
 		ConstLabels: prometheus.Labels{
-			"status": cache.CacheStatusIgnored, "mountPath": mountPath, "upstream": upstream, "host": matchHost},
+			"status": utils.CacheStatusIgnored, "mountPath": mountPath, "upstream": upstream, "host": matchHost},
 	})
-	mapKey = m.GetCacheTotalMapKey(mountPath, cache.CacheStatusMiss, matchHost)
+	mapKey = m.GetCacheTotalMapKey(mountPath, utils.CacheStatusMiss, matchHost)
 	m.collectors[mapKey] = promauto.NewCounter(prometheus.CounterOpts{
 		Name: CrautiCacheTotal,
 		Help: "Total cache",
 		ConstLabels: prometheus.Labels{
-			"status": cache.CacheStatusMiss, "mountPath": mountPath, "upstream": upstream, "host": matchHost},
+			"status": utils.CacheStatusMiss, "mountPath": mountPath, "upstream": upstream, "host": matchHost},
 	})
 }
 

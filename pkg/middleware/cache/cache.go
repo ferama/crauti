@@ -14,6 +14,7 @@ import (
 	"github.com/ferama/crauti/pkg/logger"
 	"github.com/ferama/crauti/pkg/middleware"
 	"github.com/ferama/crauti/pkg/redis"
+	"github.com/ferama/crauti/pkg/utils"
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 	"golang.org/x/text/cases"
@@ -25,12 +26,6 @@ const (
 	GeneratorHeaderKey         = "X-Generator"
 	CachedContentHeaderValue   = "crauti/cache"
 	UpstreamContentHeaderValue = "crauti/upstream"
-
-	// statuses
-	CacheStatusBypass  = "BYP"
-	CacheStatusHit     = "HIT"
-	CacheStatusIgnored = "IGN"
-	CacheStatusMiss    = "MIS"
 
 	// redis key heads. The redis key is build using the format
 	//  KEYHEAD:KEYENCODING
@@ -146,7 +141,7 @@ func (m *CacheMiddleware) serveFromCache(key string, w http.ResponseWriter, r *h
 	body, _ := redis.CacheInstance().Get(buildRedisKey(bodyKeyHead, key))
 	if body != nil {
 		log.Debug().
-			Str("status", CacheStatusHit).
+			Str("status", utils.CacheStatusHit).
 			Str("key", key).Send()
 
 		// retrieve headers string from the cache, recontsruct them
@@ -173,8 +168,8 @@ func (m *CacheMiddleware) serveFromCache(key string, w http.ResponseWriter, r *h
 
 		// set the hit status into the context
 		chainContext := chaincontext.GetChainContext(r)
-		chainContext.Cache.Status = CacheStatusHit
-		r = chainContext.Update(r, chainContext)
+		chainContext.Cache.Status = utils.CacheStatusHit
+		r = chainContext.Update()
 
 		// we can safely proceed calling the next op here. We set the cache
 		// status into the context, so the next ops can adapt their behaviour using
@@ -194,11 +189,11 @@ func (m *CacheMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !contains(conf.Methods, r.Method) || !conf.IsEnabled() {
 
 		if conf.IsEnabled() {
-			ctx.Cache.Status = CacheStatusBypass
-			r = ctx.Update(r, ctx)
+			ctx.Cache.Status = utils.CacheStatusBypass
+			r = ctx.Update()
 
 			log.Debug().
-				Str("status", CacheStatusBypass).
+				Str("status", utils.CacheStatusBypass).
 				Str("key", fmt.Sprintf("%s%s", r.Method, r.URL)).Send()
 
 		}
@@ -264,19 +259,19 @@ func (m *CacheMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		log.Debug().
-			Str("status", CacheStatusMiss).
+			Str("status", utils.CacheStatusMiss).
 			Str("key", cacheKey).Send()
 
-		ctx.Cache.Status = CacheStatusMiss
-		r = ctx.Update(r, ctx)
+		ctx.Cache.Status = utils.CacheStatusMiss
+		r = ctx.Update()
 
 	} else {
 		log.Debug().
-			Str("status", CacheStatusIgnored).
+			Str("status", utils.CacheStatusIgnored).
 			Str("key", cacheKey).Send()
 
-		ctx.Cache.Status = CacheStatusIgnored
-		r = ctx.Update(r, ctx)
+		ctx.Cache.Status = utils.CacheStatusIgnored
+		r = ctx.Update()
 	}
 
 	// If I'm here, I need to poke the backend and fill the cache

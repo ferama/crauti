@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ferama/crauti/pkg/conf"
+	"github.com/ferama/crauti/pkg/utils"
 	"github.com/golang-jwt/jwt/v4"
 )
 
@@ -21,6 +22,8 @@ type ChainContext struct {
 	Proxy *ProxyContext
 	Cache *CacheContext
 	Auth  *AuthContext
+
+	request *http.Request
 }
 
 // extracts and return chaincontext from a request
@@ -46,20 +49,33 @@ func NewChainContext() *ChainContext {
 
 // Reset the context. The context is managed using a sync.Pool and this
 // method reset the instances
-func (c *ChainContext) Reset(conf *conf.MountPoint, cacheStatus string) {
+func (c *ChainContext) Reset(conf *conf.MountPoint, r *http.Request) {
 	c.Conf = conf
 	c.Proxy.ProxiedRequest = false
-	c.Cache.Status = cacheStatus
+	c.Cache.Status = utils.CacheStatusMiss
 	c.Auth.Authorized = false
+	c.request = r
 }
 
-func (c *ChainContext) Update(r *http.Request, n ChainContext) *http.Request {
+// returns a new request object with the updated context
+// example:
+//
+//		// sets a new value into the context
+//	 	ctx.Proxy.UpstreamRequestStartTime = time.Now()
+//		// gets the updated request version
+//		r = ctx.Update()
+//		// propagate the context
+//		next.ServeHTTP(w, r)
+func (c *ChainContext) Update() *http.Request {
+	r := c.request
+
 	r = r.WithContext(context.WithValue(
 		r.Context(),
 		chainContextKey,
-		n,
+		*c,
 	))
-	return r
+	c.request = r
+	return c.request
 }
 
 type ProxyContext struct {

@@ -13,7 +13,6 @@ import (
 	"github.com/ferama/crauti/pkg/conf"
 	"github.com/ferama/crauti/pkg/logger"
 	"github.com/ferama/crauti/pkg/middleware"
-	"github.com/ferama/crauti/pkg/middleware/cache"
 	"github.com/ferama/crauti/pkg/utils"
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
@@ -140,13 +139,13 @@ func (m *ReverseProxyMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	ctx.Proxy.UpstreamRequestStartTime = time.Now()
 
-	r = ctx.Update(r, ctx)
+	r = ctx.Update()
 
 	cacheContext := ctx.Cache
 	// if we do not have tha cache middleware enabled or if it is enabled but the requests
 	// doesn't hit the cache, poke the upstream
 	cacheEnabled := ctx.Conf.Middlewares.Cache.IsEnabled()
-	if !cacheEnabled || cacheContext.Status != cache.CacheStatusHit {
+	if !cacheEnabled || cacheContext.Status != utils.CacheStatusHit {
 		log.Debug().
 			Str("upstream", fmt.Sprintf("%s://%s", upstreamUrl.Scheme, upstreamUrl.Host)).
 			Msg("poke upstream")

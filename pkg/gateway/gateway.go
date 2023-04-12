@@ -75,10 +75,10 @@ func (s *Gateway) addChainContext(mp conf.MountPoint, next http.Handler) http.Ha
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cc := contextPool.Get().(*chaincontext.ChainContext)
 		defer contextPool.Put(cc)
-		cc.Reset(&mp, cache.CacheStatusMiss)
+		cc.Reset(&mp, r)
 
 		rcc := *cc
-		r = rcc.Update(r, rcc)
+		r = rcc.Update()
 		next.ServeHTTP(w, r)
 	})
 }
