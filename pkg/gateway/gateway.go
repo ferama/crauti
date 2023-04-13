@@ -122,7 +122,9 @@ func (s *Gateway) buildChain(mp conf.MountPoint) http.Handler {
 	return chain
 }
 
-func (s *Gateway) UpdateHandlers() {
+// Update rebuilds handlers and restart the server using the last
+// configuration
+func (s *Gateway) Update() {
 	s.updateMU.Lock()
 
 	collector.MetricsInstance().UnregisterAll()

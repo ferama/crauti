@@ -85,7 +85,7 @@ func (s *svcUpdater) synch() {
 		// unmarshal the new conf
 		conf.Update()
 		// update the gateway instance
-		s.server.UpdateHandlers()
+		s.server.Update()
 	}
 }
 

@@ -17,7 +17,7 @@ func BenchmarkRequest1(b *testing.B) {
 		gwServer.Stop()
 		s.Close()
 	}()
-	gwServer.UpdateHandlers()
+	gwServer.Update()
 
 	go gwServer.Start()
 

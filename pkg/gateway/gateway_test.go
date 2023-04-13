@@ -40,7 +40,7 @@ func TestTimeout(t *testing.T) {
 		gwServer.Stop()
 		s.Close()
 	}()
-	gwServer.UpdateHandlers()
+	gwServer.Update()
 
 	go gwServer.Start()
 
@@ -73,7 +73,7 @@ func Test404(t *testing.T) {
 		gwServer.Stop()
 		s.Close()
 	}()
-	gwServer.UpdateHandlers()
+	gwServer.Update()
 
 	go gwServer.Start()
 	// give time to gateway to raise
@@ -105,7 +105,7 @@ func Test404MatchHost(t *testing.T) {
 		gwServer.Stop()
 		s.Close()
 	}()
-	gwServer.UpdateHandlers()
+	gwServer.Update()
 
 	go gwServer.Start()
 	// give time to gateway to raise
@@ -140,7 +140,7 @@ func TestPort80(t *testing.T) {
 		gwServer.Stop()
 		s.Close()
 	}()
-	gwServer.UpdateHandlers()
+	gwServer.Update()
 
 	go gwServer.Start()
 
