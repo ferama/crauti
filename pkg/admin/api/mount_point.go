@@ -28,9 +28,9 @@ func (r *mountPointGroup) get(c *gin.Context) {
 	host := c.Query("host")
 
 	if path == "" && host == "" {
-		c.JSON(http.StatusOK, conf.ConfInst.MountPoints)
+		c.YAML(http.StatusOK, conf.ConfInst.MountPoints)
 		return
 	}
 
-	c.JSON(http.StatusOK, r.filter(path, host))
+	c.YAML(http.StatusOK, r.filter(path, host))
 }

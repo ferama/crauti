@@ -10,12 +10,15 @@ export const MountPath = () => {
     const path = searchParams.get("path")
     const matchHost = searchParams.get("host")
 
-    const [config, setConfig] = useState({})
+    const [mountPoint, setMountPoint] = useState({})
 
     useEffect(() => {
         const updateState = () => {
-            http.get("config/yaml").then(data => {
-                setConfig(data.data)
+            http.get(`mount-point?path=${path}&host=${matchHost}`).then(data => {
+                let d = YAML.parse(data.data)
+                if (d.length > 0) {
+                    setMountPoint(d[0])
+                }
             })
         }
         updateState()
@@ -26,24 +29,9 @@ export const MountPath = () => {
     },[])
 
     let middlewares = (<></>)
-    let mountPoint = {}
-    if (config != "") {
-        let doc = YAML.parse(config)
-        if (doc != null) {
-            for (let mp of doc.mountPoints) {
-                if (mp.path === path) {
-                    if (mp.matchHost !== undefined) {
-                        if (mp.matchHost === matchHost) {
-                            mountPoint = mp
-                        }
-                    } else {
-                        mountPoint = mp
-                    }
-                }
-            }
-        }
+    if (mountPoint != "") {
+        middlewares = YAML.stringify(mountPoint.middlewares)
     }
-    middlewares = YAML.stringify(mountPoint)
     
     return (
         <Container>
@@ -62,7 +50,7 @@ export const MountPath = () => {
                     <tbody>
                         <tr>
                             <th>Match Host</th>
-                            <td>{matchHost}</td>
+                            <td>{mountPoint.matchHost}</td>
                         </tr>
                         <tr>
                             <th>Path</th>

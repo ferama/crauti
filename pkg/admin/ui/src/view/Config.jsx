@@ -21,7 +21,6 @@ export const Config = () => {
       }
     },[])
 
-    // console.log(config)
     let out = (<></>)
     if (config != "") {
         let doc = YAML.parse(config)
