@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/ferama/crauti/pkg/conf"
@@ -16,9 +15,11 @@ func mountPointRoutes(router *gin.RouterGroup) {
 }
 func (r *mountPointGroup) filter(path, host string) []conf.MountPoint {
 	res := make([]conf.MountPoint, 0)
-	// for _, m := range conf.ConfInst.MountPoints {
-	// 	// if m.Path == path && m
-	// }
+	for _, m := range conf.ConfInst.MountPoints {
+		if m.Path == path && m.MatchHost == host {
+			res = append(res, m)
+		}
+	}
 	return res
 }
 
@@ -31,7 +32,5 @@ func (r *mountPointGroup) get(c *gin.Context) {
 		return
 	}
 
-	message := fmt.Sprintf("path: %s, host: %s", path, host)
-	c.String(http.StatusOK, message)
-
+	c.JSON(http.StatusOK, r.filter(path, host))
 }

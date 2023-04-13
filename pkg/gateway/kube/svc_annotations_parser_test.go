@@ -12,7 +12,7 @@ func TestParser(t *testing.T) {
 				"enabled": true,
 				"upstreamHttpPort": 8080,
 				"mountPoints": [
-					{"source": "/", "path": "/api/config"}
+					{"source": "/", "path": "/api/config", "matchHost": "test.local"}
 				]
 		}`,
 	}
@@ -34,16 +34,21 @@ func TestParser(t *testing.T) {
 		t.Fatal("/api/config expected")
 	}
 
+	if conf.MountPoints[0].MatchHost != "test.local" {
+		t.Fatal("test.local expected")
+	}
+
 	annotations = map[string]string{
 		crautiAnnotationConfKey: `
 enabled: true
 upstreamHttpPort: 8080
 mountPoints:
   - source: "/"
-    path: "/api/config"
+    path: /api/config
 `}
 	svc.Annotations = annotations
 	conf = parser.parse(*svc)
+	t.Logf("%#v", conf)
 
 	if conf.Enabled != true {
 		t.Fatal("true expected")

@@ -69,8 +69,9 @@ func (s *svcUpdater) synch() {
 					svc.Name, svc.Namespace, port, item.Source)
 
 				mp = append(mp, conf.MountPoint{
-					Upstream: url,
-					Path:     item.Path,
+					Upstream:  url,
+					Path:      item.Path,
+					MatchHost: item.MatchHost,
 					// TODO: needs structure merge?
 					// probably not, because the following call to conf.Update()
 					// should merge them correctly. Needs testing

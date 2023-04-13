@@ -35,6 +35,7 @@ or you can use yaml instead
 					  enabled: true
 				- source: "/"
     			  path: "/test2"
+				  matchHost: "test.local"
 
 */
 
@@ -45,7 +46,6 @@ type annotationMountPoint struct {
 	// Custom fields for better user experience while
 	// using conf on service annotations
 	Source string `yaml:"source"`
-	Path   string `yaml:"path"`
 }
 
 // this is the service annotation config. It will be mapped
@@ -71,7 +71,6 @@ func (a *annotationParser) parse(svc corev1.Service) *crautiAnnotatedConfig {
 			}
 		}
 	}
-
 	return config
 }
 
