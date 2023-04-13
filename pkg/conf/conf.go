@@ -192,6 +192,10 @@ func setDefaults() {
 }
 
 func init() {
+	Reset()
+}
+
+func Reset() {
 	viper.SetConfigName("crauti")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")

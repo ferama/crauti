@@ -39,37 +39,46 @@ func init() {
 var rootCmd = &cobra.Command{
 	Use: "crauti",
 	Run: func(cmd *cobra.Command, args []string) {
-		config, _ := cmd.Flags().GetString("config")
-		if config != "" {
-			viper.SetConfigFile(config)
-		}
-		err := viper.ReadInConfig() // Find and read the config file
-		if err != nil {             // Handle errors reading the config file
-			log.Print("no config file detected, using default values")
-		}
-		conf.Update()
-
 		// the api gateway server
 		// log.Info().Msgf("gateway listening on '%s'", conf.ConfInst.Gateway.ListenAddress)
 		gwServer := gateway.NewGateway(":80", ":443")
 
-		if conf.ConfInst.Gateway.Kubernetes.Autodiscover {
-			kubeconfig, _ := cmd.Flags().GetString("kubeconfig")
-			// stop signal for the informer
-			stopper := make(chan struct{})
-			defer close(stopper)
-			// the kubernetes services informer
-			kube.NewObserver(gwServer, kubeconfig, stopper)
-			log.Info().Msgf("k8s service informer started")
-		} else {
+		var stopper chan struct{}
+		update := func(e fsnotify.Event) {
+			if stopper != nil {
+				close(stopper)
+			}
+			// WARN: Reset is marked as intended for tests only
+			//
+			viper.Reset()
+			config, _ := cmd.Flags().GetString("config")
+			if config != "" {
+				viper.SetConfigFile(config)
+			}
+			conf.Reset()
+
+			stopper = make(chan struct{})
+
+			log.Print("config file changed: ", e.Name)
+			err := viper.ReadInConfig()
+			if err != nil {
+				log.Print("cannot read config file")
+			}
+			conf.Update()
 			gwServer.Update()
-			viper.OnConfigChange(func(e fsnotify.Event) {
-				log.Print("config file changed:", e.Name)
-				conf.Update()
-				gwServer.Update()
-			})
-			viper.WatchConfig()
+
+			if conf.ConfInst.Gateway.Kubernetes.Autodiscover {
+				kubeconfig, _ := cmd.Flags().GetString("kubeconfig")
+				// the kubernetes services informer
+				kube.NewObserver(gwServer, kubeconfig, stopper)
+				log.Info().Msgf("k8s service informer started")
+			}
 		}
+
+		update(fsnotify.Event{Name: ""})
+
+		viper.OnConfigChange(update)
+		viper.WatchConfig()
 
 		// setupAdminServer(gwServer)
 		adminServer := admin.NewAdminServer()
@@ -77,6 +86,10 @@ var rootCmd = &cobra.Command{
 
 		// start the gateway server
 		gwServer.Start()
+
+		if stopper != nil {
+			close(stopper)
+		}
 	},
 }
 
