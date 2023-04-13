@@ -28,10 +28,10 @@ export const Home = () => {
       let key = `${mp.Path}-${mp.Middlewares.MatchHost}`
       return (
         <tr key={key}>
-          <td>{mp.Middlewares.MatchHost}</td>
+          <td>{mp.MatchHost}</td>
           <td>{mp.Path}</td>
           <td>{mp.Upstream}</td>
-          <td><Link to={"/mount?path=" + mp.Path + "&host=" + mp.Middlewares.MatchHost}>details</Link></td>
+          <td><Link to={"/mount?path=" + mp.Path + "&host=" + mp.MatchHost}>details</Link></td>
         </tr>
     )})
   }

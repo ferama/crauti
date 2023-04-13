@@ -32,8 +32,8 @@ export const MountPath = () => {
         if (doc != null) {
             for (let mp of doc.mountPoints) {
                 if (mp.path === path) {
-                    if (mp.middlewares.matchHost !== undefined) {
-                        if (mp.middlewares.matchHost === matchHost) {
+                    if (mp.matchHost !== undefined) {
+                        if (mp.matchHost === matchHost) {
                             mountPoint = mp
                         }
                     } else {

@@ -99,7 +99,7 @@ func Test404MatchHost(t *testing.T) {
 	s := startWebServer(0)
 	go s.ListenAndServe()
 
-	loadConf("test2.yaml")
+	loadConf("test3.yaml")
 	gwServer := NewGateway(":8080", ":8443")
 	defer func() {
 		gwServer.Stop()

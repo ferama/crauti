@@ -138,7 +138,7 @@ func (s *Gateway) Update() {
 	log.Print(strings.Repeat("=", 80))
 
 	for _, i := range conf.ConfInst.MountPoints {
-		matchHost := i.Middlewares.MatchHost
+		matchHost := i.MatchHost
 		if matchHost != "" {
 			if _, exists := hasRootHandler[matchHost]; !exists {
 				hasRootHandler[matchHost] = false

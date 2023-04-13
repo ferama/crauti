@@ -24,7 +24,8 @@ type MountPoint struct {
 	// full upstream definition
 	// like http://my-service.my-namespace:port
 	Upstream string `yaml:"upstream"`
-
+	// VirtualHost like behaviour
+	MatchHost string `yaml:"matchHost"`
 	// middlewares configuration can be overridden setting
 	// changed values here
 	Middlewares Middlewares `yaml:"middlewares"`
@@ -44,8 +45,6 @@ type Middlewares struct {
 	// the Host header to the real upstream host while forwarding the
 	// request to the upstream
 	PreserveHostHeader *bool `yaml:"preserveHostHeader,omitempty"`
-	// VirtualHost like behaviour
-	MatchHost string `yaml:"matchHost,omitempty"`
 	// if true, all requeste will be redirected to https
 	RedirectToHTTPS *bool `yaml:"redirectToHTTPS,omitempty"`
 	// set rewrite parameters
@@ -75,7 +74,6 @@ func (m *Middlewares) clone() Middlewares {
 		MaxRequestBodySize: m.MaxRequestBodySize,
 		PreserveHostHeader: &preserveHostHeader,
 		RedirectToHTTPS:    &redirectToHTTPS,
-		MatchHost:          m.MatchHost,
 		Rewrite:            m.Rewrite.clone(),
 		JwksURL:            m.JwksURL,
 	}
@@ -180,8 +178,7 @@ func setDefaults() {
 	viper.SetDefault("Middlewares.MaxRequestBodySize", "10mb")
 	viper.SetDefault("Middlewares.PreserveHostHeader", true)
 	viper.SetDefault("Middlewares.RedirectToHTTPS", false)
-	viper.SetDefault("Middlewares.MatchHost", "") // disabled by default
-	viper.SetDefault("Middlewares.JwksURL", "")   // disabled by default
+	viper.SetDefault("Middlewares.JwksURL", "") // disabled by default
 
 	// Cache defaults
 	viper.SetDefault("Middlewares.Cache.Enabled", false)

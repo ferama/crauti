@@ -13,11 +13,11 @@ type cacheGroup struct{}
 func cacheRoutes(router *gin.RouterGroup) {
 	r := &cacheGroup{}
 
-	router.POST("flush", r.Flush)
-	router.POST("flushall", r.FlushAll)
+	router.POST("flush", r.flush)
+	router.POST("flushall", r.flushAll)
 }
 
-func (r *cacheGroup) FlushAll(c *gin.Context) {
+func (r *cacheGroup) flushAll(c *gin.Context) {
 	redis.CacheInstance().FlushallAsync()
 	c.JSON(200, gin.H{
 		"message": "full cache flush requested",
@@ -25,7 +25,7 @@ func (r *cacheGroup) FlushAll(c *gin.Context) {
 }
 
 // curl -X POST -d '{"match": "GET/api/config*"}' http://localhost:9000/cache/flush
-func (r *cacheGroup) Flush(c *gin.Context) {
+func (r *cacheGroup) flush(c *gin.Context) {
 	type mapping struct {
 		Match string `json:"match"`
 	}

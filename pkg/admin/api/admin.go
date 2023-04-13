@@ -14,11 +14,11 @@ type adminGroup struct{}
 func adminRoutes(router *gin.RouterGroup) {
 	r := &adminGroup{}
 
-	router.GET("config", r.Config)
-	router.GET("config/:encoding", r.Config)
+	router.GET("config", r.config)
+	router.GET("config/:encoding", r.config)
 }
 
-func (r *adminGroup) Config(c *gin.Context) {
+func (r *adminGroup) config(c *gin.Context) {
 	type binding struct {
 		Encoding string `uri:"encoding"`
 	}

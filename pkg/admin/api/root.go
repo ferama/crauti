@@ -7,4 +7,5 @@ import (
 func RootRouter(router *gin.RouterGroup) {
 	adminRoutes(router.Group("/"))
 	cacheRoutes(router.Group("/cache"))
+	mountPointRoutes(router.Group("/mount-point"))
 }
