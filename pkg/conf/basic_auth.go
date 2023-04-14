@@ -20,6 +20,7 @@ func (c *BasiAuth) clone() BasiAuth {
 	enabled := *c.Enabled
 	out := BasiAuth{
 		Enabled: &enabled,
+		Realm:   c.Realm,
 	}
 	out.Credentials = append(out.Credentials, c.Credentials...)
 	return out
