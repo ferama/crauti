@@ -1,6 +1,7 @@
-kubernetes:
-  autodiscover: true
-  watchNamespace: ""
+gateway:
+  kubernetes:
+    autodiscover: false
+    watchNamespace: ""
 
 middlewares:
   cors:

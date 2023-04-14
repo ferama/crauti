@@ -51,6 +51,8 @@ type Middlewares struct {
 	Rewrite rewrite `yaml:"rewrite,omitempty"`
 	// if not empty, enables the jwt auth middleware
 	JwksURL string `yaml:"jwksURL,omitempty"`
+	// http basic auth
+	BasicAuth BasiAuth `yaml:"basicAuth"`
 }
 
 // Helper function that check for nil value on Enabled field
@@ -76,6 +78,7 @@ func (m *Middlewares) clone() Middlewares {
 		RedirectToHTTPS:    &redirectToHTTPS,
 		Rewrite:            m.Rewrite.clone(),
 		JwksURL:            m.JwksURL,
+		BasicAuth:          m.BasicAuth.clone(),
 	}
 	return c
 }
@@ -178,7 +181,6 @@ func setDefaults() {
 	viper.SetDefault("Middlewares.MaxRequestBodySize", "10mb")
 	viper.SetDefault("Middlewares.PreserveHostHeader", true)
 	viper.SetDefault("Middlewares.RedirectToHTTPS", false)
-	viper.SetDefault("Middlewares.JwksURL", "") // disabled by default
 
 	// Cache defaults
 	viper.SetDefault("Middlewares.Cache.Enabled", false)
@@ -186,6 +188,11 @@ func setDefaults() {
 	viper.SetDefault("Middlewares.Cache.Methods", "GET,HEAD,OPTIONS")
 	viper.SetDefault("Middlewares.Cache.KeyHeaders", "")
 	viper.SetDefault("Middlewares.Cache.KeyClaims", "")
+
+	// Auth middlewares
+	viper.SetDefault("Middlewares.JwksURL", "") // disabled by default
+	viper.SetDefault("Middlewares.BasicAuth.Enabled", false)
+	viper.SetDefault("Middlewares.BasicAuth.Realm", "crauti")
 }
 
 func init() {
@@ -232,6 +239,7 @@ func Update() {
 		yaml.Unmarshal(b, &m)
 
 		m.Cache.merge(i.Middlewares.Cache)
+		m.BasicAuth.merge(i.Middlewares.BasicAuth)
 
 		_, err = utils.ConvertToBytes(m.MaxRequestBodySize)
 		if err != nil {

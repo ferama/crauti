@@ -91,6 +91,8 @@ func (s *Gateway) buildChain(mp conf.MountPoint) http.Handler {
 		&redirect.RedirectMiddleware{},
 		// collect metrics and logs
 		&collector.CollectorMiddleware{},
+		// install the basic auth
+		&auth.BasicAuthMiddleware{},
 		// jwks based authentication middleware
 		&auth.JWTAuthMiddleware{},
 		// add timetout to context
