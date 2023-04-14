@@ -3,9 +3,10 @@ import { Breadcrumb, BreadcrumbItem, Col, Container, Row, Table } from 'react-bo
 import { useSearchParams } from 'react-router-dom';
 import YAML from 'yaml'
 import { http } from '../lib/Axios'
+import { duration } from '../lib/Utils';
 import { Link } from 'react-router-dom';
 
-export const MountPath = () => {
+export const MountPoint = () => {
     const [searchParams, setSearchParams] = useSearchParams()
     const path = searchParams.get("path")
     const matchHost = searchParams.get("host")
@@ -17,7 +18,10 @@ export const MountPath = () => {
             http.get(`mount-point?path=${path}&host=${matchHost}`).then(data => {
                 let d = data.data
                 if (d.length > 0) {
-                    setMountPoint(d[0])
+                    let mp = d[0]
+                    mp.Middlewares.Cache.TTL = duration(mp.Middlewares.Cache.TTL)
+                    mp.Middlewares.Timeout = duration(mp.Middlewares.Timeout)
+                    setMountPoint(mp)
                 }
             })
         }
@@ -29,7 +33,7 @@ export const MountPath = () => {
     },[])
 
     let middlewares = (<></>)
-    if (mountPoint != "") {
+    if (mountPoint.Middlewares != undefined) {
         middlewares = YAML.stringify(mountPoint.Middlewares)
     }
     
@@ -58,7 +62,7 @@ export const MountPath = () => {
                         </tr>
                         <tr>
                             <th>Upstream</th>
-                            <td>{mountPoint.upstream}</td>
+                            <td>{mountPoint.Upstream}</td>
                         </tr>
                     </tbody>
                 </Table>

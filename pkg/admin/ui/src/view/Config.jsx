@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Breadcrumb, BreadcrumbItem, Col, Container, Row } from 'react-bootstrap';
 import { http } from '../lib/Axios'
+import { duration } from '../lib/Utils';
 import YAML from 'yaml'
 
 export const Config = () => {
@@ -10,7 +11,13 @@ export const Config = () => {
       // like componentDidMount
       const updateState = () => {
           http.get("config").then(data => {
-              setConfig(data.data)
+                let conf = data.data
+                conf.Gateway.WriteTimeout = duration(conf.Gateway.WriteTimeout)
+                conf.Gateway.ReadTimeout = duration(conf.Gateway.ReadTimeout)
+                conf.Gateway.IdleTimeout = duration(conf.Gateway.IdleTimeout)
+                conf.Middlewares.Cache.TTL = duration(conf.Middlewares.Cache.TTL)
+                conf.Middlewares.Timeout = duration(conf.Middlewares.Timeout)
+                setConfig(conf)
           })
       }
       updateState()

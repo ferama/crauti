@@ -5,13 +5,13 @@ import {
   } from "react-router-dom";
 import { Config } from './view/Config';
 import { Home } from './view/Home';
-import { MountPath } from './view/MountPath';
+import { MountPoint } from './view/MountPoint';
 
 export const Routes = () => (
     <RouterRoutes>
         <Route path="/" element={<Home />} />
         <Route path="/home" element={<Home />} />
-        <Route path="/mount" element={<MountPath />}></Route>
+        <Route path="/mount" element={<MountPoint />}></Route>
         <Route path="/config" element={<Config />}></Route>
     </RouterRoutes>
 )
