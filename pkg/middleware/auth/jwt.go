@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/MicahParks/keyfunc"
@@ -22,11 +23,38 @@ type JWTAuthMiddleware struct {
 	middleware.Middleware
 
 	next http.Handler
+
+	jwks map[string]*keyfunc.JWKS
+	mu   sync.Mutex
 }
 
 func (m *JWTAuthMiddleware) Init(next http.Handler) middleware.Middleware {
 	m.next = next
+
+	m.jwks = make(map[string]*keyfunc.JWKS)
 	return m
+}
+
+func (m *JWTAuthMiddleware) getJWKS(jwksURL string) *keyfunc.JWKS {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if item, ok := m.jwks[jwksURL]; ok {
+		return item
+	}
+	jwks, _ := keyfunc.Get(jwksURL, keyfunc.Options{
+		RefreshErrorHandler: func(err error) {
+			log.Err(err).Send()
+		},
+		RefreshInterval:   time.Hour,
+		RefreshRateLimit:  time.Minute * 5,
+		RefreshTimeout:    time.Second * 10,
+		RefreshUnknownKID: true,
+	})
+
+	m.jwks[jwksURL] = jwks
+
+	return jwks
 }
 
 func (m *JWTAuthMiddleware) serverErrorResponse(val string, w http.ResponseWriter) {
@@ -62,22 +90,8 @@ func (m *JWTAuthMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	bearer := parts[1]
 
-	jwksURL := ctx.Conf.Middlewares.JwksURL
-	// Create the JWKS from the resource at the given URL.
-	jwks, err := keyfunc.Get(jwksURL, keyfunc.Options{
-		Ctx: r.Context(),
-		RefreshErrorHandler: func(err error) {
-			log.Err(err).Send()
-		},
-		RefreshInterval:   time.Hour,
-		RefreshRateLimit:  time.Minute * 5,
-		RefreshTimeout:    time.Second * 10,
-		RefreshUnknownKID: true,
-	})
-	if err != nil {
-		m.serverErrorResponse(fmt.Sprintf("Failed to get the JWKS from the given URL.\nError: %s", err), w)
-		return
-	}
+	jwks := m.getJWKS(ctx.Conf.Middlewares.JwksURL)
+
 	// Parse the JWT.
 	token, err := jwt.Parse(bearer, jwks.Keyfunc)
 	if err != nil {
