@@ -24,6 +24,12 @@ func CacheInstance() *cache {
 	return instance
 }
 
+// intended to be used on config changes
+func Update() {
+	var red = conf.ConfInst.Redis
+	instance = newCache(red.Host, red.Port, red.Password)
+}
+
 type cache struct {
 	rdb *redis.Client
 }

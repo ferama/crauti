@@ -7,16 +7,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type adminGroup struct{}
+type configGroup struct{}
 
 // Routes setup the root api routes
-func adminRoutes(router *gin.RouterGroup) {
-	r := &adminGroup{}
+func configRoutes(router *gin.RouterGroup) {
+	r := &configGroup{}
 
-	router.GET("config", r.config)
+	router.GET("", r.config)
 }
 
-func (r *adminGroup) config(c *gin.Context) {
+func (r *configGroup) config(c *gin.Context) {
 	c.Negotiate(http.StatusOK, gin.Negotiate{
 		Data:    conf.ConfInst,
 		Offered: supportedFormats,

@@ -7,7 +7,7 @@ import (
 var supportedFormats = []string{gin.MIMEJSON, gin.MIMEYAML}
 
 func RootRouter(router *gin.RouterGroup) {
-	adminRoutes(router.Group("/"))
+	configRoutes(router.Group("/config"))
 	cacheRoutes(router.Group("/cache"))
 	mountPointRoutes(router.Group("/mount-point"))
 }

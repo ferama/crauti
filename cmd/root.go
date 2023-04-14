@@ -8,6 +8,7 @@ import (
 	"github.com/ferama/crauti/pkg/gateway"
 	"github.com/ferama/crauti/pkg/gateway/kube"
 	"github.com/ferama/crauti/pkg/logger"
+	"github.com/ferama/crauti/pkg/redis"
 	"github.com/fsnotify/fsnotify"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
@@ -65,6 +66,9 @@ var rootCmd = &cobra.Command{
 				log.Print("cannot read config file")
 			}
 			conf.Update()
+			// I have the updated config at this point
+			// Notify the services
+			redis.Update()
 			gwServer.Update()
 
 			if conf.ConfInst.Gateway.Kubernetes.Autodiscover {
