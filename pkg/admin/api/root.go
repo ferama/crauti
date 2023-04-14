@@ -4,6 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var supportedFormats = []string{gin.MIMEJSON, gin.MIMEYAML}
+
 func RootRouter(router *gin.RouterGroup) {
 	adminRoutes(router.Group("/"))
 	cacheRoutes(router.Group("/cache"))

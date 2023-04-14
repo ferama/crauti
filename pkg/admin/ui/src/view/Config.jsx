@@ -9,7 +9,7 @@ export const Config = () => {
     useEffect(() => {
       // like componentDidMount
       const updateState = () => {
-          http.get("config/yaml").then(data => {
+          http.get("config").then(data => {
               setConfig(data.data)
           })
       }
@@ -23,9 +23,8 @@ export const Config = () => {
 
     let out = (<></>)
     if (config != "") {
-        let doc = YAML.parse(config)
-        if (doc != null) delete doc.mountPoints
-        out = YAML.stringify(doc)
+        delete config.MountPoints
+        out = YAML.stringify(config)
     }
     return(
         <Container>

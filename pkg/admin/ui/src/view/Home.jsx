@@ -12,8 +12,7 @@ export const Home = () => {
     // like componentDidMount
     const updateState = () => {
         http.get("mount-point").then(data => {
-            // setMountPoints(data.data)
-            setMountPoints(YAML.parse(data.data))
+            setMountPoints(data.data)
         })
     }
     updateState()
@@ -26,13 +25,13 @@ export const Home = () => {
 
   let rows = (<></>)
   rows = mountPoints.map(mp => {
-    let key = `${mp.path}-${mp.matchHost}`
+    let key = `${mp.Path}-${mp.MatchHost}`
     return (
       <tr key={key}>
-        <td>{mp.matchHost}</td>
-        <td>{mp.path}</td>
-        <td>{mp.upstream}</td>
-        <td><Link to={"/mount?path=" + mp.path + "&host=" + mp.matchHost}>details</Link></td>
+        <td>{mp.MatchHost}</td>
+        <td>{mp.Path}</td>
+        <td>{mp.Upstream}</td>
+        <td><Link to={"/mount?path=" + mp.Path + "&host=" + mp.MatchHost}>details</Link></td>
       </tr>
   )})
   return (

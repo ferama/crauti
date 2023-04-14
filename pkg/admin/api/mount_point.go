@@ -39,11 +39,17 @@ func (r *mountPointGroup) get(c *gin.Context) {
 	host := c.Query("host")
 
 	if path == "" && host == "" {
-		c.YAML(http.StatusOK, conf.ConfInst.MountPoints)
+		c.Negotiate(http.StatusOK, gin.Negotiate{
+			Data:    conf.ConfInst.MountPoints,
+			Offered: supportedFormats,
+		})
 		return
 	}
 
-	c.YAML(http.StatusOK, r.search(path, host))
+	c.Negotiate(http.StatusOK, gin.Negotiate{
+		Data:    r.search(path, host),
+		Offered: supportedFormats,
+	})
 }
 
 func (r *mountPointGroup) post(c *gin.Context) {
@@ -58,7 +64,10 @@ func (r *mountPointGroup) post(c *gin.Context) {
 	result := r.search(mp.Path, mp.MatchHost)
 
 	if len(result) > 0 {
-		c.YAML(http.StatusBadRequest, "already exists")
+		c.Negotiate(http.StatusBadRequest, gin.Negotiate{
+			Data:    "already exists",
+			Offered: supportedFormats,
+		})
 		return
 	}
 
@@ -69,10 +78,16 @@ func (r *mountPointGroup) post(c *gin.Context) {
 	viper.Set("MountPoints", mountPoints)
 	err = viper.WriteConfig()
 	if err != nil {
-		c.YAML(http.StatusInternalServerError, "can't update config")
+		c.Negotiate(http.StatusInternalServerError, gin.Negotiate{
+			Data:    "can't update config",
+			Offered: supportedFormats,
+		})
 	}
 
-	c.YAML(http.StatusOK, mp)
+	c.Negotiate(http.StatusOK, gin.Negotiate{
+		Data:    mp,
+		Offered: supportedFormats,
+	})
 }
 
 func (r *mountPointGroup) put(c *gin.Context) {
@@ -87,7 +102,10 @@ func (r *mountPointGroup) put(c *gin.Context) {
 	result := r.search(mp.Path, mp.MatchHost)
 
 	if len(result) == 0 {
-		c.YAML(http.StatusBadRequest, "mount point doesn't exists")
+		c.Negotiate(http.StatusBadRequest, gin.Negotiate{
+			Data:    "mount point doesn't exists",
+			Offered: supportedFormats,
+		})
 		return
 	}
 
@@ -102,10 +120,16 @@ func (r *mountPointGroup) put(c *gin.Context) {
 	viper.Set("MountPoints", mountPoints)
 	err = viper.WriteConfig()
 	if err != nil {
-		c.YAML(http.StatusInternalServerError, "can't update config")
+		c.Negotiate(http.StatusInternalServerError, gin.Negotiate{
+			Data:    "can't update config",
+			Offered: supportedFormats,
+		})
 	}
 
-	c.YAML(http.StatusOK, mp)
+	c.Negotiate(http.StatusOK, gin.Negotiate{
+		Data:    mp,
+		Offered: supportedFormats,
+	})
 }
 
 func (r *mountPointGroup) delete(c *gin.Context) {
@@ -124,7 +148,10 @@ func (r *mountPointGroup) delete(c *gin.Context) {
 		viper.Set("MountPoints", res)
 		err := viper.WriteConfig()
 		if err != nil {
-			c.YAML(http.StatusInternalServerError, "can't update config")
+			c.Negotiate(http.StatusInternalServerError, gin.Negotiate{
+				Data:    "can't update config",
+				Offered: supportedFormats,
+			})
 		}
 	}
 }

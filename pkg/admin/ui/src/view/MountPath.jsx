@@ -15,7 +15,7 @@ export const MountPath = () => {
     useEffect(() => {
         const updateState = () => {
             http.get(`mount-point?path=${path}&host=${matchHost}`).then(data => {
-                let d = YAML.parse(data.data)
+                let d = data.data
                 if (d.length > 0) {
                     setMountPoint(d[0])
                 }
@@ -30,14 +30,14 @@ export const MountPath = () => {
 
     let middlewares = (<></>)
     if (mountPoint != "") {
-        middlewares = YAML.stringify(mountPoint.middlewares)
+        middlewares = YAML.stringify(mountPoint.Middlewares)
     }
     
     return (
         <Container>
             <Breadcrumb>
                 <BreadcrumbItem linkAs={Link} linkProps={{ to: "/" }}>Home</BreadcrumbItem>
-                <BreadcrumbItem active>- {mountPoint.path}</BreadcrumbItem>
+                <BreadcrumbItem active>- {mountPoint.Path}</BreadcrumbItem>
             </Breadcrumb>
             <Row>
                 <Col><h3>MountPoint</h3></Col>
@@ -50,11 +50,11 @@ export const MountPath = () => {
                     <tbody>
                         <tr>
                             <th>Match Host</th>
-                            <td>{mountPoint.matchHost}</td>
+                            <td>{mountPoint.MatchHost}</td>
                         </tr>
                         <tr>
                             <th>Path</th>
-                            <td>{mountPoint.path}</td>
+                            <td>{mountPoint.Path}</td>
                         </tr>
                         <tr>
                             <th>Upstream</th>
