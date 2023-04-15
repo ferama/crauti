@@ -7,7 +7,7 @@ build() {
     EXT=""
     [[ $GOOS = "windows" ]] && EXT=".exe"
     echo "Building ${GOOS} ${GOARCH}"
-    go build \
+    CGO_ENABLED=0 go build \
         -trimpath \
         -o ./bin/crauti-${GOOS}-${GOARCH}${EXT} .
 }
