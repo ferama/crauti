@@ -154,6 +154,8 @@ func setDefaults() {
 	viper.SetDefault("Redis.Host", "localhost")
 	viper.SetDefault("Redis.Port", 6379)
 
+	viper.SetDefault("MountPoints", []MountPoint{})
+
 	// Gateway conf
 	viper.SetDefault("Gateway.ReadTimeout", "120s")
 	viper.SetDefault("Gateway.WriteTimeout", "120s")
