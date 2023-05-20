@@ -45,16 +45,16 @@ type server struct {
 
 func newServer(httpListenAddr string, httpsListenAddress string, update chan *runtimeUpdates) *server {
 
-	HTTPEnabled := conf.ConfInst.Gateway.HTTPSEnabled
+	HTTPSEnabled := conf.ConfInst.Gateway.HTTPSEnabled
 	autoHTTPSEnabled := conf.ConfInst.Gateway.AutoHTTPSEnabled
 
 	if autoHTTPSEnabled {
 		// implicit enable HTTPS too
-		HTTPEnabled = true
+		HTTPSEnabled = true
 	}
 
 	s := &server{
-		HTTPSEnabled:     HTTPEnabled,
+		HTTPSEnabled:     HTTPSEnabled,
 		autoHTTPSEnabled: autoHTTPSEnabled,
 		https:            &http.Server{},
 		http:             &http.Server{},
